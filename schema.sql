@@ -265,10 +265,10 @@ CREATE POLICY "Allow full access to config to staff only" ON configs
     FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
 
 -- 8. Customer Profile Policies
-CREATE POLICY "Customers read own profile" ON customers 
-    FOR SELECT TO authenticated USING (auth.uid() = id);
-CREATE POLICY "Customers edit own profile" ON customers 
-    FOR UPDATE TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Customers read own profile" ON customers
+FOR SELECT TO authenticated USING (auth.uid()::text = id);
+CREATE POLICY "Customers edit own profile" ON customers
+FOR UPDATE TO authenticated USING (auth.uid()::text = id);
 CREATE POLICY "Full access to customers for staff" ON customers 
     FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
 

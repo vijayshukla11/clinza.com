@@ -8,15 +8,8 @@ import { Product, BlogPost, Order, HomepageConfig, ThemeConfig } from "./types";
 
 // Fallbacks are provided directly from user specification for immediate, robust operation
 const viteEnv = (import.meta as any).env || {};
-const SUPABASE_URL = 
-  viteEnv.VITE_SUPABASE_URL || 
-  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://zvlcraiwdwohdqfpqjtz.supabase.co";
-
-const SUPABASE_ANON_KEY = 
-  viteEnv.VITE_SUPABASE_ANON_KEY || 
-  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  "sb_publishable_T5AXsc3Zotfbi_J18VwJXw_jZR3wlOp";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
