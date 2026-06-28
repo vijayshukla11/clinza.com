@@ -1,0 +1,6 @@
+{
+  "name": "CLINZA Premium Fashion E-Commerce",
+  "description": "Complete premium AI e-commerce storefront with a live image style analyzer and tailored style recommendations.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
