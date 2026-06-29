@@ -151,14 +151,17 @@ export const ProductsService = {
     try {
       const row = mapProductToDb(product);
       const { data, error } = await supabase.from("products").insert(row).select().single();
-      if (error) throw error;
+      if (error) {
+  console.error("INSERT ERROR:", error);
+  throw error;
+}
       const local = getProducts();
       if (!local.some(p => p.id === product.id)) {
         saveProducts([...local, product]);
       }
       return data ? mapDbProduct(data) : product;
     } catch (e) {
-      console.warn("Supabase products create fallback:", e);
+      console.error("FULL CREATE ERROR:", e);
       const local = getProducts();
       if (!local.some(p => p.id === product.id)) {
         saveProducts([...local, product]);

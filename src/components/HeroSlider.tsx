@@ -14,7 +14,7 @@ interface HeroSliderProps {
 }
 
 export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
-  const slides = getHomeConfig().slides;
+  const slides = getHomeConfig()?.slides || [];
   const [activeIdx, setActiveIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
@@ -62,7 +62,10 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
     return null;
   }
 
-  const currentSlide = slides[activeIdx];
+  const currentSlide = slides[activeIdx] || {
+  id: "default",
+  image: "/hero.jpg"
+};
 
   return (
     <section 
