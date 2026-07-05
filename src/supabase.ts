@@ -1,10 +1,17 @@
-/**
+/**getCustomersFromCloud
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { Product, BlogPost, Order, HomepageConfig, ThemeConfig } from "./types";
+import {
+  Product,
+  BlogPost,
+  Order,
+  HomepageConfig,
+  ThemeConfig,
+  CustomerProfile,
+} from "./types";
 
 // Fallbacks are provided directly from user specification for immediate, robust operation
 const viteEnv = (import.meta as any).env || {};
@@ -363,6 +370,54 @@ export async function getSingleOrderFromCloud(orderId: string): Promise<Order | 
     return null;
   }
 }
+// =====================
+// CUSTOMERS
+// =====================
+
+export async function syncCustomersFromCloud() {  try {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Could not fetch customers:", error.message);
+    return [];
+  }
+
+  return data || [];
+} catch (err) {
+  console.error("Customer sync failed:", err);
+  return [];
+}
+}
+
+export async function saveCustomerToCloud(customer: CustomerProfile) { try {
+  const { error } = await supabase
+    .from("customers")
+    .upsert(customer, { onConflict: "id" });
+
+  if (error) {
+    console.warn("Customer save failed:", error.message);
+  }
+} catch (err) {
+  console.error("Customer save failed:", err);
+}
+}
+
+export async function deleteCustomerFromCloud(id: string) { try {
+  const { error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.warn("Customer delete failed:", error.message);
+  }
+} catch (err) {
+  console.error("Customer delete failed:", err);
+}
+}
 
 // 4. Sync Homepage Configs
 export async function syncHomepageConfigFromCloud(): Promise<HomepageConfig | null> {
@@ -629,49 +684,54 @@ export async function getStyleAnalysisLeadsFromCloud(): Promise<any[]> {
   }
 }
 
-// ---- CUSTOMERS INTEGRATION ----
-export async function getCustomersFromCloud(): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.warn("Could not load customers:", error.message);
-      return [];
-    }
-    return data || [];
-  } catch (err) {
-    console.error("Customers query failure:", err);
+// ===============================
+// COLLECTIONS
+// ===============================
+export async function getCollectionsFromCloud() {
+  const { data, error } = await supabase
+    .from("collections")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    console.error(error);
     return [];
   }
-}
 
-export async function saveCustomerToCloud(customer: {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  addresses?: any[];
-  orders?: any[];
-}): Promise<void> {
-  try {
-    const { error } = await supabase
-      .from("customers")
-      .upsert({
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone || "",
-        addresses: customer.addresses || [],
-        orders: customer.orders || [],
-        created_at: new Date().toISOString()
-      }, { onConflict: "id" });
-    if (error) {
-      console.warn("Could not save customer details to cloud:", error.message);
-    }
-  } catch (err) {
-    console.error("Customer cloud state insertion issue:", err);
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    slug: item.slug,
+    banner: item.banner || "",
+    thumbnail: item.thumbnail || "",
+    description: item.description || "",
+    seoTitle: item.seo_title || "",
+    seoDescription: item.seo_description || "",
+    displayOrder: item.display_order || 0,
+    featured: item.featured ?? true,
+  }));
+}
+ 
+
+export async function saveCollectionToCloud(collection: any) {
+  const { error } = await supabase
+    .from("collections")
+    .upsert(collection, {
+      onConflict: "id",
+    });
+
+  if (error) {
+    console.error("Collection save failed:", error);
   }
 }
 
+export async function deleteCollectionFromCloud(id: string) {
+  const { error } = await supabase
+    .from("collections")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Collection delete failed:", error);
+  }
+}

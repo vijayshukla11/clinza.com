@@ -64,7 +64,11 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
 
   const currentSlide = slides[activeIdx] || {
   id: "default",
-  image: "/hero.jpg"
+  image: "/hero.jpg",
+  title: "",
+  subtitle: "",
+  description: "",
+  route: "collections/all"
 };
 
   return (
@@ -120,24 +124,23 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                 transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/30 px-3.5 py-1 text-[10px] font-black font-mono tracking-[0.3em] text-white"
               >
-                NEW COLLECTION
+{currentSlide.subtitle}
               </motion.div>
 
               {/* HEADING */}
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
-                Premium Everyday Fashion
-              </h1>
-
+             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
+  {currentSlide.title}
+</h1>
               {/* SUBHEADING */}
               <p className="text-white/95 text-xs sm:text-base font-sans font-light tracking-wide leading-relaxed max-w-md drop-shadow-sm">
-                Timeless fits. Premium fabrics. Designed for modern India.
-              </p>
+  {currentSlide.description}
+</p>
 
               {/* ACTION BUTTONS */}
               <div className="flex flex-row gap-4 pt-4">
                 <button
                   id="hero-shop-collection-btn"
-                  onClick={() => setRoute("collections/all")}
+                 onClick={() => setRoute(currentSlide.route)}
                   className="px-6 sm:px-8 py-4 bg-white text-zinc-950 text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
                 >
                   Shop Collection

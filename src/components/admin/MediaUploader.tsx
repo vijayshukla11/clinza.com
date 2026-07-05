@@ -9,7 +9,7 @@ import { Upload, Check, AlertCircle, Loader } from "lucide-react";
 import { uploadFileToSupabase } from "../../supabase";
 
 interface MediaUploaderProps {
-  bucketName: "products" | "collections" | "blogs" | "sliders";
+  bucketName: "products" | "collections" | "blogs" | "homepage" | "categories" | "banners" | "customers";
   onUploadSuccess: (url: string) => void;
   label?: string;
 }

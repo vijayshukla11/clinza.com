@@ -2,10 +2,9 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { ProductCollection } from "../types";
+import { supabase } from "../supabase";
 
 interface CollectionListProps {
   setRoute: (route: string) => void;
@@ -65,6 +64,40 @@ const COLLECTIONS_META: CollectionItem[] = [
 ];
 
 export default function CollectionList({ setRoute }: CollectionListProps) {
+
+ const [collections, setCollections] = useState<CollectionItem[]>([]);
+  useEffect(() => {
+  loadCollections();
+}, []);
+
+async function loadCollections() {
+  const { data, error } = await supabase
+    .from("collections")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  console.log("Supabase Data:", data);
+  console.log("Supabase Error:", error);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const mapped: CollectionItem[] = (data || []).map((c: any) => ({
+    name: c.name,
+    slug: c.slug,
+    description: c.description || "",
+    image:
+      c.thumbnail ||
+      c.banner ||
+      "https://via.placeholder.com/600x600",
+    count: 0,
+  }));
+
+  setCollections(mapped);
+}
+
   return (
     <section id="clinza-collections-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 border-t border-gray-100">
       <div className="max-w-7xl mx-auto">
@@ -90,7 +123,7 @@ export default function CollectionList({ setRoute }: CollectionListProps) {
 
         {/* BENTO GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
-          {COLLECTIONS_META.map((item) => (
+         {collections.map((item) => (
             <div
               id={`collection-card-${item.slug}`}
               key={item.slug}

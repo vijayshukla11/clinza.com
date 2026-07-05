@@ -189,7 +189,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Summer Collection",
       title: "ELEVATED CUBAN CUTS",
       description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
+      image: "https://i.postimg.cc/G38w5tcs/Linen-(4).jpg",
       route: "collections/shirts"
     },
     {
@@ -198,7 +198,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Premium Linen series",
       title: "TACTILE TEXTURAL SILK",
       description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
+      image: "https://i.postimg.cc/52QZQZQZ/Linen-(2).jpg",
       route: "collections/shirts"
     },
     {
@@ -207,7 +207,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Business Casual Curation",
       title: "INTELLIGENT CASUAL COMFORT",
       description: "Premium double-breasted blazers paired beautifully with tapered stretch pants. Reinterpreting classical office attire for the modern visionary.",
-      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1600",
+      image: "https://i.postimg.cc/8PZQZQZQ/Linen-(3).jpg",
       route: "collections/pants"
     },
     {
@@ -216,7 +216,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Weekend Collection",
       title: "MINIMALIST DRAWSTRING ESSENTIALS",
       description: "Complete linen-blend co-ords. Sophisticated side-vented camp shirts designed for seamless beach-to-evening style styling.",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
+      image: "https://i.postimg.cc/WpJC7ynG/Clinza-combo-set-(4).jpg",
       route: "collections/combos"
     },
     {
@@ -225,7 +225,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Trending Selvedge Denim",
       title: "13.5 OZ SOLID HEAVY RAW DENIM",
       description: "Woven meticulously on historical Japanese shuttle looms. Authentic redline tickers, designed to age beautifully with your lifestyle.",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
+      image: "https://i.postimg.cc/rpmYRZsT/mens-white-linen-shirt-taupe-pant-combo-clinza-(4).png",
       route: "collections/jeans"
     }
   ],
@@ -234,7 +234,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
   editorialTitle: "Unpacking Textile Architecture",
   editorialSubtitle: "Clinza Publication Room",
   editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800"
+  editorialImg: "https://i.postimg.cc/G38w5tcs/Linen-(4).jpg"
 };
 
 export function initializeDatabase() {
@@ -475,7 +475,7 @@ export function updateOrderStatus(orderId: string, status: Order["status"], note
     saveOrders(current);
     
     // Sync order modification to cloud
-    saveOrderToCloud(order).catch(err => console.error("Firestore order update failed:", err));
+   saveOrderToCloud(order).catch(err => console.error("Supabase order update failed:", err));
   }
 }
 
@@ -509,7 +509,7 @@ export function updateOrderTracking(
       });
     }
     saveOrders(current);
-    saveOrderToCloud(order).catch(err => console.error("Firestore order tracking save failed:", err));
+   saveOrderToCloud(order).catch(err => console.error("Supabase order tracking save failed:", err));
   }
 }
 
