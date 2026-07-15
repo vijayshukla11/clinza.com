@@ -284,7 +284,7 @@ export default function ShopAllCollectionsPage({
           <div className="lg:col-span-6 relative bg-zinc-100 rounded-none border border-zinc-200 overflow-hidden leading-none h-full">
             <div className="aspect-[4/3] rounded-none overflow-hidden bg-gray-100 group">
               <img 
-                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1200" 
+                src="https://i.postimg.cc/BZptYsRq/Grey-Modern-Illustrative-Product-Promotion-Instagram-Post-(1).png" 
                 alt="CLINZA Editorial Campaign Model"
                 className="w-full h-full object-cover grayscale opacity-95 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                 referrerPolicy="no-referrer"
