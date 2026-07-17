@@ -92,6 +92,7 @@ export default function AdminPanel() {
 
   // Slides CMS inputs
   const [slideEditIdx, setSlideEditIdx] = useState<number | null>(null);
+  const [offerEditIdx, setOfferEditIdx] = useState<number | null>(null);
 
   useEffect(() => {
     // Route matching for active tab
@@ -728,6 +729,255 @@ export default function AdminPanel() {
                     >
                       Update Theme Slider
                     </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Offers customization list */}
+              <div className="bg-white border rounded-2xl p-6 text-zinc-750 font-sans border-zinc-200 mt-6">
+                <div className="flex justify-between items-center border-b pb-3 mb-4">
+                  <div>
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-800">Dynamic Current Offers CMS</h4>
+                    <p className="text-[10px] text-zinc-400 font-sans">These offers display in a premium grid/scroller right after the Hero Slider on the homepage.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const copy = { ...homeConfig };
+                      const currentOffers = copy.offers || [];
+                      const newOffer = {
+                        id: `offer-${Date.now()}`,
+                        image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600",
+                        title: "New Premium Offer",
+                        subtitle: "Meticulously crafted premium wardrobe apparel.",
+                        discount: "FLAT 10% OFF",
+                        buttonText: "Shop Now",
+                        link: "collections/shirts",
+                        badge: "NEW",
+                        startDate: new Date().toISOString().split("T")[0],
+                        endDate: "2026-12-31"
+                      };
+                      copy.offers = [...currentOffers, newOffer];
+                      setHomeConfig(copy);
+                      saveHomeConfig(copy);
+                      setOfferEditIdx(copy.offers.length - 1);
+                    }}
+                    className="px-3 py-1.5 bg-[#F27D26] hover:bg-[#d66518] text-white font-black text-[10px] uppercase tracking-wider rounded cursor-pointer transition"
+                  >
+                    + Add New Offer
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {(homeConfig.offers || []).map((offer, idx) => (
+                    <div key={offer.id} className="p-4 bg-zinc-50 border rounded-xl flex gap-4 items-start justify-between">
+                      <div className="flex gap-4">
+                        <img src={offer.image} alt="" className="w-16 h-20 object-cover border rounded shrink-0" />
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-mono font-bold text-orange-600 block uppercase">{offer.badge || "SPECIAL"}</span>
+                          <h5 className="font-bold text-zinc-950 truncate max-w-[150px]">{offer.title || "No Title"}</h5>
+                          <p className="text-[10px] text-zinc-500">{offer.discount || "No Discount Text"}</p>
+                          <p className="text-[9px] text-zinc-400 font-mono">{offer.startDate} to {offer.endDate}</p>
+                          <button
+                            type="button"
+                            onClick={() => setOfferEditIdx(idx)}
+                            className="text-[10px] font-mono font-bold text-orange-600 uppercase hover:underline pt-2 cursor-pointer block text-left"
+                          >
+                            Modify Parameters
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this offer?")) {
+                            const copy = { ...homeConfig };
+                            const currentOffers = copy.offers || [];
+                            copy.offers = currentOffers.filter((_, oidx) => oidx !== idx);
+                            setHomeConfig(copy);
+                            saveHomeConfig(copy);
+                            setOfferEditIdx(null);
+                          }
+                        }}
+                        className="text-[10px] text-red-500 hover:text-red-700 font-black uppercase cursor-pointer"
+                        title="Delete offer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {offerEditIdx !== null && homeConfig.offers && homeConfig.offers[offerEditIdx] && (
+                  <div className="mt-8 p-5 bg-zinc-50 border border-zinc-200 space-y-4 rounded-xl text-xs">
+                    <div className="flex justify-between border-b pb-2 mb-2 items-center">
+                      <span className="font-bold text-zinc-800">EDITING OFFER INDEX #{offerEditIdx + 1}</span>
+                      <button onClick={() => setOfferEditIdx(null)} className="h-4 w-4 bg-zinc-200 rounded flex items-center justify-center font-bold cursor-pointer">✕</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Offer Title</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].title ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].title = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Offer Subtitle</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].subtitle ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].subtitle = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Discount Text / Subheading</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].discount ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].discount = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Offer Badge Text</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].badge ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].badge = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Button Text</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].buttonText ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].buttonText = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Button Link / Route</label>
+                        <input
+                          type="text"
+                          value={homeConfig.offers[offerEditIdx].link ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].link = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 text-[10px] font-mono focus:outline-none bg-white text-zinc-850"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Offer Image URL</label>
+                      <input
+                        type="text"
+                        value={homeConfig.offers[offerEditIdx].image ?? ""}
+                        onChange={(e) => {
+                          const copy = { ...homeConfig };
+                          if (copy.offers) {
+                            copy.offers[offerEditIdx].image = e.target.value;
+                            setHomeConfig(copy);
+                          }
+                        }}
+                        className="w-full border rounded px-3 py-1.5 text-[10px] font-mono focus:outline-none bg-white text-zinc-850"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={homeConfig.offers[offerEditIdx].startDate ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].startDate = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={homeConfig.offers[offerEditIdx].endDate ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            if (copy.offers) {
+                              copy.offers[offerEditIdx].endDate = e.target.value;
+                              setHomeConfig(copy);
+                            }
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const copy = { ...homeConfig };
+                          setHomeConfig(copy);
+                          saveHomeConfig(copy);
+                          alert("Dynamic offer parameters saved successfully!");
+                          setOfferEditIdx(null);
+                        }}
+                        className="px-5 py-2.5 bg-[#F27D26] hover:bg-[#d66518] text-white font-black text-xs uppercase tracking-widest rounded shadow cursor-pointer transition"
+                      >
+                        Update Dynamic Offer
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -503,12 +503,115 @@ function AppContent() {
             {/* 1. HOME VIEW */}
             <Route path="/" element={
               <div id="home-route-viewport" className="animate-fade-in">
+                {/* 1. Hero Slider */}
                 <HeroSlider 
                   setRoute={handleOldRouteTrigger} 
                   scrollToAI={scrollToAISection} 
                 />
 
-                {/* Collections (Fade Up) */}
+                {/* 2. Current Offers Section (New Section) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 35 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <section id="current-offers-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-b border-gray-100">
+                    <div className="max-w-7xl mx-auto">
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-zinc-200 pb-4">
+                        <div className="max-w-xl text-left">
+                          <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase mb-1.5 font-mono block">
+                            Exclusive Time-Limited Deals
+                          </span>
+                          <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase">
+                            Current Offers
+                          </h2>
+                        </div>
+                      </div>
+
+                      {/* Grid on Desktop, Scroll on Mobile */}
+                      {(() => {
+                        const homeConfig = getHomeConfig();
+                        const activeOffers = (homeConfig.offers || []).filter((offer: any) => {
+                          if (!offer.startDate || !offer.endDate) return true;
+                          const now = new Date();
+                          return now >= new Date(offer.startDate) && now <= new Date(offer.endDate);
+                        });
+
+                        if (activeOffers.length === 0) {
+                          return (
+                            <div className="text-center py-10 text-gray-400 font-sans text-xs">
+                              No active offers at this moment. Stay tuned for our next seasonal drop!
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-6 pb-4 lg:pb-0 snap-x scrollbar-none">
+                            {activeOffers.map((offer: any, idx: number) => (
+                              <div
+                                id={`offer-card-${idx}`}
+                                key={idx}
+                                className="group relative flex flex-col bg-white border border-gray-150 rounded-none overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-[440px] snap-start min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-shrink-0"
+                              >
+                                {/* Image Overlay */}
+                                <div className="relative h-64 overflow-hidden bg-gray-50">
+                                  <img
+                                    src={offer.image || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600"}
+                                    alt={offer.title}
+                                    className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  {offer.badge && (
+                                    <div className="absolute top-4 left-4 bg-orange-600 text-white font-mono text-[9px] font-black uppercase tracking-widest px-3 py-1">
+                                      {offer.badge}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Info and button */}
+                                <div className="p-5 flex-1 flex flex-col justify-between">
+                                  <div>
+                                    {offer.discount && (
+                                      <span className="text-[10px] text-orange-600 font-bold tracking-widest uppercase mb-1 block font-mono">
+                                        {offer.discount}
+                                      </span>
+                                    )}
+                                    <h3 className="text-base font-sans font-black text-gray-950 uppercase tracking-tight line-clamp-1">
+                                      {offer.title}
+                                    </h3>
+                                    <p className="text-gray-500 text-xs mt-1.5 line-clamp-2 leading-relaxed font-light">
+                                      {offer.subtitle}
+                                    </p>
+                                  </div>
+
+                                  <button
+                                    id={`offer-btn-${idx}`}
+                                    onClick={() => {
+                                      if (offer.link) {
+                                        handleOldRouteTrigger(offer.link);
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                      } else {
+                                        handleOldRouteTrigger("collections/all");
+                                      }
+                                    }}
+                                    className="mt-4 w-full bg-zinc-950 hover:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-none transition-colors duration-300 text-center flex items-center justify-center gap-1.5 font-mono cursor-pointer"
+                                  >
+                                    {offer.buttonText || "Shop Now"}
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </section>
+                </motion.div>
+
+                {/* 3. Shop by Collection (Fade Up) */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -518,7 +621,7 @@ function AppContent() {
                   <CollectionList setRoute={handleOldRouteTrigger} />
                 </motion.div>
 
-                {/* Trending section (Fade Up) */}
+                {/* 4. Trending section (Fade Up) */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -563,7 +666,7 @@ function AppContent() {
                   </section>
                 </motion.div>
 
-                {/* New Arrivals (Fade Up) */}
+                {/* 5. New Collection (Fade Up) */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -608,7 +711,92 @@ function AppContent() {
                   </section>
                 </motion.div>
 
-                {/* Features (Why Clinza - Fade In) */}
+                {/* 6. Shop by Category (New Section) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 35 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <section id="shop-by-category-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-b border-gray-100">
+                    <div className="max-w-7xl mx-auto">
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-zinc-200 pb-4">
+                        <div className="max-w-xl text-left">
+                          <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase mb-1.5 font-mono block">
+                            Sartorial Departments
+                          </span>
+                          <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase">
+                            Shop by Category
+                          </h2>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+                        {[
+                          {
+                            name: "Shirts",
+                            slug: "shirts",
+                            image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=400",
+                          },
+                          {
+                            name: "Jeans",
+                            slug: "jeans",
+                            image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=400",
+                          },
+                          {
+                            name: "Pants",
+                            slug: "pants",
+                            image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=400",
+                          },
+                          {
+                            name: "Oversized",
+                            slug: "shirts",
+                            image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400",
+                          },
+                          {
+                            name: "Co-ords",
+                            slug: "combos",
+                            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=400",
+                          },
+                          {
+                            name: "Accessories",
+                            slug: "accessories",
+                            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400",
+                          }
+                        ].map((cat, idx) => (
+                          <div
+                            id={`category-card-${cat.name.toLowerCase()}`}
+                            key={idx}
+                            onClick={() => {
+                              handleOldRouteTrigger(`collections/${cat.slug}`);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="group relative h-48 rounded-none overflow-hidden cursor-pointer border border-gray-200 flex flex-col justify-end"
+                          >
+                            <div className="absolute inset-0 z-0">
+                              <img
+                                src={cat.image}
+                                alt={cat.name}
+                                className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent z-10" />
+                            </div>
+
+                            <div className="relative z-20 p-4 text-left flex items-center justify-between w-full">
+                              <h3 className="text-sm font-sans font-black tracking-widest text-white uppercase">
+                                {cat.name}
+                              </h3>
+                              <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                </motion.div>
+
+                {/* 7. Why Choose Clinza (Fade In) */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -618,7 +806,7 @@ function AppContent() {
                   <FeaturesSection />
                 </motion.div>
 
-                {/* Editorial / Blogs (Fade Up) */}
+                {/* 8. Editorial / Blogs (Fade Up) */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -666,6 +854,7 @@ function AppContent() {
                   </section>
                 </motion.div>
 
+                {/* 9. AI Style Analyzer */}
                 <div ref={aiSectionRef}>
                   <AIAnalyzer
                     setRoute={handleOldRouteTrigger}
@@ -675,6 +864,69 @@ function AppContent() {
                     wishlistIds={wishlist}
                   />
                 </div>
+
+                {/* 10. Newsletter Subscription (Move Newsletter above Footer) */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {(() => {
+                    const cfg = getHomeConfig();
+                    if (!cfg.newsletter?.enabled) return null;
+                    return (
+                      <section 
+                        id="homepage-newsletter-section" 
+                        className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 text-center border-t border-white/5"
+                        style={{ backgroundColor: cfg.newsletter.bgColor || "#09090b" }}
+                      >
+                        <div className="max-w-xl mx-auto space-y-6">
+                          <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase font-mono block">
+                            Atelier Publications
+                          </span>
+                          <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-white uppercase leading-none">
+                            {cfg.newsletter.heading || "The CLINZA Editorial List"}
+                          </h2>
+                          <p className="text-gray-400 text-xs sm:text-sm font-sans font-light leading-relaxed max-w-lg mx-auto">
+                            {cfg.newsletter.description || "Register your email to gain instant priority notices regarding seasonal resort drops."}
+                          </p>
+                          
+                          <div className="pt-2">
+                            {!newsletterSubbed ? (
+                              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                                <input
+                                  id="home-newsletter-email-field"
+                                  type="email"
+                                  placeholder="sartorialist@gmail.com"
+                                  value={newsletterEmail}
+                                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                                  className="bg-white/5 border border-white/10 px-4 py-3.5 text-xs focus:ring-1 focus:ring-[#F27D26] focus:outline-none text-white font-sans w-full rounded-none"
+                                  required
+                                />
+                                <button
+                                  id="home-newsletter-submit-btn"
+                                  type="submit"
+                                  className="bg-white hover:bg-[#F27D26] hover:text-white text-gray-950 font-sans text-xs font-black uppercase tracking-widest py-3.5 px-8 transition-colors duration-300 cursor-pointer text-center whitespace-nowrap rounded-none font-mono"
+                                >
+                                  {cfg.newsletter.buttonText || "Subscribe"}
+                                </button>
+                              </form>
+                            ) : (
+                              <div className="max-w-md mx-auto bg-green-500/10 border border-green-500/25 p-4 rounded-none text-green-400 text-xs font-mono font-bold flex items-center justify-center gap-2">
+                                <CheckCircle className="h-5 w-5 stroke-[2.5]" /> SUBSCRIBED TO THE ATELIER CIRCLE
+                              </div>
+                            )}
+
+                            {newsletterErr && (
+                              <p className="text-[11px] text-red-400 font-medium font-mono mt-3 text-center">{newsletterErr}</p>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+                    );
+                  })()}
+                </motion.div>
               </div>
             } />
 

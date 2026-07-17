@@ -44,14 +44,16 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     headerBg: "#ffffff",
     footerBg: "#09090b",
     background: "#ffffff",
-    text: "#09090b"
+    text: "#09090b",
+    borderColor: "#e4e4e7"
   },
   typography: {
     headingFont: "sans-serif",
     bodyFont: "sans-serif",
     buttonFont: "sans-serif",
     headingWeight: "font-black",
-    bodySize: "text-sm"
+    bodySize: "text-sm",
+    fontSizeScale: "100%"
   },
   announcement: {
     enabled: true,
@@ -178,7 +180,15 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     shippingPolicy: "Double-checked for crease zero flaws. Metro cities transit delivers inside 3 days.",
     terms: "Corporate contract policies and catalog pricing acceptance parameters.",
     contactPage: "Chat with the executive desk or log tracking sequences directly with our stylist helpline."
-  }
+  },
+  brandName: "CLINZA",
+  brandTagline: "Premium Organic Clothing",
+  faviconUrl: "",
+  mobileLogo: "",
+  heroOverlayOpacity: 40,
+  borderRadius: "rounded-xl",
+  buttonStyle: "rounded",
+  cardStyle: "bordered"
 };
 
 export const DEFAULT_HOME_CONFIG: HomepageConfig = {
@@ -189,7 +199,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Summer Collection",
       title: "ELEVATED CUBAN CUTS",
       description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      image: "https://i.postimg.cc/G38w5tcs/Linen-(4).jpg",
+      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
       route: "collections/shirts"
     },
     {
@@ -198,7 +208,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Premium Linen series",
       title: "TACTILE TEXTURAL SILK",
       description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      image: "https://i.postimg.cc/52QZQZQZ/Linen-(2).jpg",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
       route: "collections/shirts"
     },
     {
@@ -207,7 +217,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Business Casual Curation",
       title: "INTELLIGENT CASUAL COMFORT",
       description: "Premium double-breasted blazers paired beautifully with tapered stretch pants. Reinterpreting classical office attire for the modern visionary.",
-      image: "https://i.postimg.cc/8PZQZQZQ/Linen-(3).jpg",
+      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1600",
       route: "collections/pants"
     },
     {
@@ -216,7 +226,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Weekend Collection",
       title: "MINIMALIST DRAWSTRING ESSENTIALS",
       description: "Complete linen-blend co-ords. Sophisticated side-vented camp shirts designed for seamless beach-to-evening style styling.",
-      image: "https://i.postimg.cc/WpJC7ynG/Clinza-combo-set-(4).jpg",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
       route: "collections/combos"
     },
     {
@@ -225,7 +235,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Trending Selvedge Denim",
       title: "13.5 OZ SOLID HEAVY RAW DENIM",
       description: "Woven meticulously on historical Japanese shuttle looms. Authentic redline tickers, designed to age beautifully with your lifestyle.",
-      image: "https://i.postimg.cc/rpmYRZsT/mens-white-linen-shirt-taupe-pant-combo-clinza-(4).png",
+      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
       route: "collections/jeans"
     }
   ],
@@ -234,7 +244,57 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
   editorialTitle: "Unpacking Textile Architecture",
   editorialSubtitle: "Clinza Publication Room",
   editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://i.postimg.cc/G38w5tcs/Linen-(4).jpg"
+  editorialImg: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
+  offers: [
+    {
+      id: "offer-1",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600",
+      title: "Linen Resort Wardrobe",
+      subtitle: "Spun from long-staple Normandy flax, meticulously pre-washed.",
+      discount: "FLAT 10% OFF",
+      buttonText: "Shop Now",
+      link: "collections/shirts",
+      badge: "BEST SELLER",
+      startDate: "2026-07-01",
+      endDate: "2026-12-31"
+    },
+    {
+      id: "offer-2",
+      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600",
+      title: "Selvedge Denim Drop",
+      subtitle: "Woven on historical Japanese shuttle looms with authentic redline tickers.",
+      discount: "FREE SHIPPING",
+      buttonText: "Explore",
+      link: "collections/jeans",
+      badge: "NEW ARRIVAL",
+      startDate: "2026-07-01",
+      endDate: "2026-12-31"
+    },
+    {
+      id: "offer-3",
+      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=600",
+      title: "Double-Breasted Blazers",
+      subtitle: "Reinterpreting classical office attire for the modern visionary.",
+      discount: "UP TO 15% OFF",
+      buttonText: "Sartorial Fits",
+      link: "collections/pants",
+      badge: "LIMITED DROP",
+      startDate: "2026-07-01",
+      endDate: "2026-12-31"
+    },
+    {
+      id: "offer-4",
+      image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=600",
+      title: "Luxury Accessories",
+      subtitle: "Handcrafted leather accents and everyday minimal luxury goods.",
+      discount: "COMPLIMENTARY GIFT",
+      buttonText: "Discover",
+      link: "collections/accessories",
+      badge: "EXQUISITE",
+      startDate: "2026-07-01",
+      endDate: "2026-12-31"
+    }
+  ]
 };
 
 export function initializeDatabase() {
@@ -475,7 +535,7 @@ export function updateOrderStatus(orderId: string, status: Order["status"], note
     saveOrders(current);
     
     // Sync order modification to cloud
-   saveOrderToCloud(order).catch(err => console.error("Supabase order update failed:", err));
+    saveOrderToCloud(order).catch(err => console.error("Firestore order update failed:", err));
   }
 }
 
@@ -509,7 +569,7 @@ export function updateOrderTracking(
       });
     }
     saveOrders(current);
-   saveOrderToCloud(order).catch(err => console.error("Supabase order tracking save failed:", err));
+    saveOrderToCloud(order).catch(err => console.error("Firestore order tracking save failed:", err));
   }
 }
 

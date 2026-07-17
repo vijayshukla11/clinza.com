@@ -29,19 +29,42 @@ export interface APlusSection {
   imageUrl?: string;
   features: { icon: string; title: string; description: string }[];
 }
-
 export interface Product {
+  seoTitle?: string;
+metaDescription?: string;
+metaKeywords?: string;
+canonicalUrl?: string;
+ogImage?: string;
+schemaType?: string;
   id: string;
   name: string;
   slug: string;
   price: number;
   originalPrice: number; // MRP
   collection: ProductCollection;
-  category: string; // e.g., "Premium Linen", "Regular Fit Jeans"
+  category: string;
   images: string[];
+
   colors: { name: string; hex: string }[];
   sizes: string[];
+
+  // Product Variants
+  variants?: {
+    id: string;
+    sku: string;
+    color: string;
+    size: string;
+    stock: number;
+    price?: number;
+    image?: string;
+  }[];
+
   stockStatus: "In Stock" | "Low Stock" | "Out of Stock";
+
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  warehouseLocation?: string;
+
   sku: string;
   brand: string;
   rating: number;
@@ -49,12 +72,19 @@ export interface Product {
   description: string;
   specifications: { label: string; value: string }[];
   aPlusContent: APlusSection;
+
   isTrending?: boolean;
   isNewArrival?: boolean;
+
   seoTitle?: string;
   metaDescription?: string;
-}
 
+  // SEO
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  schemaType?: string;
+}
 export interface CartItem {
   product: Product;
   selectedColor: string;
@@ -153,6 +183,19 @@ export interface HomeSlide {
   secondaryButtonLink?: string;
 }
 
+export interface OfferItem {
+  id: string;
+  image: string;
+  title: string;
+  subtitle: string;
+  discount: string;
+  buttonText: string;
+  link: string;
+  badge: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface HomepageConfig {
   slides: HomeSlide[];
   trendingTitle: string;
@@ -161,6 +204,15 @@ export interface HomepageConfig {
   editorialSubtitle: string;
   editorialDesc: string;
   editorialImg?: string;
+  offers?: OfferItem[];
+  newsletter?: {
+    enabled: boolean;
+    heading: string;
+    description: string;
+    buttonText: string;
+    bgImage: string;
+    bgColor: string;
+  };
 }
 
 export interface Category {
@@ -330,6 +382,7 @@ export interface ColorSettings {
   footerBg: string;
   background: string;
   text: string;
+  borderColor?: string;
 }
 
 export interface TypographySettings {
@@ -338,6 +391,7 @@ export interface TypographySettings {
   buttonFont: string;
   headingWeight: string;
   bodySize: string;
+  fontSizeScale?: string;
 }
 
 export interface AnnouncementBarConfig {
@@ -381,6 +435,14 @@ export interface ThemeConfig {
   newsletter: NewsletterSectionConfig;
   footer: FooterConfig;
   policies: PolicyPagesConfig;
+  brandName?: string;
+  brandTagline?: string;
+  faviconUrl?: string;
+  mobileLogo?: string;
+  heroOverlayOpacity?: number;
+  borderRadius?: string;
+  buttonStyle?: string;
+  cardStyle?: string;
 }
 
 
