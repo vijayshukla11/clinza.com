@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Product, BlogPost, Order, CartItem, HomepageConfig, ThemeConfig, ThemeSlide } from "./types";
+import { Product, BlogPost, Order, CartItem, HomepageConfig, ThemeConfig, ThemeSlide, CollectionMaster } from "./types";
 import { INITIAL_PRODUCTS, INITIAL_BLOGS } from "./data";
 import { 
   auth,
@@ -771,4 +771,22 @@ export async function rollbackThemeConfig(): Promise<ThemeConfig | null> {
   }
   return null;
 }
+
+export function getCollections(): CollectionMaster[] {
+  const cached = localStorage.getItem("clinza_collections_master");
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      return [];
+    }
+  }
+  const initial: CollectionMaster[] = [
+    { id: "col-1", name: "Linen Collection", slug: "linen-collection", banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1205", thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", description: "Breathable shirts crafted with premium linen meshes formulated for relaxed resort drapes.", displayOrder: 1, featured: true, seoTitle: "Linen Activewear & Shirts | Clinza", seoDescription: "Shop supreme European organic flax shirt and trousers templates." },
+    { id: "col-2", name: "Aesthetic Co-Ords", slug: "aesthetic-coords", banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=200", description: "Pre-coordinated monochrome pairings matching shirts and shorts.", displayOrder: 2, featured: true, seoTitle: "Matching Linen Co-ord Outfits | Clinza", seoDescription: "Luxury matching sets for high-summer adventures and pristine beach travel." }
+  ];
+  localStorage.setItem("clinza_collections_master", JSON.stringify(initial));
+  return initial;
+}
+
 

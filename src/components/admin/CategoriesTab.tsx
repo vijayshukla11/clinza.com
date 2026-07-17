@@ -58,7 +58,7 @@ export default function CategoriesTab() {
         name: "",
         slug: "",
         description: "",
-        banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800",
+        banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1783446029277_72xe4q.jpeg",
         seoTitle: "",
         seoDescription: "",
         keywords: ""
