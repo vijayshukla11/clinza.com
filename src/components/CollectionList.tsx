@@ -5,22 +5,31 @@
 
 import React, { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
-import { getCollections, getProducts } from "../utils";
+import { getProducts } from "../utils";
+import { getCollectionsFromCloud } from "../supabase";
 
 interface CollectionListProps {
   setRoute: (route: string) => void;
 }
 
 export default function CollectionList({ setRoute }: CollectionListProps) {
-  const [collections, setCollections] = useState(() => getCollections());
-  const [products, setProducts] = useState(() => getProducts());
+const [collections, setCollections] = useState([]);  const [products, setProducts] = useState(() => getProducts());
 
   // Automatically refresh when mounted/rendered
-  useEffect(() => {
-    setCollections(getCollections());
-    setProducts(getProducts());
-  }, []);
+ useEffect(() => {
+  async function loadData() {
+    try {
+      const cloudCollections = await getCollectionsFromCloud();
+      setCollections(cloudCollections);
 
+      setProducts(getProducts());
+    } catch (error) {
+      console.error("Failed to load collections:", error);
+    }
+  }
+
+  loadData();
+}, []);
   // Display ONLY collections where: homepageFeatured == true or featured == true
   const featuredCollections = collections.filter(
     (col) => col.featured === true || (col as any).homepageFeatured === true

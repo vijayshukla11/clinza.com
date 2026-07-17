@@ -199,7 +199,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Summer Collection",
       title: "ELEVATED CUBAN CUTS",
       description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       route: "collections/shirts"
     },
     {
@@ -208,7 +208,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Premium Linen series",
       title: "TACTILE TEXTURAL SILK",
       description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       route: "collections/shirts"
     },
     {
@@ -217,7 +217,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Business Casual Curation",
       title: "INTELLIGENT CASUAL COMFORT",
       description: "Premium double-breasted blazers paired beautifully with tapered stretch pants. Reinterpreting classical office attire for the modern visionary.",
-      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       route: "collections/pants"
     },
     {
@@ -226,7 +226,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Weekend Collection",
       title: "MINIMALIST DRAWSTRING ESSENTIALS",
       description: "Complete linen-blend co-ords. Sophisticated side-vented camp shirts designed for seamless beach-to-evening style styling.",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       route: "collections/combos"
     },
     {
@@ -235,7 +235,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Trending Selvedge Denim",
       title: "13.5 OZ SOLID HEAVY RAW DENIM",
       description: "Woven meticulously on historical Japanese shuttle looms. Authentic redline tickers, designed to age beautifully with your lifestyle.",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       route: "collections/jeans"
     }
   ],
@@ -244,11 +244,11 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
   editorialTitle: "Unpacking Textile Architecture",
   editorialSubtitle: "Clinza Publication Room",
   editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
+  editorialImg: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
   offers: [
     {
       id: "offer-1",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       title: "Linen Resort Wardrobe",
       subtitle: "Spun from long-staple Normandy flax, meticulously pre-washed.",
       discount: "FLAT 10% OFF",
@@ -260,7 +260,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     },
     {
       id: "offer-2",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
       title: "Selvedge Denim Drop",
       subtitle: "Woven on historical Japanese shuttle looms with authentic redline tickers.",
       discount: "FREE SHIPPING",
@@ -797,8 +797,8 @@ export function getCollections(): CollectionMaster[] {
       id: "shirts", 
       name: "Premium Shirts", 
       slug: "shirts", 
-      banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png", 
       description: "Loom-woven certified European linen shirts crafted for supreme breathability in spread and mandarin collars.", 
       displayOrder: 1, 
       featured: true, 
@@ -809,8 +809,8 @@ export function getCollections(): CollectionMaster[] {
       id: "jeans", 
       name: "Selvedge Jeans", 
       slug: "jeans", 
-      banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
       description: "13.5 oz heavy Japanese indigo shuttle-loom raw denim structured for timeless architectural leg shapes.", 
       displayOrder: 2, 
       featured: true, 
@@ -821,8 +821,8 @@ export function getCollections(): CollectionMaster[] {
       id: "pants", 
       name: "Sartorial Pants", 
       slug: "pants", 
-      banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
       description: "Pleated formal crease heavyweight organic summer trousers and tailored modern chinos.", 
       displayOrder: 3, 
       featured: true, 

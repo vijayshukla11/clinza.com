@@ -182,7 +182,7 @@ export default function ShopAllCollectionsPage({
       id: "premium-linen",
       title: "Premium Linen Luxe",
       description: "Heavyweight Normandy flax threads loomed for airy, refined sophistication.",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png",
       itemCount: "12 Garments",
       badge: "SARTORIAL HERITAGE"
     },

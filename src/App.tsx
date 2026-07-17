@@ -736,32 +736,32 @@ function AppContent() {
                           {
                             name: "Shirts",
                             slug: "shirts",
-                            image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=400",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1784143807685_qi772s.png",
                           },
                           {
                             name: "Jeans",
                             slug: "jeans",
-                            image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=400",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/dark%20blue%20jeans%20for%20men%20(2).png",
                           },
                           {
                             name: "Pants",
                             slug: "pants",
-                            image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=400",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1784143010625_m2u2uj.png",
                           },
                           {
-                            name: "Oversized",
-                            slug: "shirts",
-                            image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400",
+                            name: "cargo",
+                            slug: "cargo-pants",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/cargos.jpg",
                           },
                           {
-                            name: "Co-ords",
+                            name: "Combos",
                             slug: "combos",
-                            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=400",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
                           },
                           {
-                            name: "Accessories",
-                            slug: "accessories",
-                            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400",
+                            name: "trending",
+                            slug: "trending",
+                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png",
                           }
                         ].map((cat, idx) => (
                           <div
