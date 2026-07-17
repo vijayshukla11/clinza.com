@@ -13,15 +13,23 @@ export default function CategoriesTab() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [form, setForm] = useState({
-    id: "",
-    name: "",
-    slug: "",
-    description: "",
-    banner: "",
-    seoTitle: "",
-    seoDescription: "",
-    keywords: ""
-  });
+  id: "",
+  name: "",
+  slug: "",
+  description: "",
+  banner: "",
+
+  // Homepage Settings
+  homepageImage: "",
+  showOnHomepage: true,
+  displayOrder: 0,
+  status: true,
+
+  // SEO
+  seoTitle: "",
+  seoDescription: "",
+  keywords: ""
+});
 
   useEffect(() => {
     const cached = localStorage.getItem("clinza_categories");
@@ -29,9 +37,9 @@ export default function CategoriesTab() {
       setCategories(JSON.parse(cached));
     } else {
       const initial: Category[] = [
-        { id: "cat-1", name: "Premium Shirts", slug: "shirts", description: "Loom-woven certified European linen shirts crafted for supreme breathability.", banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", seoTitle: "Premium Linen Shirts | Clinza Collection", seoDescription: "Shop luxury organic linen shirts in spread and mandarin collar fits.", keywords: "linen shirt, resort shirt" },
-        { id: "cat-2", name: "Japanese Selvedge Jeans", slug: "jeans", description: "Heavyweight shuttle Loom raw denim structured for timeless silhouettes.", banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800", seoTitle: "Raw Indigo Selvedge Jeans | Clinza Denim", seoDescription: "Crafted on historic shuttles with flawless red-line selvedge cuffs.", keywords: "raw denim, selvedge jeans" },
-        { id: "cat-3", name: "Co-Ord Combos", slug: "combos", description: "Seamless, elegant premium sets curated for high-summer excursions.", banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=800", seoTitle: "Premium Co-ord Apparel Combos | Clinza", seoDescription: "Aesthetic matching shirt and trouser bundles.", keywords: "coord set, linen matching combo" }
+        { id: "cat-1", name: "Premium Shirts", slug: "shirts", description: "Loom-woven certified European linen shirts crafted for supreme breathability.", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1784143807685_qi772s.png", homepageImage: "", showOnHomepage: true, displayOrder: 0, status: true, seoTitle: "Premium Linen Shirts | Clinza Collection", seoDescription: "Shop luxury organic linen shirts in spread and mandarin collar fits.", keywords: "linen shirt, resort shirt" },
+        { id: "cat-2", name: "Jeans", slug: "jeans", description: "Heavyweight shuttle Loom raw denim structured for timeless silhouettes.", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/dark%20blue%20jeans%20for%20men%20(2).png", homepageImage: "", showOnHomepage: true, displayOrder: 0, status: true, seoTitle: "Raw Indigo Selvedge Jeans | Clinza Denim", seoDescription: "Crafted on historic shuttles with flawless red-line selvedge cuffs.", keywords: "raw denim, selvedge jeans" },
+        { id: "cat-3", name: "Combos", slug: "combos", description: "Seamless, elegant premium sets curated for high-summer excursions.", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", homepageImage: "", showOnHomepage: true, displayOrder: 0, status: true, seoTitle: "Premium Co-ord Apparel Combos | Clinza", seoDescription: "Aesthetic matching shirt and trouser bundles.", keywords: "coord set, linen matching combo" }
       ];
       setCategories(initial);
       localStorage.setItem("clinza_categories", JSON.stringify(initial));

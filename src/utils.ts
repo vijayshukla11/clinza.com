@@ -776,17 +776,91 @@ export function getCollections(): CollectionMaster[] {
   const cached = localStorage.getItem("clinza_collections_master");
   if (cached) {
     try {
-      return JSON.parse(cached);
-    } catch {
-      return [];
+      const parsed = JSON.parse(cached);
+      // Check if stale demo collection data exists (e.g. linen-collection or aesthetic-coords)
+      const hasStaleData = parsed.some((c: any) => c.slug === "linen-collection" || c.slug === "aesthetic-coords");
+      if (hasStaleData) {
+        console.warn("getCollections() detected stale demo collections. Evicting cache to synchronize with Curated CMS database...");
+        localStorage.removeItem("clinza_collections_master");
+      } else {
+        console.log("getCollections() successfully read from localstorage key: clinza_collections_master", parsed);
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to parse clinza_collections_master cache:", e);
     }
   }
+
+  // Pure single source of truth real-world Curated Collections matching our actual product types
   const initial: CollectionMaster[] = [
-    { id: "col-1", name: "Linen Collection", slug: "linen-collection", banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1205", thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", description: "Breathable shirts crafted with premium linen meshes formulated for relaxed resort drapes.", displayOrder: 1, featured: true, seoTitle: "Linen Activewear & Shirts | Clinza", seoDescription: "Shop supreme European organic flax shirt and trousers templates." },
-    { id: "col-2", name: "Aesthetic Co-Ords", slug: "aesthetic-coords", banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=200", description: "Pre-coordinated monochrome pairings matching shirts and shorts.", displayOrder: 2, featured: true, seoTitle: "Matching Linen Co-ord Outfits | Clinza", seoDescription: "Luxury matching sets for high-summer adventures and pristine beach travel." }
+    { 
+      id: "shirts", 
+      name: "Premium Shirts", 
+      slug: "shirts", 
+      banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", 
+      description: "Loom-woven certified European linen shirts crafted for supreme breathability in spread and mandarin collars.", 
+      displayOrder: 1, 
+      featured: true, 
+      seoTitle: "Premium Linen Shirts | Clinza Collection", 
+      seoDescription: "Shop luxury organic linen shirts in spread and mandarin collar fits." 
+    },
+    { 
+      id: "jeans", 
+      name: "Selvedge Jeans", 
+      slug: "jeans", 
+      banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200", 
+      description: "13.5 oz heavy Japanese indigo shuttle-loom raw denim structured for timeless architectural leg shapes.", 
+      displayOrder: 2, 
+      featured: true, 
+      seoTitle: "Raw Indigo Selvedge Jeans | Clinza Denim", 
+      seoDescription: "Crafted on historic shuttles with flawless red-line selvedge cuffs." 
+    },
+    { 
+      id: "pants", 
+      name: "Sartorial Pants", 
+      slug: "pants", 
+      banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200", 
+      description: "Pleated formal crease heavyweight organic summer trousers and tailored modern chinos.", 
+      displayOrder: 3, 
+      featured: true, 
+      seoTitle: "Double Pleat Trousers & Pants | Clinza", 
+      seoDescription: "Heavy plisse elegant drapes for active summer style." 
+    },
+    { 
+      id: "combos", 
+      name: "Combo Sets", 
+      slug: "combos", 
+      banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=200", 
+      description: "Aesthetic matching shirt & trouser pre-coordinated pairings curated for effortless summer excursions.", 
+      displayOrder: 4, 
+      featured: true, 
+      seoTitle: "Premium Co-ord Apparel Combos | Clinza", 
+      seoDescription: "Selected pre-treated monochrome linen matching bundles." 
+    },
+    { 
+      id: "footwear", 
+      name: "Luxury Footwear", 
+      slug: "footwear", 
+      banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=200", 
+      description: "Handcrafted suede and full grain leather loafers curated to perfect the sartorial silhouettes.", 
+      displayOrder: 5, 
+      featured: true, 
+      seoTitle: "Luxury Footwear Curation | Clinza", 
+      seoDescription: "Handcrafted suede and full grain leather loafers." 
+    }
   ];
   localStorage.setItem("clinza_collections_master", JSON.stringify(initial));
   return initial;
+}
+
+export function saveCollections(list: CollectionMaster[]): void {
+  console.log("saveCollections() writing to localstorage key: clinza_collections_master", list);
+  localStorage.setItem("clinza_collections_master", JSON.stringify(list));
 }
 
 

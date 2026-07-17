@@ -221,11 +221,18 @@ export interface Category {
   slug: string;
   description: string;
   banner: string;
+
+  // Homepage
+  homepageImage?: string;
+  showOnHomepage?: boolean;
+  displayOrder?: number;
+  status?: boolean;
+
+  // SEO
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string;
 }
-
 export interface CollectionMaster {
   id: string;
   name: string;
