@@ -349,7 +349,7 @@ function AppContent() {
       
       {/* ANNOUNCEMENT BAR & CUSTOM CUSTOMER NAVIGATION (HIDDEN ON ADMIN VIEWS) */}
       {!isAdminRoute && (
-        <>
+        <div className="fixed top-0 left-0 right-0 z-50 w-full bg-white shadow-xs">
           {/* Announcement promotion ribbon */}
           <div className="bg-zinc-950 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-2 px-4 text-center border-b border-white/5 font-mono select-none">
             ⚡ COMPLIMENTARY CASH ON DELIVERY (COD) + FREE EXPEDITED CARGO ALL INDIA ⚡
@@ -367,11 +367,11 @@ function AppContent() {
             setSearchOpen={setSearchOpen}
             searchOpen={searchOpen}
           />
-        </>
+        </div>
       )}
 
       {/* DYNAMIC PAGE ROUTE MOUNT */}
-      <main className={`flex-1 ${!isAdminRoute ? "mt-[65px]" : ""}`}>
+      <main className={`flex-1 ${!isAdminRoute ? "pt-[112px]" : ""}`}>
         
         {/* SUCCESS MODAL REDIRECT */}
         {orderSuccessDetail ? (

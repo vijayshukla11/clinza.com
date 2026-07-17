@@ -564,13 +564,13 @@ export default function AdminPanel() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Header Title</label>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Badge Text</label>
                         <input
                           type="text"
-                          value={homeConfig.slides[slideEditIdx].title}
+                          value={homeConfig.slides[slideEditIdx].badge ?? ""}
                           onChange={(e) => {
                             const copy = { ...homeConfig };
-                            copy.slides[slideEditIdx].title = e.target.value;
+                            copy.slides[slideEditIdx].badge = e.target.value;
                             setHomeConfig(copy);
                           }}
                           className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
@@ -580,7 +580,7 @@ export default function AdminPanel() {
                         <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Subtitle Tag</label>
                         <input
                           type="text"
-                          value={homeConfig.slides[slideEditIdx].subtitle}
+                          value={homeConfig.slides[slideEditIdx].subtitle ?? ""}
                           onChange={(e) => {
                             const copy = { ...homeConfig };
                             copy.slides[slideEditIdx].subtitle = e.target.value;
@@ -591,28 +591,105 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Header Title</label>
+                      <input
+                        type="text"
+                        value={homeConfig.slides[slideEditIdx].title ?? ""}
+                        onChange={(e) => {
+                          const copy = { ...homeConfig };
+                          copy.slides[slideEditIdx].title = e.target.value;
+                          setHomeConfig(copy);
+                        }}
+                        className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white font-semibold text-zinc-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Description</label>
+                      <textarea
+                        rows={3}
+                        value={homeConfig.slides[slideEditIdx].description ?? ""}
+                        onChange={(e) => {
+                          const copy = { ...homeConfig };
+                          copy.slides[slideEditIdx].description = e.target.value;
+                          setHomeConfig(copy);
+                        }}
+                        className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800 font-sans"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Background Image URL</label>
+                      <input
+                        type="text"
+                        value={homeConfig.slides[slideEditIdx].image ?? ""}
+                        onChange={(e) => {
+                          const copy = { ...homeConfig };
+                          copy.slides[slideEditIdx].image = e.target.value;
+                          setHomeConfig(copy);
+                        }}
+                        className="w-full border rounded px-3 py-1.5 text-[10px] font-mono focus:outline-none bg-white text-zinc-850"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Description</label>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Primary Button Text</label>
                         <input
                           type="text"
-                          value={homeConfig.slides[slideEditIdx].description}
+                          value={homeConfig.slides[slideEditIdx].primaryButtonText ?? homeConfig.slides[slideEditIdx].button1Text ?? ""}
                           onChange={(e) => {
                             const copy = { ...homeConfig };
-                            copy.slides[slideEditIdx].description = e.target.value;
+                            copy.slides[slideEditIdx].primaryButtonText = e.target.value;
+                            copy.slides[slideEditIdx].button1Text = e.target.value;
                             setHomeConfig(copy);
                           }}
                           className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Slide Background Image URL</label>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Primary Button Route</label>
                         <input
                           type="text"
-                          value={homeConfig.slides[slideEditIdx].image}
+                          value={homeConfig.slides[slideEditIdx].primaryButtonLink ?? homeConfig.slides[slideEditIdx].button1Link ?? homeConfig.slides[slideEditIdx].route ?? ""}
                           onChange={(e) => {
                             const copy = { ...homeConfig };
-                            copy.slides[slideEditIdx].image = e.target.value;
+                            const val = e.target.value;
+                            copy.slides[slideEditIdx].primaryButtonLink = val;
+                            copy.slides[slideEditIdx].button1Link = val;
+                            copy.slides[slideEditIdx].route = val;
+                            setHomeConfig(copy);
+                          }}
+                          className="w-full border rounded px-3 py-1.5 text-[10px] font-mono focus:outline-none bg-white text-zinc-850"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Secondary Button Text</label>
+                        <input
+                          type="text"
+                          value={homeConfig.slides[slideEditIdx].secondaryButtonText ?? homeConfig.slides[slideEditIdx].button2Text ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            copy.slides[slideEditIdx].secondaryButtonText = e.target.value;
+                            copy.slides[slideEditIdx].button2Text = e.target.value;
+                            setHomeConfig(copy);
+                          }}
+                          className="w-full border rounded px-3 py-1.5 focus:outline-none bg-white text-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-550 uppercase mb-1">Secondary Button Route</label>
+                        <input
+                          type="text"
+                          value={homeConfig.slides[slideEditIdx].secondaryButtonLink ?? homeConfig.slides[slideEditIdx].button2Link ?? ""}
+                          onChange={(e) => {
+                            const copy = { ...homeConfig };
+                            copy.slides[slideEditIdx].secondaryButtonLink = e.target.value;
+                            copy.slides[slideEditIdx].button2Link = e.target.value;
                             setHomeConfig(copy);
                           }}
                           className="w-full border rounded px-3 py-1.5 text-[10px] font-mono focus:outline-none bg-white text-zinc-850"
@@ -623,7 +700,27 @@ export default function AdminPanel() {
                     <button
                       type="button"
                       onClick={() => {
-                        saveHomeConfig(homeConfig);
+                        const copy = { ...homeConfig };
+                        const s = copy.slides[slideEditIdx];
+                        s.badge = s.badge || "NEW COLLECTION";
+                        s.title = s.title || "Premium Everyday Fashion";
+                        s.subtitle = s.subtitle || "The Premium Summer Collection";
+                        s.description = s.description || "Timeless fits. Premium fabrics. Designed for modern India.";
+                        s.image = s.image || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600";
+                        s.primaryButtonText = s.primaryButtonText ?? s.button1Text ?? "Shop Collection";
+                        s.primaryButtonLink = s.primaryButtonLink ?? s.button1Link ?? s.route ?? "collections/all";
+                        s.secondaryButtonText = s.secondaryButtonText ?? s.button2Text ?? "Shop All Collections";
+                        s.secondaryButtonLink = s.secondaryButtonLink ?? s.button2Link ?? "shop-all-collections";
+
+                        // Set backward compatibility aliases explicitly on save too
+                        s.button1Text = s.primaryButtonText;
+                        s.button1Link = s.primaryButtonLink;
+                        s.route = s.primaryButtonLink;
+                        s.button2Text = s.secondaryButtonText;
+                        s.button2Link = s.secondaryButtonLink;
+
+                        setHomeConfig(copy);
+                        saveHomeConfig(copy);
                         alert("Slide coordinates persistent. Auto-sync has saved changes to Cloud Rules!");
                         setSlideEditIdx(null);
                       }}

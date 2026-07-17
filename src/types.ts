@@ -147,6 +147,10 @@ export interface HomeSlide {
   description: string;
   image: string;
   route: string;
+  primaryButtonText?: string;
+  primaryButtonLink?: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
 }
 
 export interface HomepageConfig {

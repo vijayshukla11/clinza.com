@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { ThemeConfig, ThemeSlide, Product, BlogPost, Order } from "../../types";
 import { getThemeConfig, saveThemeConfig, publishThemeConfig, rollbackThemeConfig, DEFAULT_THEME_CONFIG } from "../../utils";
+import { syncThemeConfigFromCloud, saveThemeConfigToCloud } from "../../supabase";
 import MediaUploader from "./MediaUploader";
 
 interface ThemeEditorTabProps {
@@ -44,14 +45,125 @@ interface ThemeEditorTabProps {
   orderList: Order[];
 }
 
+// Helper helper to ensure no runtime errors due to missing properties on old or draft database settings
+function mergeWithDefaultThemeConfig(config: any): ThemeConfig {
+  if (!config) return DEFAULT_THEME_CONFIG;
+  return {
+    ...DEFAULT_THEME_CONFIG,
+    ...config,
+    colors: {
+      ...DEFAULT_THEME_CONFIG.colors,
+      ...(config.colors || {})
+    },
+    typography: {
+      ...DEFAULT_THEME_CONFIG.typography,
+      ...(config.typography || {})
+    },
+    announcement: {
+      ...DEFAULT_THEME_CONFIG.announcement,
+      ...(config.announcement || {})
+    },
+    header: {
+      ...DEFAULT_THEME_CONFIG.header,
+      ...(config.header || {})
+    },
+    sliderSettings: {
+      ...DEFAULT_THEME_CONFIG.sliderSettings,
+      ...(config.sliderSettings || {})
+    },
+    slides: Array.isArray(config.slides) && config.slides.length > 0 
+      ? config.slides.map((s: any, idx: number) => ({
+          ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
+          ...s
+        }))
+      : DEFAULT_THEME_CONFIG.slides,
+    featuredCollections: {
+      ...DEFAULT_THEME_CONFIG.featuredCollections,
+      ...(config.featuredCollections || {})
+    },
+    trendingProducts: {
+      ...DEFAULT_THEME_CONFIG.trendingProducts,
+      ...(config.trendingProducts || {})
+    },
+    features: {
+      ...DEFAULT_THEME_CONFIG.features,
+      ...(config.features || {})
+    },
+    testimonials: Array.isArray(config.testimonials)
+      ? config.testimonials
+      : DEFAULT_THEME_CONFIG.testimonials,
+    blogs: {
+      ...DEFAULT_THEME_CONFIG.blogs,
+      ...(config.blogs || {})
+    },
+    newsletter: {
+      ...DEFAULT_THEME_CONFIG.newsletter,
+      ...(config.newsletter || {})
+    },
+    footer: {
+      ...DEFAULT_THEME_CONFIG.footer,
+      ...(config.footer || {})
+    },
+    policies: {
+      ...DEFAULT_THEME_CONFIG.policies,
+      ...(config.policies || {})
+    }
+  };
+}
+
+const isValidHex = (color: string): boolean => {
+  return /^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$/.test(color);
+};
+
 export default function ThemeEditorTab({ productList, blogList, orderList }: ThemeEditorTabProps) {
   // 1. Core States
-  const [draftConfig, setDraftConfig] = useState<ThemeConfig>(() => getThemeConfig(true));
+  const [draftConfig, setDraftConfig] = useState<ThemeConfig>(DEFAULT_THEME_CONFIG);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>("colors");
   const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedSlideIdx, setSelectedSlideIdx] = useState<number>(0);
+
+  // Load theme settings from Supabase when the page opens
+  useEffect(() => {
+    async function loadThemeSettings() {
+      try {
+        setLoading(true);
+        setLoadError(null);
+        
+        // 1. Try to fetch draft settings first
+        let config = await syncThemeConfigFromCloud(true);
+        
+        // 2. If no draft exists, try to fetch published settings
+        if (!config) {
+          config = await syncThemeConfigFromCloud(false);
+        }
+        
+        // 3. If no theme exists in Supabase at all, automatically create default theme values
+        if (!config) {
+          console.log("No theme config found in database. Initializing default theme configs in cloud...");
+          await saveThemeConfigToCloud(DEFAULT_THEME_CONFIG, true);
+          await saveThemeConfigToCloud(DEFAULT_THEME_CONFIG, false);
+          config = DEFAULT_THEME_CONFIG;
+        }
+
+        const merged = mergeWithDefaultThemeConfig(config);
+        setDraftConfig(merged);
+        
+        // Keep localStorage synchronized for immediate page fallbacks
+        localStorage.setItem("clinza_theme_draft", JSON.stringify(merged));
+      } catch (err: any) {
+        console.error("Failed to fetch theme settings from Supabase:", err);
+        setLoadError(err.message || "Failed to load theme settings from database levels.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadThemeSettings();
+  }, []);
 
   // Auto clear status message after a few seconds
   useEffect(() => {
@@ -67,27 +179,71 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
   const updateDraft = (updater: (prev: ThemeConfig) => ThemeConfig) => {
     setDraftConfig(prev => {
       const updated = updater(prev);
-      // Soft-save to local and cloud Draft storage instantly (Draft Auto-Save behavior)
-      saveThemeConfig(updated, true);
+      // Save locally first for instant memory syncing
+      localStorage.setItem("clinza_theme_draft", JSON.stringify(updated));
       return updated;
     });
   };
 
   // 2. Action Handlers
   const handleSaveDraft = async () => {
+    // Validate all six color values before saving
+    const colorsToValidate = [
+      { name: "Primary", val: draftConfig.colors.primary },
+      { name: "Secondary", val: draftConfig.colors.secondary },
+      { name: "Accent", val: draftConfig.colors.accent },
+      { name: "Background", val: draftConfig.colors.background || "#ffffff" },
+      { name: "Text", val: draftConfig.colors.text || "#09090b" },
+      { name: "Border", val: draftConfig.colors.borderColor || "#e4e4e7" },
+    ];
+
+    for (const color of colorsToValidate) {
+      if (!isValidHex(color.val)) {
+        setStatusMessage({ 
+          type: "error", 
+          text: `Validation Failed: Invalid Hex value "${color.val}" for ${color.name} Color. Color values must be valid Hex codes (e.g., #ffffff, #000, or #F27D26).` 
+        });
+        return;
+      }
+    }
+
     setIsSyncing(true);
-    setStatusMessage({ type: "info", text: "Encrypting draft configurations and backing up to cloud..." });
+    setStatusMessage({ type: "info", text: "Encrypting draft configurations and backing up to Supabase..." });
     try {
-      saveThemeConfig(draftConfig, true);
+      // Save theme config draft to Supabase
+      await saveThemeConfigToCloud(draftConfig, true);
+      // Also save to localStorage
+      localStorage.setItem("clinza_theme_draft", JSON.stringify(draftConfig));
       setStatusMessage({ type: "success", text: "Draft changes safely saved to Supabase configurations! Share this workspace URL to preview." });
-    } catch (e) {
-      setStatusMessage({ type: "error", text: "Failed to sync draft changes with database levels." });
+    } catch (e: any) {
+      console.error("Save draft error:", e);
+      setStatusMessage({ type: "error", text: `Failed to sync draft changes with database: ${e.message || e}` });
     } finally {
       setIsSyncing(false);
     }
   };
 
   const handlePublish = async () => {
+    // Validate all six color values before publishing
+    const colorsToValidate = [
+      { name: "Primary", val: draftConfig.colors.primary },
+      { name: "Secondary", val: draftConfig.colors.secondary },
+      { name: "Accent", val: draftConfig.colors.accent },
+      { name: "Background", val: draftConfig.colors.background || "#ffffff" },
+      { name: "Text", val: draftConfig.colors.text || "#09090b" },
+      { name: "Border", val: draftConfig.colors.borderColor || "#e4e4e7" },
+    ];
+
+    for (const color of colorsToValidate) {
+      if (!isValidHex(color.val)) {
+        setStatusMessage({ 
+          type: "error", 
+          text: `Validation Failed: Invalid Hex value "${color.val}" for ${color.name} Color. Color values must be valid Hex codes (e.g., #ffffff, #000, or #F27D26).` 
+        });
+        return;
+      }
+    }
+
     if (!confirm("Are you sure you want to promote your current draft to the live CLINZA storefront? A backup of the previous active theme will be created automatically.")) {
       return;
     }
@@ -95,10 +251,10 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
     setStatusMessage({ type: "info", text: "Backing up active configuration and pushing theme draft live..." });
     try {
       await publishThemeConfig(draftConfig);
-      // Trigger update on published storage so visitors see the changes instantly
       setStatusMessage({ type: "success", text: "Congratulations! Theme has been published live. Standard users will now experience the updated styling." });
-    } catch (e) {
-      setStatusMessage({ type: "error", text: "Failed to publish theme configurations." });
+    } catch (e: any) {
+      console.error("Publish error:", e);
+      setStatusMessage({ type: "error", text: `Failed to publish theme configurations: ${e.message || e}` });
     } finally {
       setIsSyncing(false);
     }
@@ -113,12 +269,14 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
     try {
       const restored = await rollbackThemeConfig();
       if (restored) {
-        setDraftConfig(restored);
+        const merged = mergeWithDefaultThemeConfig(restored);
+        setDraftConfig(merged);
         setStatusMessage({ type: "success", text: "Successfully restored last published Theme configuration! Reloading variables..." });
       } else {
         setStatusMessage({ type: "error", text: "No published backup configuration was found. Create a backup first by publishing live edits." });
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Rollback error:", e);
       setStatusMessage({ type: "error", text: "Failed to perform database rollback transaction." });
     } finally {
       setIsSyncing(false);
@@ -128,7 +286,8 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
   const handleResetToDefault = () => {
     if (confirm("Reset current Customizer workspace to system default clothing template values? You will lose unsaved draft changes.")) {
       setDraftConfig(DEFAULT_THEME_CONFIG);
-      saveThemeConfig(DEFAULT_THEME_CONFIG, true);
+      // Soft-save to memory
+      localStorage.setItem("clinza_theme_draft", JSON.stringify(DEFAULT_THEME_CONFIG));
       setStatusMessage({ type: "success", text: "Workspace reverted locally. Press Save Draft or Publish to overwrite the cloud state." });
     }
   };
@@ -182,6 +341,61 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
       return { ...prev, slides: nextSlides };
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 space-y-4 text-center">
+        <div className="h-10 w-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm font-mono text-zinc-400 uppercase tracking-widest animate-pulse">
+          Establishing Supabase Session & Pulling Active Configuration...
+        </p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-red-950/20 text-red-400 border border-red-500/25 p-6 rounded-2xl space-y-4 text-left font-sans">
+        <h3 className="text-sm font-black uppercase tracking-wider font-mono">CMS Synchronization Error</h3>
+        <p className="text-xs leading-relaxed">{loadError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-red-900/40 hover:bg-red-900 border border-red-500 text-white font-mono text-[10px] uppercase font-bold tracking-wider py-2 px-4 rounded-xl cursor-pointer transition"
+        >
+          Retry Session Loading
+        </button>
+      </div>
+    );
+  }
+
+  // Mappings for responsive style configurations inside the live preview simulator
+  const getTailwindRadius = (r?: string) => {
+    if (r === "rounded-none") return "rounded-none";
+    if (r === "rounded-sm") return "rounded-sm";
+    if (r === "rounded-md") return "rounded-md";
+    if (r === "rounded-lg") return "rounded-lg";
+    if (r === "rounded-xl") return "rounded-xl";
+    if (r === "rounded-full") return "rounded-full";
+    return "rounded-xl";
+  };
+  const currentRadius = getTailwindRadius(draftConfig.borderRadius);
+  
+  const currentCardStyleClass = draftConfig.cardStyle === "flat"
+    ? `${currentRadius} border-zinc-200/50 shadow-none`
+    : draftConfig.cardStyle === "shadow"
+    ? `${currentRadius} border shadow-md`
+    : `${currentRadius} border shadow-xs`; // default: bordered
+
+  const getTailwindBtnRadius = (s?: string) => {
+    if (s === "sharp") return "rounded-none";
+    if (s === "pill") return "rounded-full";
+    return "rounded-lg"; // default: rounded
+  };
+  const currentBtnRadius = getTailwindBtnRadius(draftConfig.buttonStyle);
+
+  const finalOverlayOpacity = draftConfig.heroOverlayOpacity !== undefined 
+    ? draftConfig.heroOverlayOpacity 
+    : (draftConfig.slides[selectedSlideIdx]?.bgOverlay || 45);
 
   return (
     <div className="space-y-6 text-left animate-fade-in text-xs font-sans">
@@ -386,6 +600,54 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                       <span className="font-mono text-[10px] font-bold text-white uppercase">{draftConfig.colors.footerBg}</span>
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Background Color</label>
+                    <div className="flex gap-2 items-center bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                      <input
+                        type="color"
+                        value={draftConfig.colors.background || "#ffffff"}
+                        onChange={(e) => updateDraft(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors, background: e.target.value } 
+                        }))}
+                        className="h-6 w-8 border-none cursor-pointer p-0 bg-transparent"
+                      />
+                      <span className="font-mono text-[10px] font-bold text-white uppercase">{draftConfig.colors.background || "#FFFFFF"}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Text Color</label>
+                    <div className="flex gap-2 items-center bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                      <input
+                        type="color"
+                        value={draftConfig.colors.text || "#09090b"}
+                        onChange={(e) => updateDraft(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors, text: e.target.value } 
+                        }))}
+                        className="h-6 w-8 border-none cursor-pointer p-0 bg-transparent"
+                      />
+                      <span className="font-mono text-[10px] font-bold text-white uppercase">{draftConfig.colors.text || "#09090B"}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Border Color</label>
+                    <div className="flex gap-2 items-center bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                      <input
+                        type="color"
+                        value={draftConfig.colors.borderColor || "#e4e4e7"}
+                        onChange={(e) => updateDraft(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors, borderColor: e.target.value } 
+                        }))}
+                        className="h-6 w-8 border-none cursor-pointer p-0 bg-transparent"
+                      />
+                      <span className="font-mono text-[10px] font-bold text-white uppercase">{draftConfig.colors.borderColor || "#E4E4E7"}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-orange-600/10 rounded-xl text-[10px] border border-orange-500/15">
@@ -465,6 +727,26 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                     >
                       <option value="text-sm">Standard (text-sm)</option>
                       <option value="text-xs">Compact (text-xs)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Font Size Scale</label>
+                    <select
+                      value={draftConfig.typography.fontSizeScale || "100%"}
+                      onChange={(e) => updateDraft(prev => ({ 
+                        ...prev, 
+                        typography: { ...prev.typography, fontSizeScale: e.target.value } 
+                      }))}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-zinc-500 text-white font-mono"
+                    >
+                      <option value="90%">90% (Small)</option>
+                      <option value="95%">95% (Compact)</option>
+                      <option value="100%">100% (Default)</option>
+                      <option value="105%">105% (Slightly Large)</option>
+                      <option value="110%">110% (Medium Large)</option>
+                      <option value="115%">115% (Large)</option>
+                      <option value="120%">120% (Extra Large)</option>
                     </select>
                   </div>
                 </div>
@@ -753,19 +1035,82 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                 </div>
 
                 <div className="space-y-4">
-                  {/* Branding logo */}
-                  <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Logo Cover Image Link (leave empty for typography logo)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. https://clinza.in/logo.png"
-                      value={draftConfig.header.logoUrl}
-                      onChange={(e) => updateDraft(prev => ({
-                        ...prev,
-                        header: { ...prev.header, logoUrl: e.target.value }
-                      }))}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 font-mono text-[10px] text-white"
-                    />
+                  {/* Brand Information */}
+                  <div className="grid grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-lg border border-zinc-850">
+                    <span className="col-span-2 text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb-1">Branding Details</span>
+                    <div>
+                      <label className="block text-[8px] font-mono text-zinc-400">Brand Name</label>
+                      <input
+                        type="text"
+                        placeholder="CLINZA"
+                        value={draftConfig.brandName || "CLINZA"}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          brandName: e.target.value
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] text-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-mono text-zinc-400">Brand Tagline</label>
+                      <input
+                        type="text"
+                        placeholder="Premium Organic Clothing"
+                        value={draftConfig.brandTagline || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          brandTagline: e.target.value
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Logo Management */}
+                  <div className="space-y-3 bg-zinc-950 p-3 rounded-lg border border-zinc-850">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 pb- block">Logo & Icon Management</span>
+                    
+                    <div>
+                      <label className="block text-[8px] font-mono text-zinc-400 mb-1">Desktop Logo URL (leave empty for typography logo)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. https://clinza.in/logo.png"
+                        value={draftConfig.header.logoUrl || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          header: { ...prev.header, logoUrl: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] font-mono text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-mono text-zinc-400 mb-1">Mobile Logo URL</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. https://clinza.in/mobile-logo.png"
+                        value={draftConfig.mobileLogo || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          mobileLogo: e.target.value
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] font-mono text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-mono text-zinc-400 mb-1">Favicon URL</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. https://clinza.in/favicon.ico"
+                        value={draftConfig.faviconUrl || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          faviconUrl: e.target.value
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] font-mono text-white"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-lg border border-zinc-850">
@@ -831,11 +1176,90 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
             {activeSection === "homepage-modules" && (
               <div className="space-y-4">
                 <div className="border-b border-zinc-800 pb-2 mb-2">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Homepage Shelves</h3>
-                  <p className="text-[10px] text-zinc-500">Enable or rename collections displays and testimonial shelves.</p>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Homepage Shelves & Components</h3>
+                  <p className="text-[10px] text-zinc-500">Enable or rename collections displays, customize component styles, and overlay states.</p>
                 </div>
 
                 <div className="space-y-4">
+                  {/* Brand Homepage & Component Styling */}
+                  <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-850 space-y-3">
+                    <span className="text-[10px] font-bold text-white uppercase font-mono block">Global Component Styling</span>
+                    
+                    <div>
+                      <label className="block text-[8px] uppercase font-mono text-zinc-400 mb-1">Hero Slide Overlay Opacity (%)</label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="0"
+                          max="95"
+                          step="5"
+                          value={draftConfig.heroOverlayOpacity !== undefined ? draftConfig.heroOverlayOpacity : 40}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            heroOverlayOpacity: parseInt(e.target.value)
+                          }))}
+                          className="flex-1 accent-orange-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-xs text-white font-mono w-8 text-right font-bold">
+                          {draftConfig.heroOverlayOpacity !== undefined ? draftConfig.heroOverlayOpacity : 40}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <div>
+                        <label className="block text-[8px] uppercase font-mono text-zinc-400 mb-0.5">Border Radius</label>
+                        <select
+                          value={draftConfig.borderRadius || "rounded-xl"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            borderRadius: e.target.value
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] text-white"
+                        >
+                          <option value="rounded-none">Sharp (none)</option>
+                          <option value="rounded-sm">Small (sm)</option>
+                          <option value="rounded-md">Medium (md)</option>
+                          <option value="rounded-lg">Large (lg)</option>
+                          <option value="rounded-xl">Extra Large (xl)</option>
+                          <option value="rounded-full">Pill/Circle</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[8px] uppercase font-mono text-zinc-400 mb-0.5">Button Style</label>
+                        <select
+                          value={draftConfig.buttonStyle || "rounded"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            buttonStyle: e.target.value
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] text-white"
+                        >
+                          <option value="sharp">Sharp Edged</option>
+                          <option value="rounded">Rounded</option>
+                          <option value="pill">Pill Shape</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[8px] uppercase font-mono text-zinc-400 mb-0.5">Card Style</label>
+                        <select
+                          value={draftConfig.cardStyle || "bordered"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            cardStyle: e.target.value
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-[10px] text-white"
+                        >
+                          <option value="flat">Flat Borderless</option>
+                          <option value="bordered">Bordered Outline</option>
+                          <option value="shadow">Shadow Card</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Departments Section */}
                   <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-850 space-y-3">
                     <div className="flex justify-between items-center">
@@ -1052,12 +1476,16 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
 
           {/* REAL PREVIEW SCREEN STAGE CONTAINERS */}
           <div className="flex justify-center transition-all duration-300">
-            <div className={`bg-white text-zinc-900 border border-zinc-200 shadow-2xl transition-all duration-300 text-left overflow-y-auto max-h-[750px] ${
+            <div className={`border shadow-2xl transition-all duration-300 text-left overflow-y-auto max-h-[750px] ${
               viewMode === "mobile" 
                 ? "w-[360px] rounded-3xl min-h-[640px]" 
                 : "w-full rounded-2xl min-h-[500px]"
             }`} style={{
-              fontFamily: draftConfig.typography.bodyFont === "Playfair Display" ? "'Playfair Display', Georgia, serif" : "sans-serif"
+              fontFamily: draftConfig.typography.bodyFont === "Playfair Display" ? "'Playfair Display', Georgia, serif" : "sans-serif",
+              backgroundColor: draftConfig.colors.background || "#ffffff",
+              color: draftConfig.colors.text || "#09090b",
+              borderColor: draftConfig.colors.borderColor || "#e4e4e7",
+              fontSize: draftConfig.typography.fontSizeScale || "100%"
             }}>
 
               {/* SIMULATOR CORE CONTAINER */}
@@ -1077,8 +1505,9 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                 )}
 
                 {/* 2. Top Header Navbar */}
-                <header className="border-b transition-all border-zinc-200/80" style={{
-                  backgroundColor: draftConfig.colors.headerBg
+                <header className="border-b transition-all" style={{
+                  backgroundColor: draftConfig.colors.headerBg,
+                  borderColor: draftConfig.colors.borderColor || "#e4e4e7"
                 }}>
                   <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     {/* Brand Logo typography */}
@@ -1091,8 +1520,8 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                       }}
                     >
                       {draftConfig.header.logoUrl ? (
-                        <img src={draftConfig.header.logoUrl} className="h-4 w-auto self-center" alt="Clinza" />
-                      ) : "CLINZA"}
+                        <img src={draftConfig.header.logoUrl} className="h-4 w-auto self-center" alt={draftConfig.brandName || "CLINZA"} />
+                      ) : (draftConfig.brandName || "CLINZA")}
                     </span>
 
                     {/* Desktop menu mock */}
@@ -1127,7 +1556,7 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                     {/* Dim Overlay */}
                     <div 
                       className="absolute inset-0 bg-black"
-                      style={{ opacity: `${draftConfig.slides[selectedSlideIdx].bgOverlay / 100}` }}
+                      style={{ opacity: `${finalOverlayOpacity / 100}` }}
                     ></div>
 
                     {/* Text Container */}
@@ -1163,7 +1592,7 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
 
                         <div className="flex gap-2 items-center justify-start pointer-events-none">
                           <span 
-                            className="inline-block px-4 py-2 text-[8px] font-black uppercase text-center font-mono tracking-widest transition-all rounded shadow"
+                            className={`inline-block px-4 py-2 text-[8px] font-black uppercase text-center font-mono tracking-widest transition-all shadow ${currentBtnRadius}`}
                             style={{ 
                               backgroundColor: draftConfig.colors.button,
                               color: "#ffffff"
@@ -1186,7 +1615,10 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
 
                 {/* 4. Departments Grid */}
                 {draftConfig.featuredCollections.enabled && (
-                  <section className="py-8 px-4 bg-zinc-50 border-b">
+                  <section className="py-8 px-4 border-b" style={{ 
+                    backgroundColor: draftConfig.colors.background === "#ffffff" ? "#f9f9f9" : (draftConfig.colors.secondary || "#f4f4f5"),
+                    borderColor: draftConfig.colors.borderColor || "#e4e4e7"
+                  }}>
                     <div className="text-center max-w-lg mx-auto mb-6">
                       <h3 className="text-sm font-bold uppercase tracking-wider font-serif mb-1" style={{ color: draftConfig.colors.primary }}>
                         {draftConfig.featuredCollections.title}
@@ -1203,10 +1635,13 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                         { name: "Sartorial Pants", count: "14 Styles", img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200" },
                         { name: "Resort Co-ords", count: "6 Styles", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=200" }
                       ].map((col, idx) => (
-                        <div key={idx} className="bg-white border rounded-xl overflow-hidden shadow-xs shrink-0 flex flex-col hover:scale-102 transition duration-300">
+                        <div key={idx} className={`overflow-hidden shrink-0 flex flex-col hover:scale-102 transition duration-300 ${currentCardStyleClass}`} style={{
+                          backgroundColor: draftConfig.colors.background || "#ffffff",
+                          borderColor: draftConfig.colors.borderColor || "#e4e4e7"
+                        }}>
                           <img src={col.img} alt="" className="h-24 w-full object-cover bg-zinc-100" />
                           <div className="p-2.5 text-left">
-                            <h5 className="font-bold text-[10px] text-zinc-950 truncate">{col.name}</h5>
+                            <h5 className="font-bold text-[10px] truncate" style={{ color: draftConfig.colors.text || "#09090b" }}>{col.name}</h5>
                             <span className="text-[8px] text-zinc-400 font-mono uppercase">{col.count}</span>
                           </div>
                         </div>
@@ -1217,13 +1652,17 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
 
                 {/* 5. Trending Shelby */}
                 {draftConfig.trendingProducts.enabled && (
-                  <section className="py-8 px-4 bg-white text-zinc-700">
+                  <section className="py-8 px-4 text-zinc-700" style={{
+                    backgroundColor: draftConfig.colors.background || "#ffffff"
+                  }}>
                     <div className="max-w-7xl mx-auto">
-                      <div className="flex justify-between items-end border-b pb-3 mb-6">
-                        <h3 className="text-sm font-black uppercase tracking-wider text-zinc-950 font-serif">
+                      <div className="flex justify-between items-end border-b pb-3 mb-6" style={{
+                        borderColor: draftConfig.colors.borderColor || "#e4e4e7"
+                      }}>
+                        <h3 className="text-sm font-black uppercase tracking-wider font-serif" style={{ color: draftConfig.colors.text || "#09090b" }}>
                           {draftConfig.trendingProducts.title}
                         </h3>
-                        <span className="text-[9px] uppercase tracking-wider font-bold text-orange-500 font-mono flex items-center gap-1">
+                        <span className="text-[9px] uppercase tracking-wider font-bold font-mono flex items-center gap-1" style={{ color: draftConfig.colors.accent }}>
                           Browse all cuts <ArrowRight className="h-3 w-3" />
                         </span>
                       </div>
@@ -1232,10 +1671,12 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {productList.slice(0, 4).map((item) => (
                           <div key={item.id} className="group relative">
-                            <img src={item.images?.[0]} className="h-40 w-full object-cover rounded-xl bg-zinc-50 border" alt="" />
-                            <div className="mt-2.5 text-left text-zinc-900">
-                              <span className="text-[8px] font-mono uppercase text-zinc-400 font-bold block mb-0.5">{item.brand || "CLINZA"}</span>
-                              <h4 className="font-bold text-[10px] leading-tight text-zinc-950 truncate font-serif">{item.name}</h4>
+                            <img src={item.images?.[0]} className={`h-40 w-full object-cover bg-zinc-50 border ${currentRadius}`} style={{
+                              borderColor: draftConfig.colors.borderColor || "#e4e4e7"
+                            }} alt="" />
+                            <div className="mt-2.5 text-left" style={{ color: draftConfig.colors.text || "#09090b" }}>
+                              <span className="text-[8px] font-mono uppercase text-zinc-400 font-bold block mb-0.5">{item.brand || (draftConfig.brandName || "CLINZA")}</span>
+                              <h4 className="font-bold text-[10px] leading-tight truncate font-serif" style={{ color: draftConfig.colors.text || "#09090b" }}>{item.name}</h4>
                               <div className="flex gap-1.5 items-center mt-1">
                                 <span className="font-bold text-[10px]" style={{ color: draftConfig.colors.accent }}>₹{item.price.toLocaleString("en-IN")}</span>
                                 <span className="line-through text-zinc-400 text-[9px]">₹{(item.price * 1.5).toLocaleString("en-IN")}</span>
@@ -1264,12 +1705,16 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                 {/* 7. Footer bottom info */}
                 <footer className="p-8 border-t transition" style={{
                   backgroundColor: draftConfig.colors.footerBg,
+                  borderColor: draftConfig.colors.borderColor || "#e4e4e7",
                   color: "#d4d4d8"
                 }}>
                   <div className="max-w-4xl mx-auto space-y-6 text-[10px] leading-loose">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start text-left">
                       <div className="space-y-2">
-                        <span className="text-xs uppercase tracking-widest text-white font-serif">{draftConfig.header.logoUrl ? "CLINZA" : "CLINZA"}</span>
+                        <span className="text-xs uppercase tracking-widest text-white font-serif">{draftConfig.brandName || "CLINZA"}</span>
+                        {draftConfig.brandTagline && (
+                          <p className="text-[8px] tracking-wider text-zinc-400 uppercase font-sans leading-relaxed">{draftConfig.brandTagline}</p>
+                        )}
                         <p className="text-zinc-400">
                           {draftConfig.footer.companyInfo}
                         </p>

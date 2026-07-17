@@ -98,13 +98,9 @@ export default function Navbar({
   return (
     <header
       id="navbar-header"
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 py-3"
-          : "bg-transparent py-5"
-      }`}
+      className="w-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.05)] transition-all duration-300 h-20 flex items-center"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full h-full">
         {/* LOGO */}
         <div className="flex items-center gap-2">
           <button
@@ -115,12 +111,12 @@ export default function Navbar({
             <span className="font-sans font-black tracking-tighter text-2xl text-gray-950 transition-colors uppercase">
               Clinza
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] self-end mb-2 animate-pulse"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] self-end mb-2"></span>
           </button>
         </div>
 
         {/* CENTER MENU LINKS (Desktop) */}
-        <nav className="hidden lg:flex items-center space-x-8">
+        <nav className="hidden lg:flex items-center space-x-10">
           {menuItems.map((item) => {
             const isActive = currentRoute === item.route;
             if (item.route === "shop-all-collections") {
@@ -129,7 +125,7 @@ export default function Navbar({
                   id={`nav-link-${item.route}`}
                   key={item.route}
                   onClick={() => setRoute(item.route)}
-                  className={`font-sans text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 border rounded-full focus:outline-none cursor-pointer flex items-center gap-1 bg-[#F27D26]/10 text-[#F27D26] border-[#F27D26] hover:bg-[#F27D26] hover:text-white hover:border-[#F27D26] animate-pulse`}
+                  className={`font-sans text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 border rounded-full focus:outline-none cursor-pointer flex items-center gap-1 bg-[#F27D26]/10 text-[#F27D26] border-[#F27D26] hover:bg-[#F27D26] hover:text-white hover:border-[#F27D26]`}
                 >
                   {item.name}
                 </button>
@@ -151,7 +147,7 @@ export default function Navbar({
         </nav>
 
         {/* RIGHT ACTION ICONS */}
-        <div className="flex items-center space-x-4 sm:space-x-5">
+        <div className="flex items-center space-x-4 sm:space-x-6">
           {/* SEARCH BUTTON */}
           <button
             id="nav-search-button"
@@ -317,7 +313,7 @@ export default function Navbar({
 
       {/* MOBILE MENU TRAY */}
       {mobileMenuOpen && (
-        <div id="mobile-menu-tray" className="fixed inset-0 top-[60px] bg-white z-30 lg:hidden px-6 py-8 overflow-y-auto animate-fade-in border-t border-gray-100">
+        <div id="mobile-menu-tray" className="fixed inset-0 top-[112px] bg-white z-30 lg:hidden px-6 py-8 overflow-y-auto animate-fade-in border-t border-gray-100">
           {/* Quick search input */}
           <div className="relative mb-8">
             <input
@@ -344,7 +340,7 @@ export default function Navbar({
                       setRoute(item.route);
                       setMobileMenuOpen(false);
                     }}
-                    className={`text-left font-sans text-sm font-black uppercase tracking-widest border-b border-gray-50 pb-3 transition-colors text-[#F27D26] animate-pulse`}
+                    className={`text-left font-sans text-sm font-black uppercase tracking-widest border-b border-gray-50 pb-3 transition-colors text-[#F27D26]`}
                   >
                     🔥 {item.name}
                   </button>

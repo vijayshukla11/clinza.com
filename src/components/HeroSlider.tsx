@@ -14,19 +14,20 @@ interface HeroSliderProps {
 }
 
 export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
-  const slides = getHomeConfig()?.slides || [];
+  const slides = getHomeConfig().slides;
   const [activeIdx, setActiveIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Auto slide every 3 seconds as requested
+  // Auto slide every 5 seconds as requested, pause on hover
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || isHovered) return;
     const timer = setInterval(() => {
       handleNext();
-    }, 3000);
+    }, 5000);
     return () => clearInterval(timer);
-  }, [activeIdx, slides.length]);
+  }, [activeIdx, slides.length, isHovered]);
 
   const handleNext = () => {
     if (animating || slides.length === 0) return;
@@ -62,21 +63,29 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
     return null;
   }
 
-  const currentSlide = slides[activeIdx] || {
-  id: "default",
-  image: "/hero.jpg",
-  title: "",
-  subtitle: "",
-  description: "",
-  route: "collections/all"
-};
+  const currentSlide = slides[activeIdx] as any;
+
+  // Extract dynamic values with fallback defaults to ensure backward compatibility and graceful loading
+  const title = currentSlide.title || "Premium Everyday Fashion";
+  const subtitle = currentSlide.subtitle || "The Premium Summer Collection";
+  const description = currentSlide.description || "Timeless fits. Premium fabrics. Designed for modern India.";
+  const image = currentSlide.image || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600";
+  const badgeText = currentSlide.badge || "NEW COLLECTION";
+
+  // Primary and Secondary action buttons customization from CMS
+  const primaryButtonText = currentSlide.button1Text || currentSlide.primaryButtonText || "Shop Collection";
+  const primaryButtonLink = currentSlide.button1Link || currentSlide.primaryButtonLink || currentSlide.route || "collections/all";
+  const secondaryButtonText = currentSlide.button2Text || currentSlide.secondaryButtonText || "Shop All Collections";
+  const secondaryButtonLink = currentSlide.button2Link || currentSlide.secondaryButtonLink || "shop-all-collections";
 
   return (
     <section 
       id="hero-minimal-luxury-slider" 
-      className="relative h-[85vh] sm:h-[90vh] w-full bg-[#fafafa] overflow-hidden select-none"
+      className="relative h-[90vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-[#fafafa] overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* 1. HERO VISUAL - LIGHT GRADIENT OVERLAY ONLY */}
       <div className="absolute inset-0 z-0">
@@ -90,11 +99,11 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           >
             {/* Elegant light gradient overlay: readable text on left, 100% visible product image on right */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-transparent z-10 pointer-events-none" />
             <img
-              src={currentSlide.image}
+              src={image}
               alt="Premium Collection model showcase"
-              className="h-full w-full object-cover object-center sm:object-[center_35%]"
+              className="h-full w-full object-cover object-center"
               loading="eager"
               referrerPolicy="no-referrer"
             />
@@ -107,7 +116,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
 
       {/* 2. MINIMALIST FOREGROUND HERO CONTENT */}
       <div className="absolute inset-0 z-10 flex items-end sm:items-center px-6 sm:px-12 lg:px-20 max-w-7xl mx-auto pb-20 sm:pb-0">
-        <div className="max-w-xl text-left">
+        <div className="max-w-2xl text-left">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIdx}
@@ -124,34 +133,42 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                 transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/30 px-3.5 py-1 text-[10px] font-black font-mono tracking-[0.3em] text-white"
               >
-{currentSlide.subtitle}
+                {badgeText}
               </motion.div>
 
-              {/* HEADING */}
-             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
-  {currentSlide.title}
-</h1>
-              {/* SUBHEADING */}
+              {/* HEADING & SUBTITLE STACK */}
+              <div className="space-y-1 sm:space-y-2">
+                {subtitle && (
+                  <p className="text-white/85 text-[11px] sm:text-xs font-mono tracking-[0.2em] uppercase select-none drop-shadow-xs">
+                    {subtitle}
+                  </p>
+                )}
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
+                  {title}
+                </h1>
+              </div>
+
+              {/* DESCRIPTION */}
               <p className="text-white/95 text-xs sm:text-base font-sans font-light tracking-wide leading-relaxed max-w-md drop-shadow-sm">
-  {currentSlide.description}
-</p>
+                {description}
+              </p>
 
               {/* ACTION BUTTONS */}
               <div className="flex flex-row gap-4 pt-4">
                 <button
                   id="hero-shop-collection-btn"
-                 onClick={() => setRoute(currentSlide.route)}
-                  className="px-6 sm:px-8 py-4 bg-white text-zinc-950 text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
+                  onClick={() => setRoute(primaryButtonLink)}
+                  className="px-6 sm:px-8 py-5 bg-white text-zinc-950 text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
                 >
-                  Shop Collection
+                  {primaryButtonText}
                 </button>
 
                 <button
                   id="hero-shop-all-collections-btn"
-                  onClick={() => setRoute("shop-all-collections")}
-                  className="px-6 sm:px-8 py-4 bg-transparent text-white text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-white hover:text-zinc-950 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white backdrop-blur-xs"
+                  onClick={() => setRoute(secondaryButtonLink)}
+                  className="px-6 sm:px-8 py-5 bg-transparent text-white text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-white hover:text-zinc-950 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white backdrop-blur-xs"
                 >
-                  Shop All Collections
+                  {secondaryButtonText}
                 </button>
               </div>
             </motion.div>
@@ -202,7 +219,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                   className="absolute left-0 top-0 bottom-0 bg-white"
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: 3, ease: "linear" }} // 3 second auto-slide representation
+                  transition={{ duration: 5, ease: "linear" }} // 5 second auto-slide representation
                 />
               )}
             </button>
