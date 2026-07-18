@@ -6,6 +6,11 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Tag, Percent } from "lucide-react";
 import { Coupon } from "../../types";
+import {
+  syncCouponsFromCloud,
+  saveCouponToCloud,
+  deleteCouponFromCloud,
+} from "../../supabase";
 
 export default function CouponsTab() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -34,6 +39,16 @@ export default function CouponsTab() {
       setCoupons(initial);
       localStorage.setItem("clinza_marketing_coupons", JSON.stringify(initial));
     }
+
+    // Load from cloud database
+    syncCouponsFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        setCoupons(cloudList);
+        localStorage.setItem("clinza_marketing_coupons", JSON.stringify(cloudList));
+      }
+    }).catch((err) => {
+      console.warn("Could not sync coupons from cloud, using cached:", err);
+    });
   }, []);
 
   const saveToStore = (list: Coupon[]) => {
@@ -78,6 +93,9 @@ export default function CouponsTab() {
     }
 
     saveToStore(updated);
+    saveCouponToCloud(payload).catch((err) => {
+      console.error("Failed to sync coupon to cloud:", err);
+    });
     setEditorMode("list");
     setEditingCoupon(null);
     alert(`Coupon code "${uppercaseCode}" has been created!`);
@@ -87,6 +105,9 @@ export default function CouponsTab() {
     if (confirm("Delete this marketing campaign coupon code?")) {
       const updated = coupons.filter(c => c.id !== id);
       saveToStore(updated);
+      deleteCouponFromCloud(id).catch((err) => {
+        console.error("Failed to delete coupon from cloud:", err);
+      });
     }
   };
 

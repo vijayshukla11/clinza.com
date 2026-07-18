@@ -159,11 +159,11 @@ Please confirm availability. Link: ${itemUrl}`;
       </div>
 
       {/* LOWER DATA PANEL */}
-      <div className="p-4 flex flex-col flex-1 justify-between text-left">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between text-left">
         <div>
           {/* CATEGORY & STAR RATINGS */}
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-black font-mono tracking-widest text-[#F27D26] uppercase">
+            <span className="text-[9px] sm:text-[10px] font-black font-mono tracking-widest text-[#F27D26] uppercase">
               {product.category}
             </span>
             <div className="flex items-center gap-1 bg-yellow-500/5 px-1.5 py-0.5 border border-yellow-500/10 rounded-xs">
@@ -179,22 +179,22 @@ Please confirm availability. Link: ${itemUrl}`;
               onProductClick(product);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="text-gray-950 hover:text-[#F27D26] text-sm tracking-tight leading-snug line-clamp-2 block font-serif h-10 transition-colors focus:outline-none cursor-pointer text-left"
+            className="text-gray-950 hover:text-[#F27D26] text-xs sm:text-sm tracking-tight leading-snug line-clamp-2 block font-serif h-8 sm:h-10 transition-colors focus:outline-none cursor-pointer text-left"
           >
             {product.name}
           </button>
 
           {/* PRICING DETAIL */}
-          <div className="flex items-baseline gap-2.5 mt-2.5">
-            <span className="text-sm font-bold text-gray-950">
+          <div className="flex items-baseline gap-1.5 sm:gap-2.5 mt-2 sm:mt-2.5">
+            <span className="text-xs sm:text-sm font-bold text-gray-950">
               ₹{product.price.toLocaleString("en-IN")}
             </span>
             {product.originalPrice > product.price && (
               <>
-                <span className="text-xs text-gray-400 line-through font-normal">
+                <span className="text-[10px] sm:text-xs text-gray-400 line-through font-normal">
                   ₹{product.originalPrice.toLocaleString("en-IN")}
                 </span>
-                <span className="text-[10px] font-bold text-green-600 font-mono">
+                <span className="text-[8px] sm:text-[10px] font-bold text-green-600 font-mono">
                   ({discountPercent}% OFF)
                 </span>
               </>
@@ -203,21 +203,21 @@ Please confirm availability. Link: ${itemUrl}`;
         </div>
 
         {/* BOTTOM ORDER WORKFLOW GATES */}
-        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-1.5">
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-col gap-1 sm:gap-1.5">
           {product.stockStatus !== "Out of Stock" ? (
             <>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
                 <button
                   id={`card-buy-now-${product.id}`}
                   onClick={handleBuyNow}
-                  className="bg-black hover:bg-[#F27D26] text-white hover:text-black font-sans text-[9px] font-black uppercase tracking-widest py-3 rounded-none transition-colors cursor-pointer text-center"
+                  className="bg-black hover:bg-[#F27D26] text-white hover:text-black font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-colors cursor-pointer text-center"
                 >
                   Buy Now
                 </button>
                 <button
                   id={`card-add-to-cart-${product.id}`}
                   onClick={() => onAddToCart(product, product.colors[0]?.name || "Default", product.sizes[0] || "M")}
-                  className="bg-white hover:bg-gray-50 border border-black text-black font-sans text-[9px] font-black uppercase tracking-widest py-3 rounded-none transition-colors cursor-pointer text-center"
+                  className="bg-white hover:bg-gray-50 border border-black text-black font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-colors cursor-pointer text-center"
                 >
                   Add to Bag
                 </button>
@@ -227,13 +227,13 @@ Please confirm availability. Link: ${itemUrl}`;
                 href={buildWhatsAppLink()}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full bg-[#1b8a3a] hover:bg-[#126b2b] text-white font-sans text-[9px] font-black uppercase tracking-widest py-3 rounded-none transition-all flex items-center justify-center gap-2"
+                className="w-full bg-[#1b8a3a] hover:bg-[#126b2b] text-white font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-all flex items-center justify-center gap-2"
               >
                 <img 
                   src="https://i.postimg.cc/fVFPc5Mf/image.png" 
                   onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/Vr6DJmCQ/image.png"; }}
                   alt="WhatsApp" 
-                  className="h-4 w-4 object-contain rounded-full bg-white shrink-0"
+                  className="h-3.5 w-3.5 object-contain rounded-full bg-white shrink-0"
                 /> 
                 WhatsApp
               </a>
@@ -242,7 +242,7 @@ Please confirm availability. Link: ${itemUrl}`;
             <button
               id={`card-outstock-btn-${product.id}`}
               disabled
-              className="w-full bg-gray-50 border border-gray-200 text-gray-400 font-sans text-[9px] font-bold uppercase tracking-widest py-3.5 rounded-none cursor-not-allowed select-none text-center"
+              className="w-full bg-gray-50 border border-gray-200 text-gray-400 font-sans text-[8px] sm:text-[9px] font-bold uppercase tracking-widest py-2.5 sm:py-3.5 rounded-none cursor-not-allowed select-none text-center"
             >
               Sold Out
             </button>

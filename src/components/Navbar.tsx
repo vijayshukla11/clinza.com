@@ -98,7 +98,7 @@ export default function Navbar({
   return (
     <header
       id="navbar-header"
-      className="w-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.05)] transition-all duration-300 h-20 flex items-center"
+      className="w-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.05)] transition-all duration-300 h-16 sm:h-20 flex items-center"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full h-full">
         {/* LOGO */}
@@ -108,10 +108,10 @@ export default function Navbar({
             onClick={() => setRoute("home")}
             className="group flex items-center gap-1 focus:outline-none"
           >
-            <span className="font-sans font-black tracking-tighter text-2xl text-gray-950 transition-colors uppercase">
+            <span className="font-sans font-black tracking-tighter text-xl sm:text-2xl text-gray-950 transition-colors uppercase">
               Clinza
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] self-end mb-2"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] self-end mb-1.5 sm:mb-2"></span>
           </button>
         </div>
 
@@ -147,12 +147,12 @@ export default function Navbar({
         </nav>
 
         {/* RIGHT ACTION ICONS */}
-        <div className="flex items-center space-x-4 sm:space-x-6">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* SEARCH BUTTON */}
           <button
             id="nav-search-button"
             onClick={() => setSearchOpen(!searchOpen)}
-            className="p-1.5 text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer"
+            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer"
             aria-label="Toggle Search"
           >
             <Search className="h-5 w-5 stroke-[2]" />
@@ -162,12 +162,12 @@ export default function Navbar({
           <button
             id="nav-wishlist-button"
             onClick={() => setRoute("wishlist")}
-            className="p-1.5 text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
+            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
             aria-label="Wishlist"
           >
             <Heart className="h-5 w-5 stroke-[2]" />
             {wishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#F27D26] text-[10px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
+              <span className="absolute top-1 right-1 sm:top-0.5 sm:right-0.5 bg-[#F27D26] text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
                 {wishlistCount}
               </span>
             )}
@@ -177,12 +177,12 @@ export default function Navbar({
           <button
             id="nav-cart-button"
             onClick={() => setRoute("cart")}
-            className="p-1.5 text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
+            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
             aria-label="Shopping Bag"
           >
             <ShoppingBag className="h-5 w-5 stroke-[2]" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gray-950 text-[10px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
+              <span className="absolute top-1 right-1 sm:top-0.5 sm:right-0.5 bg-gray-950 text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
                 {cartCount}
               </span>
             )}
@@ -192,7 +192,7 @@ export default function Navbar({
           <button
             id="nav-mobile-toggle-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5 text-gray-850 hover:text-gray-950 hover:bg-gray-100 rounded-lg lg:hidden transition-colors focus:outline-none cursor-pointer"
+            className="h-11 w-11 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-100 rounded-lg lg:hidden transition-colors focus:outline-none cursor-pointer"
             aria-label="Toggle Mobile Menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -313,7 +313,7 @@ export default function Navbar({
 
       {/* MOBILE MENU TRAY */}
       {mobileMenuOpen && (
-        <div id="mobile-menu-tray" className="fixed inset-0 top-[112px] bg-white z-30 lg:hidden px-6 py-8 overflow-y-auto animate-fade-in border-t border-gray-100">
+        <div id="mobile-menu-tray" className="fixed inset-0 top-[96px] sm:top-[112px] bg-white z-30 lg:hidden px-6 py-8 overflow-y-auto animate-fade-in border-t border-gray-100">
           {/* Quick search input */}
           <div className="relative mb-8">
             <input

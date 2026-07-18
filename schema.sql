@@ -199,8 +199,61 @@ CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages (
 CREATE INDEX IF NOT EXISTS idx_style_analysis_created_at ON style_analysis (created_at DESC);
 
 -- ==========================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES & ROLE MANAGEMENT
 -- ==========================================================
+
+-- 17. Create admin_users table for robust role-based access
+CREATE TABLE IF NOT EXISTS admin_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'Admin', -- 'Super Admin', 'Admin', 'Inventory Manager', 'Order Manager', 'Marketing Manager', 'Customer Support'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 18. Create admin_audit_logs table
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    admin_email TEXT NOT NULL,
+    admin_name TEXT,
+    action TEXT NOT NULL,
+    affected_record TEXT,
+    ip_address TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Enable RLS on newly created tables
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- 19. Security helper function to check admin roles safely (SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION check_admin_role(required_roles text[])
+RETURNS boolean SECURITY DEFINER AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM admin_users 
+    WHERE email = auth.jwt()->>'email' 
+      AND (role = 'Super Admin' OR role = 'Admin' OR role = ANY(required_roles))
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Seed the initial Super Admin
+INSERT INTO admin_users (email, name, role)
+VALUES ('sastaelectronic6@gmail.com', 'Clinza Super Admin', 'Super Admin')
+ON CONFLICT (email) DO NOTHING;
+
+-- Policies for admin_users
+CREATE POLICY "Admins can select admin_users" ON admin_users
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin']));
+CREATE POLICY "Super Admins can manage admin_users" ON admin_users
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin']));
+
+-- Policies for admin_audit_logs
+CREATE POLICY "Admins can view audit logs" ON admin_audit_logs
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin']));
+CREATE POLICY "Allow public/authenticated inserts for logging" ON admin_audit_logs
+    FOR INSERT TO public WITH CHECK (true);
 
 -- Enable Row Level Security (RLS) on all Tables
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
@@ -224,25 +277,25 @@ ALTER TABLE style_analysis ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public read access to categories" ON categories 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to authenticated staff only" ON categories 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Inventory Manager']));
 
 -- 2. Collections Policies
 CREATE POLICY "Allow public read access to collections" ON collections 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to collections for staff" ON collections 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Inventory Manager']));
 
 -- 3. Products Policies
 CREATE POLICY "Allow public read access to products" ON products 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to products for staff" ON products 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Inventory Manager']));
 
 -- 4. Blogs Policies
 CREATE POLICY "Allow public read access to blogs" ON blogs 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to blogs for staff" ON blogs 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
 
 -- 5. Orders Policies
 CREATE POLICY "Allow any guest or client to place orders" ON orders 
@@ -250,45 +303,45 @@ CREATE POLICY "Allow any guest or client to place orders" ON orders
 CREATE POLICY "Allow visitors to fetch their order status by code" ON orders 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Full access to orders for staff" ON orders 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Order Manager']));
 
 -- 6. Newsletter Policies
 CREATE POLICY "Allow guest list inserts to newsletters" ON newsletters 
     FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Only staff read access to newsletters" ON newsletters 
-    FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
 
 -- 7. Configs Policies
 CREATE POLICY "Allow public select configurations" ON configs 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow full access to config to staff only" ON configs 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin']));
 
 -- 8. Customer Profile Policies
-CREATE POLICY "Customers read own profile" ON customers
-FOR SELECT TO authenticated USING (auth.uid()::text = id);
-CREATE POLICY "Customers edit own profile" ON customers
-FOR UPDATE TO authenticated USING (auth.uid()::text = id);
+CREATE POLICY "Customers read own profile" ON customers 
+    FOR SELECT TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Customers edit own profile" ON customers 
+    FOR UPDATE TO authenticated USING (auth.uid() = id);
 CREATE POLICY "Full access to customers for staff" ON customers 
-    FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Customer Support']));
 
 -- 9. Homepage Slides Policies
 CREATE POLICY "Allow public read access to homepage slides" ON homepage_slides 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to homepage slides for staff" ON homepage_slides 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
 
 -- 10. Theme Settings Policies
 CREATE POLICY "Allow public read access to active theme settings" ON theme_settings 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow write access to theme settings for staff" ON theme_settings 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
 
 -- 11. Tracking Updates Policies
 CREATE POLICY "Allow public tracking query" ON tracking_updates 
     FOR SELECT TO public USING (true);
 CREATE POLICY "Allow staff write updates" ON tracking_updates 
-    FOR ALL TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Order Manager']));
 
 -- 12. Wishlist Policies
 CREATE POLICY "Allow users to view own wishlist" ON wishlist 
@@ -306,16 +359,16 @@ CREATE POLICY "Allow public cart sessions edit" ON cart
 CREATE POLICY "Allow any visitor to submit contact form" ON contact_messages 
     FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Allow staff to view contact submissions" ON contact_messages 
-    FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Customer Support']));
 
 -- 15. Newsletter Subscribers Policies
 CREATE POLICY "Allow any guest subscription" ON newsletter_subscribers 
     FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Allow staff reading subscriptions list" ON newsletter_subscribers 
-    FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
 
 -- 16. Style Analysis Leads Policies
 CREATE POLICY "Allow visitors to save style recommendations" ON style_analysis 
     FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Allow staff to view style analysis leads" ON style_analysis 
-    FOR SELECT TO authenticated USING (auth.jwt()->>'email' = 'sastaelectronic6@gmail.com');
+    FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Customer Support']));

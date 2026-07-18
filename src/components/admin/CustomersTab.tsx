@@ -6,11 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, User, ArrowRight, Eye, Phone, MapPin, Heart, ListOrdered } from "lucide-react";
 import { CustomerProfile } from "../../types";
-import {
-  syncCustomersFromCloud,
-  saveCustomerToCloud,
-  deleteCustomerFromCloud,
-} from "../../supabase";
+import { syncCustomersFromCloud } from "../../supabase";
 
 export default function CustomersTab() {
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
@@ -18,28 +14,28 @@ export default function CustomersTab() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-   const fetchCustomers = async () => {
-  const cloudCustomers = await syncCustomersFromCloud();
+    const cached = localStorage.getItem("clinza_customers");
+    if (cached) {
+      setCustomers(JSON.parse(cached));
+    } else {
+      const initial: CustomerProfile[] = [
+        { id: "cust-1", name: "Priyanshu Sharma", email: "priyanshu@gmail.com", phone: "+91 98845 23301", addressBook: ["Sector 12, H-402, Malviya Nagar, New Delhi - 110017"], totalSpend: 8499, wishlist: ["prod-italian-linen", "prod-selvedge-indigo"] },
+        { id: "cust-2", name: "Tanya Sen", email: "tanya.styling@outlook.com", phone: "+91 88201 15420", addressBook: ["Bunglow 4C, Carter Road, Bandra West, Mumbai - 400050"], totalSpend: 12900, wishlist: ["prod-cuban-camp"] },
+        { id: "cust-3", name: "Rohan Roy", email: "rohan.roy8@gmail.com", phone: "+91 94330 45781", addressBook: ["A-42, Salt Lake, Block CL, Kolkata - 700091"], totalSpend: 3999, wishlist: [] }
+      ];
+      setCustomers(initial);
+      localStorage.setItem("clinza_customers", JSON.stringify(initial));
+    }
 
-  if (cloudCustomers.length > 0) {
-    setCustomers(cloudCustomers);
-    return;
-  }
-
-  const initial: CustomerProfile[] = [
-    { id: "cust-1", name: "Priyanshu Sharma", email: "priyanshu@gmail.com", phone: "+91 98845 23301", addressBook: ["Sector 12, H-402, Malviya Nagar, New Delhi - 110017"], totalSpend: 8499, wishlist: [] },
-    { id: "cust-2", name: "Tanya Sen", email: "tanya.styling@outlook.com", phone: "+91 88201 15420", addressBook: ["Bunglow 4C, Carter Road, Bandra West, Mumbai - 400050"], totalSpend: 12900, wishlist: [] },
-    { id: "cust-3", name: "Rohan Roy", email: "rohan.roy8@gmail.com", phone: "+91 94330 45781", addressBook: ["A-42, Salt Lake, Block CL, Kolkata - 700091"], totalSpend: 3999, wishlist: [] },
-  ];
-
-  setCustomers(initial);
-
-  for (const customer of initial) {
-    await saveCustomerToCloud(customer);
-  }
-};
-
-fetchCustomers();
+    // Load from Cloud database
+    syncCustomersFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        setCustomers(cloudList);
+        localStorage.setItem("clinza_customers", JSON.stringify(cloudList));
+      }
+    }).catch((err) => {
+      console.warn("Could not load customers from cloud:", err);
+    });
   }, []);
 
   const filtered = customers.filter(c =>

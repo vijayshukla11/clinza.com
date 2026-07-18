@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Product, BlogPost, Order, CartItem, HomepageConfig, ThemeConfig, ThemeSlide, CollectionMaster } from "./types";
+import { Product, BlogPost, Order, CartItem, HomepageConfig, ThemeConfig, ThemeSlide, CollectionMaster, Category } from "./types";
 import { INITIAL_PRODUCTS, INITIAL_BLOGS } from "./data";
 import { 
   auth,
@@ -21,7 +21,12 @@ import {
   syncThemeConfigFromCloud,
   saveThemeConfigToCloud,
   rollbackThemeConfigInCloud,
-  createBackupThemeConfigInCloud
+  createBackupThemeConfigInCloud,
+  getCollectionsFromCloud,
+  saveCollectionToCloud,
+  deleteCollectionFromCloud,
+  syncCategoriesFromCloud,
+  saveCategoryToCloud
 } from "./supabase";
 
 const PRODUCTS_KEY = "clinza_products_db";
@@ -199,7 +204,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Summer Collection",
       title: "ELEVATED CUBAN CUTS",
       description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
       route: "collections/shirts"
     },
     {
@@ -208,7 +213,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Premium Linen series",
       title: "TACTILE TEXTURAL SILK",
       description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
       route: "collections/shirts"
     },
     {
@@ -217,7 +222,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Business Casual Curation",
       title: "INTELLIGENT CASUAL COMFORT",
       description: "Premium double-breasted blazers paired beautifully with tapered stretch pants. Reinterpreting classical office attire for the modern visionary.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1600",
       route: "collections/pants"
     },
     {
@@ -226,7 +231,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "The Weekend Collection",
       title: "MINIMALIST DRAWSTRING ESSENTIALS",
       description: "Complete linen-blend co-ords. Sophisticated side-vented camp shirts designed for seamless beach-to-evening style styling.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
       route: "collections/combos"
     },
     {
@@ -235,7 +240,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       subtitle: "Trending Selvedge Denim",
       title: "13.5 OZ SOLID HEAVY RAW DENIM",
       description: "Woven meticulously on historical Japanese shuttle looms. Authentic redline tickers, designed to age beautifully with your lifestyle.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
       route: "collections/jeans"
     }
   ],
@@ -244,11 +249,11 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
   editorialTitle: "Unpacking Textile Architecture",
   editorialSubtitle: "Clinza Publication Room",
   editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+  editorialImg: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
   offers: [
     {
       id: "offer-1",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600",
       title: "Linen Resort Wardrobe",
       subtitle: "Spun from long-staple Normandy flax, meticulously pre-washed.",
       discount: "FLAT 10% OFF",
@@ -260,7 +265,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     },
     {
       id: "offer-2",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600",
       title: "Selvedge Denim Drop",
       subtitle: "Woven on historical Japanese shuttle looms with authentic redline tickers.",
       discount: "FREE SHIPPING",
@@ -398,6 +403,39 @@ export async function forceSyncFromCloud() {
       // Highly expected and secure check that standard non-logged-in customers are rejected access
       console.debug("Corporate orders sync omitted for non-staff instances.");
     }
+  }
+
+  // 4. Sync public Curated Collections
+  try {
+    const cloudCollections = await getCollectionsFromCloud();
+    if (cloudCollections && cloudCollections.length > 0) {
+      saveCollections(cloudCollections);
+    } else if (auth.currentUser && auth.currentUser.email === "sastaelectronic6@gmail.com") {
+      const currentLocals = getCollections();
+      for (const col of currentLocals) {
+        await saveCollectionToCloud(col).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.warn("Could not sync collections from cloud:", err);
+  }
+
+  // 5. Sync public Categories (follows Collections as master)
+  try {
+    const cloudCategories = await syncCategoriesFromCloud();
+    if (cloudCategories && cloudCategories.length > 0) {
+      localStorage.setItem("clinza_categories", JSON.stringify(cloudCategories));
+    } else {
+      const currentLocals = getCollections().map(mapCollectionToCategory);
+      localStorage.setItem("clinza_categories", JSON.stringify(currentLocals));
+      if (auth.currentUser && auth.currentUser.email === "sastaelectronic6@gmail.com") {
+        for (const cat of currentLocals) {
+          await saveCategoryToCloud(cat).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Could not sync categories from cloud:", err);
   }
 }
 
@@ -772,15 +810,34 @@ export async function rollbackThemeConfig(): Promise<ThemeConfig | null> {
   return null;
 }
 
+export function mapCollectionToCategory(col: CollectionMaster): Category {
+  return {
+    id: col.id,
+    name: col.name,
+    slug: col.slug,
+    description: col.description || "",
+    banner: "",
+    seoTitle: col.seoTitle || "",
+    seoDescription: col.seoDescription || "",
+    keywords: col.slug
+  };
+}
+
 export function getCollections(): CollectionMaster[] {
   const cached = localStorage.getItem("clinza_collections_master");
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      // Check if stale demo collection data exists (e.g. linen-collection or aesthetic-coords)
-      const hasStaleData = parsed.some((c: any) => c.slug === "linen-collection" || c.slug === "aesthetic-coords");
+      // Check if stale or wrong collection configuration exists
+      const hasStaleData = parsed.some((c: any) => 
+        c.slug === "linen-collection" || 
+        c.slug === "aesthetic-coords" || 
+        c.slug === "footwear" || 
+        c.slug === "combos"
+      ) || parsed.length !== 6;
+      
       if (hasStaleData) {
-        console.warn("getCollections() detected stale demo collections. Evicting cache to synchronize with Curated CMS database...");
+        console.warn("getCollections() detected stale collections. Evicting cache to synchronize 6 master collections...");
         localStorage.removeItem("clinza_collections_master");
       } else {
         console.log("getCollections() successfully read from localstorage key: clinza_collections_master", parsed);
@@ -791,76 +848,97 @@ export function getCollections(): CollectionMaster[] {
     }
   }
 
-  // Pure single source of truth real-world Curated Collections matching our actual product types
+  // Pure single source of truth 6 Master Collections (Combo, Shirts, Pants, Jeans, Shoes, Linen Combo Set)
   const initial: CollectionMaster[] = [
     { 
-      id: "shirts", 
-      name: "Premium Shirts", 
-      slug: "shirts", 
-      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png", 
-      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png", 
-      description: "Loom-woven certified European linen shirts crafted for supreme breathability in spread and mandarin collars.", 
+      id: "combo", 
+      name: "Combo", 
+      slug: "combo", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Pre-coordinated matching clothing sets curated for effortless styling.", 
       displayOrder: 1, 
       featured: true, 
-      seoTitle: "Premium Linen Shirts | Clinza Collection", 
-      seoDescription: "Shop luxury organic linen shirts in spread and mandarin collar fits." 
+      seoTitle: "Combo Sets | Clinza", 
+      seoDescription: "Shop luxury organic pre-coordinated apparel combo bundles." 
     },
     { 
-      id: "jeans", 
-      name: "Selvedge Jeans", 
-      slug: "jeans", 
-      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
-      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
-      description: "13.5 oz heavy Japanese indigo shuttle-loom raw denim structured for timeless architectural leg shapes.", 
+      id: "shirts", 
+      name: "Shirts", 
+      slug: "shirts", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Premium linen and organic cotton shirts crafted for supreme breathability.", 
       displayOrder: 2, 
       featured: true, 
-      seoTitle: "Raw Indigo Selvedge Jeans | Clinza Denim", 
-      seoDescription: "Crafted on historic shuttles with flawless red-line selvedge cuffs." 
+      seoTitle: "Premium Shirts | Clinza", 
+      seoDescription: "Shop premium luxury linen and cotton shirts." 
     },
     { 
       id: "pants", 
-      name: "Sartorial Pants", 
+      name: "Pants", 
       slug: "pants", 
-      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
-      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png", 
-      description: "Pleated formal crease heavyweight organic summer trousers and tailored modern chinos.", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Pleated heavyweight trousers and tailored modern chinos.", 
       displayOrder: 3, 
       featured: true, 
-      seoTitle: "Double Pleat Trousers & Pants | Clinza", 
-      seoDescription: "Heavy plisse elegant drapes for active summer style." 
+      seoTitle: "Sartorial Pants | Clinza", 
+      seoDescription: "Double pleat elegant trousers and pants." 
     },
     { 
-      id: "combos", 
-      name: "Combo Sets", 
-      slug: "combos", 
-      banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=200", 
-      description: "Aesthetic matching shirt & trouser pre-coordinated pairings curated for effortless summer excursions.", 
+      id: "jeans", 
+      name: "Jeans", 
+      slug: "jeans", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Selvedge denim jeans structured for timeless shapes.", 
       displayOrder: 4, 
       featured: true, 
-      seoTitle: "Premium Co-ord Apparel Combos | Clinza", 
-      seoDescription: "Selected pre-treated monochrome linen matching bundles." 
+      seoTitle: "Selvedge Jeans | Clinza Denim", 
+      seoDescription: "Heavy raw indigo selvedge denim jeans." 
     },
     { 
-      id: "footwear", 
-      name: "Luxury Footwear", 
-      slug: "footwear", 
-      banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=200", 
-      description: "Handcrafted suede and full grain leather loafers curated to perfect the sartorial silhouettes.", 
+      id: "shoes", 
+      name: "Shoes", 
+      slug: "shoes", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Luxury leather footwear handcrafted to perfect your silhouette.", 
       displayOrder: 5, 
       featured: true, 
-      seoTitle: "Luxury Footwear Curation | Clinza", 
+      seoTitle: "Luxury Shoes | Clinza Footwear", 
       seoDescription: "Handcrafted suede and full grain leather loafers." 
+    },
+    { 
+      id: "linen-combo-set", 
+      name: "Linen Combo Set", 
+      slug: "linen-combo-set", 
+      banner: "", 
+      thumbnail: "", 
+      description: "Pure linen matching shirt and trouser sets curated for absolute luxury.", 
+      displayOrder: 6, 
+      featured: true, 
+      seoTitle: "Linen Combo Set | Clinza Curation", 
+      seoDescription: "Shop premium organic linen matching combo sets." 
     }
   ];
+
   localStorage.setItem("clinza_collections_master", JSON.stringify(initial));
+  
+  // Also keep categories in sync locally!
+  const initialCategories = initial.map(mapCollectionToCategory);
+  localStorage.setItem("clinza_categories", JSON.stringify(initialCategories));
+
   return initial;
 }
 
 export function saveCollections(list: CollectionMaster[]): void {
   console.log("saveCollections() writing to localstorage key: clinza_collections_master", list);
   localStorage.setItem("clinza_collections_master", JSON.stringify(list));
+  // Keep categories list matched to collections!
+  const matchingCategories = list.map(mapCollectionToCategory);
+  localStorage.setItem("clinza_categories", JSON.stringify(matchingCategories));
 }
 
 

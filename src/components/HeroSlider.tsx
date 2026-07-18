@@ -81,7 +81,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
   return (
     <section 
       id="hero-minimal-luxury-slider" 
-      className="relative h-[90vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-[#fafafa] overflow-hidden select-none"
+      className="relative h-[55vh] xs:h-[60vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-[#fafafa] overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseEnter={() => setIsHovered(true)}
@@ -98,8 +98,8 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Elegant light gradient overlay: readable text on left, 100% visible product image on right */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-transparent z-10 pointer-events-none" />
+            {/* Elegant gradient overlay: vertical on mobile, horizontal on desktop */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/10 sm:bg-gradient-to-r sm:from-black/55 sm:via-black/35 sm:to-transparent z-10 pointer-events-none" />
             <img
               src={image}
               alt="Premium Collection model showcase"
@@ -115,7 +115,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
       <div className="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-white/20 blur-[100px] pointer-events-none z-1" />
 
       {/* 2. MINIMALIST FOREGROUND HERO CONTENT */}
-      <div className="absolute inset-0 z-10 flex items-end sm:items-center px-6 sm:px-12 lg:px-20 max-w-7xl mx-auto pb-20 sm:pb-0">
+      <div className="absolute inset-0 z-10 flex items-end sm:items-center px-4 sm:px-12 lg:px-20 max-w-7xl mx-auto pb-12 sm:pb-0">
         <div className="max-w-2xl text-left">
           <AnimatePresence mode="wait">
             <motion.div
@@ -124,41 +124,41 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-4 sm:space-y-6"
+              className="space-y-2.5 sm:space-y-6"
             >
               {/* BRAND BADGE */}
               <motion.div 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/30 px-3.5 py-1 text-[10px] font-black font-mono tracking-[0.3em] text-white"
+                className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/30 px-3.5 py-1 text-[9px] sm:text-[10px] font-black font-mono tracking-[0.3em] text-white"
               >
                 {badgeText}
               </motion.div>
 
               {/* HEADING & SUBTITLE STACK */}
-              <div className="space-y-1 sm:space-y-2">
+              <div className="space-y-0.5 sm:space-y-2">
                 {subtitle && (
-                  <p className="text-white/85 text-[11px] sm:text-xs font-mono tracking-[0.2em] uppercase select-none drop-shadow-xs">
+                  <p className="text-white/85 text-[10px] sm:text-xs font-mono tracking-[0.2em] uppercase select-none drop-shadow-xs">
                     {subtitle}
                   </p>
                 )}
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
+                <h1 className="text-2xl xs:text-3xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
                   {title}
                 </h1>
               </div>
 
               {/* DESCRIPTION */}
-              <p className="text-white/95 text-xs sm:text-base font-sans font-light tracking-wide leading-relaxed max-w-md drop-shadow-sm">
+              <p className="text-white/95 text-[11px] sm:text-base font-sans font-light tracking-wide leading-relaxed max-w-md drop-shadow-sm line-clamp-2 sm:line-clamp-none">
                 {description}
               </p>
 
               {/* ACTION BUTTONS */}
-              <div className="flex flex-row gap-4 pt-4">
+              <div className="flex flex-row gap-2.5 sm:gap-4 pt-2 sm:pt-4">
                 <button
                   id="hero-shop-collection-btn"
                   onClick={() => setRoute(primaryButtonLink)}
-                  className="px-6 sm:px-8 py-5 bg-white text-zinc-950 text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
+                  className="px-3 sm:px-8 py-2.5 sm:py-5 bg-white text-zinc-950 text-[10px] sm:text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
                 >
                   {primaryButtonText}
                 </button>
@@ -166,7 +166,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                 <button
                   id="hero-shop-all-collections-btn"
                   onClick={() => setRoute(secondaryButtonLink)}
-                  className="px-6 sm:px-8 py-5 bg-transparent text-white text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-white hover:text-zinc-950 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white backdrop-blur-xs"
+                  className="px-3 sm:px-8 py-2.5 sm:py-5 bg-transparent text-white text-[10px] sm:text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-white hover:text-zinc-950 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white backdrop-blur-xs"
                 >
                   {secondaryButtonText}
                 </button>
@@ -177,7 +177,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
       </div>
 
       {/* 3. MINIMALIST CORNER SLIDER CONTROLS (ZARA STYLE) */}
-      <div className="absolute right-4 sm:right-8 bottom-6 sm:bottom-10 z-20 flex items-center gap-2">
+      <div className="absolute right-4 sm:right-8 bottom-4 sm:bottom-10 z-20 hidden sm:flex items-center gap-2">
         <button
           id="hero-prev-arrow-btn"
           onClick={handlePrev}
@@ -197,7 +197,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
       </div>
 
       {/* 4. MODERN PROGRESS LINES (BOTTOM LEFT) */}
-      <div className="absolute bottom-6 sm:bottom-10 left-6 sm:left-12 z-20 flex items-center gap-2 bg-black/20 backdrop-blur-md p-2 px-3.5 border border-white/10 rounded-none">
+      <div className="absolute bottom-4 sm:bottom-10 left-4 sm:left-12 z-20 flex items-center gap-1.5 sm:gap-2 bg-black/20 backdrop-blur-md p-1.5 px-2.5 sm:p-2 sm:px-3.5 border border-white/10 rounded-none">
         {slides.map((slide, index) => {
           const isActive = index === activeIdx;
           return (
@@ -211,7 +211,7 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                   setTimeout(() => setAnimating(false), 500);
                 }
               }}
-              className="relative h-1 w-8 sm:w-14 bg-white/30 overflow-hidden cursor-pointer rounded-none focus:outline-none transition-all duration-300"
+              className="relative h-1 w-5 sm:w-14 bg-white/30 overflow-hidden cursor-pointer rounded-none focus:outline-none transition-all duration-300"
               aria-label={`Show design ${index + 1}`}
             >
               {isActive && (

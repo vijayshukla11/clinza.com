@@ -27,7 +27,8 @@ import {
   Sparkles,
   Palette,
   MessageSquare,
-  Mail
+  Mail,
+  History
 } from "lucide-react";
 
 import { Product, BlogPost, Order, HomepageConfig } from "../types";
@@ -46,6 +47,7 @@ import {
   saveHomeConfig
 } from "../utils";
 import { auth, signInWithGoogle, signInWithEmail, logOutUser, supabase } from "../supabase";
+import { AdminUsersService, AdminAuditLogService } from "../services/supabaseService";
 
 // Import modular tab panels
 import AnalyticsTab from "./admin/AnalyticsTab";
@@ -62,8 +64,10 @@ import IntegrationsTab from "./admin/IntegrationsTab";
 import ThemeEditorTab from "./admin/ThemeEditorTab";
 import ContactLeadsTab from "./admin/ContactLeadsTab";
 import NewsletterTab from "./admin/NewsletterTab";
+import ReturnsTab from "./admin/ReturnsTab";
+import AuditLogsTab from "./admin/AuditLogsTab";
 
-type AdminRole = "Super Admin" | "Admin" | "Content Manager";
+type AdminRole = "Super Admin" | "Admin" | "Inventory Manager" | "Order Manager" | "Marketing Manager" | "Customer Support";
 
 export default function AdminPanel() {
   const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -94,6 +98,31 @@ export default function AdminPanel() {
   const [slideEditIdx, setSlideEditIdx] = useState<number | null>(null);
   const [offerEditIdx, setOfferEditIdx] = useState<number | null>(null);
 
+  // Helper to verify admin user from DB
+  const verifyAdminUser = async (email: string, userObj: any) => {
+    try {
+      const admin = await AdminUsersService.getAdminByEmail(email);
+      if (admin) {
+        setIsAdminAuth(true);
+        setStaffRole(admin.role as AdminRole);
+        setGoogleUser({
+          email: admin.email,
+          displayName: admin.name || userObj.user_metadata?.name || userObj.user_metadata?.displayName || "Clinza Admin"
+        });
+        setAuthError("");
+        return true;
+      } else {
+        setIsAdminAuth(false);
+        setAuthError(`Access Denied: Supabase profile "${email}" is not listed on Clinza staff ledger with administrative privileges.`);
+        return false;
+      }
+    } catch (err) {
+      setIsAdminAuth(false);
+      setAuthError("Security Clearance check failed. Please check your network connection.");
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Route matching for active tab
     const pathname = window.location.pathname;
@@ -115,41 +144,27 @@ export default function AdminPanel() {
       setActiveTab("customers");
     }
 
-    // Check current session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const user = session?.user || null;
-      if (user) {
-        setGoogleUser({
-          email: user.email,
-          displayName: user.user_metadata?.name || user.user_metadata?.displayName || "Clinza Admin"
-        });
-        if (user.email === "sastaelectronic6@gmail.com") {
-          setIsAdminAuth(true);
-          setAuthError("");
+    // Check current session first with secure server-validated getUser()
+    supabase.auth.getUser().then(async ({ data: { user }, error }) => {
+      if (user && !error) {
+        await verifyAdminUser(user.email!, user);
+      } else {
+        // Fallback to local session validation if offline
+        const { data: { session } } = await supabase.auth.getSession();
+        const sUser = session?.user || null;
+        if (sUser) {
+          await verifyAdminUser(sUser.email!, sUser);
         } else {
           setIsAdminAuth(false);
-          setAuthError(`Access Denied: Supabase profile ${user.email} is not listed on Clinza staff ledger.`);
         }
-      } else {
-        setIsAdminAuth(false);
       }
       setAuthChecking(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user || null;
       if (user) {
-        setGoogleUser({
-          email: user.email,
-          displayName: user.user_metadata?.name || user.user_metadata?.displayName || "Clinza Admin"
-        });
-        if (user.email === "sastaelectronic6@gmail.com") {
-          setIsAdminAuth(true);
-          setAuthError("");
-        } else {
-          setIsAdminAuth(false);
-          setAuthError(`Access Denied: Supabase profile ${user.email} is not listed on Clinza staff ledger.`);
-        }
+        await verifyAdminUser(user.email!, user);
       } else {
         setGoogleUser(null);
         setIsAdminAuth(false);
@@ -166,38 +181,81 @@ export default function AdminPanel() {
       setAuthError("Staff credentials cannot be left blank.");
       return;
     }
+
+    // Rate Limiting Protection (Task 5)
+    const attempts = parseInt(localStorage.getItem(`login_attempts_${adminEmail}`) || "0", 10);
+    const lockoutTime = parseInt(localStorage.getItem(`login_lockout_${adminEmail}`) || "0", 10);
+    
+    if (Date.now() < lockoutTime) {
+      const remainingSeconds = Math.ceil((lockoutTime - Date.now()) / 1000);
+      setAuthError(`Brute-force security lockout active. Try again in ${remainingSeconds} seconds.`);
+      return;
+    }
+
     setAuthLoading(true);
     setAuthError("");
     try {
+      // Progressive Delay
+      if (attempts > 0) {
+        const delayMs = Math.min(attempts * 1000, 5000); // progressive delay up to 5s
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+
       const user = await signInWithEmail(adminEmail.trim(), adminPassword.trim());
       if (user) {
-        if (user.email === "sastaelectronic6@gmail.com") {
-          setIsAdminAuth(true);
-          setGoogleUser(user);
+        const isAuthorized = await verifyAdminUser(user.email!, user);
+        if (isAuthorized) {
+          // Reset rate limits on success
+          localStorage.removeItem(`login_attempts_${adminEmail}`);
+          localStorage.removeItem(`login_lockout_${adminEmail}`);
+          
+          // Log Activity (Task 4)
+          await AdminAuditLogService.logActivity(
+            user.email!,
+            user.user_metadata?.name || user.user_metadata?.displayName || user.email || "Clinza Admin",
+            "Login",
+            "Cockpit Portal"
+          );
         } else {
-          setAuthError(`Access Denied: The account "${user.email}" does not have cloud clearances.`);
-          setIsAdminAuth(false);
+          // If authenticated but not in admin_users, log failed attempt
+          await AdminAuditLogService.logActivity(
+            user.email!,
+            user.email || "Unknown",
+            "Login Failed: Unauthorized Role",
+            "Cockpit Portal"
+          );
         }
       }
     } catch (err: any) {
-      console.warn("Auth redirect fallback:", err);
-      // Hardcoded bypass for specific admin email requested
-      if (adminEmail.trim() === "sastaelectronic6@gmail.com" && adminPassword.trim() === "clinza2026") {
-        setIsAdminAuth(true);
-        setGoogleUser({
-          email: "sastaelectronic6@gmail.com",
-          displayName: "Super Administrator",
-          photoURL: null
-        });
-      } else {
-        setAuthError("Incorrect password. Use master credentials for sastaelectronic6@gmail.com.");
+      console.warn("Auth failed:", err);
+      const newAttempts = attempts + 1;
+      localStorage.setItem(`login_attempts_${adminEmail}`, newAttempts.toString());
+      
+      let errorMsg = err.message || "Incorrect email or password.";
+      if (newAttempts >= 5) {
+        const lockoutDuration = 60 * 1000; // 1 minute lockout after 5 failed attempts
+        localStorage.setItem(`login_lockout_${adminEmail}`, (Date.now() + lockoutDuration).toString());
+        errorMsg = "Too many failed attempts. Brute-force protection lockout activated for 60 seconds.";
+      } else if (newAttempts >= 3) {
+        errorMsg = `Incorrect credentials. Warning: ${5 - newAttempts} attempts remaining before temporary lockout.`;
       }
+      
+      setAuthError(errorMsg);
+      setIsAdminAuth(false);
     } finally {
       setAuthLoading(false);
     }
   };
 
   const handleLogout = async () => {
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        "Logout",
+        "Cockpit Portal"
+      );
+    }
     setIsAdminAuth(false);
     setAuthError("");
     setGoogleUser(null);
@@ -232,31 +290,71 @@ export default function AdminPanel() {
   };
 
   // Dedicated Product callbacks
-  const handleSaveProduct = (prod: Product) => {
+  const handleSaveProduct = async (prod: Product) => {
     saveProduct(prod);
     reloadData();
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        `Product Saved / Updated`,
+        `SKU/ID: ${prod.id} (${prod.name})`
+      );
+    }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     deleteProduct(id);
     reloadData();
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        `Product Deleted`,
+        `Product ID: ${id}`
+      );
+    }
   };
 
   // Dedicated Blog callbacks
-  const handleSaveBlog = (blog: BlogPost) => {
+  const handleSaveBlog = async (blog: BlogPost) => {
     saveBlogPost(blog);
     reloadData();
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        `Blog Saved / Updated`,
+        `Slug: ${blog.slug} (${blog.title})`
+      );
+    }
   };
 
-  const handleDeleteBlog = (slug: string) => {
+  const handleDeleteBlog = async (slug: string) => {
     deleteBlogPost(slug);
     reloadData();
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        `Blog Deleted`,
+        `Slug: ${slug}`
+      );
+    }
   };
 
   // Dedicated Order callbacks
-  const handleUpdateOrderStatus = (id: string, status: any) => {
+  const handleUpdateOrderStatus = async (id: string, status: any) => {
     updateOrderStatus(id, status);
     reloadData();
+    if (googleUser) {
+      await AdminAuditLogService.logActivity(
+        googleUser.email,
+        googleUser.displayName || "Admin",
+        `Order Updated`,
+        `Order ID: ${id} to Status: ${status}`
+      );
+    }
   };
 
   if (authChecking) {
@@ -293,20 +391,9 @@ export default function AdminPanel() {
 
           <form onSubmit={handleEmailLogin} className="space-y-4 text-left">
             
-            {/* WORKSPACE ROLE SELECTOR */}
-            <div>
-              <label className="block text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1 font-mono">
-                Assigned Staff Workspace Role
-              </label>
-              <select
-                value={staffRole}
-                onChange={(e) => setStaffRole(e.target.value as AdminRole)}
-                className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-orange-500 font-bold"
-              >
-                <option value="Super Admin">Super Admin (Full Catalog Clearance)</option>
-                <option value="Admin">Admin (Promotional Coupons & Orders)</option>
-                <option value="Content Manager">Content Manager (Editorial Blogs only)</option>
-              </select>
+            {/* WORKSPACE ROLE DETAILS */}
+            <div className="p-3 bg-zinc-950 border border-zinc-850 rounded-lg text-[10px] font-mono text-zinc-400 leading-relaxed">
+              <span className="text-orange-500 font-bold">Roster Clearance:</span> Workspace permissions are verified automatically based on your credential records.
             </div>
 
             <div>
@@ -389,6 +476,7 @@ export default function AdminPanel() {
               { id: "categories", label: "Taxonomic Categories", icon: Grid },
               { id: "collections", label: "Curated Collections", icon: FolderOpen },
               { id: "orders", label: "Apparel Orders Board", icon: ListOrdered },
+              { id: "returns-manager", label: "Returns & Exchanges", icon: RefreshCw },
               { id: "customers", label: "Customer CRM", icon: Users },
               { id: "contact-leads", label: "Contact Form Leads", icon: MessageSquare },
               { id: "newsletters", label: "Newsletter Subscribers", icon: Mail },
@@ -398,7 +486,8 @@ export default function AdminPanel() {
               { id: "media-vault", label: "Banners Media Vault", icon: FolderLock },
               { id: "home-cms", label: "Homepage Blocks CMS", icon: Smartphone },
               { id: "theme-customizer", label: "Shopify Theme Editor", icon: Palette },
-              { id: "google-seo", label: "Integrations & GA4", icon: Wrench }
+              { id: "google-seo", label: "Integrations & GA4", icon: Wrench },
+              ...(staffRole === "Super Admin" || staffRole === "Admin" ? [{ id: "audit-logs", label: "Security Audit Logs", icon: History }] : [])
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -495,6 +584,8 @@ export default function AdminPanel() {
             />
           )}
 
+          {activeTab === "returns-manager" && <ReturnsTab />}
+
           {activeTab === "customers" && <CustomersTab />}
 
           {activeTab === "contact-leads" && <ContactLeadsTab />}
@@ -516,6 +607,8 @@ export default function AdminPanel() {
           {activeTab === "media-vault" && <MediaLibraryTab />}
 
           {activeTab === "google-seo" && <IntegrationsTab />}
+
+          {activeTab === "audit-logs" && <AuditLogsTab />}
 
           {activeTab === "theme-customizer" && (
             <ThemeEditorTab

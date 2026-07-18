@@ -5,31 +5,25 @@
 
 import React, { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
-import { getProducts } from "../utils";
-import { getCollectionsFromCloud } from "../supabase";
+import { getCollections, getProducts } from "../utils";
 
 interface CollectionListProps {
   setRoute: (route: string) => void;
 }
 
 export default function CollectionList({ setRoute }: CollectionListProps) {
-const [collections, setCollections] = useState([]);  const [products, setProducts] = useState(() => getProducts());
+  const [collections, setCollections] = useState(() => getCollections());
+  const [products, setProducts] = useState(() => getProducts());
 
   // Automatically refresh when mounted/rendered
- useEffect(() => {
-  async function loadData() {
-    try {
-      const cloudCollections = await getCollectionsFromCloud();
-      setCollections(cloudCollections);
+  useEffect(() => {
+    const cmsCollections = getCollections();
+    console.log("=== COLLECTIONLIST MOUNT / REFRESH ===");
+    console.log("Loaded collections from CMS getCollections():", cmsCollections);
+    setCollections(cmsCollections);
+    setProducts(getProducts());
+  }, []);
 
-      setProducts(getProducts());
-    } catch (error) {
-      console.error("Failed to load collections:", error);
-    }
-  }
-
-  loadData();
-}, []);
   // Display ONLY collections where: homepageFeatured == true or featured == true
   const featuredCollections = collections.filter(
     (col) => col.featured === true || (col as any).homepageFeatured === true
@@ -94,7 +88,7 @@ const [collections, setCollections] = useState([]);  const [products, setProduct
                 <div
                   id={`collection-card-${item.slug}`}
                   key={item.id || item.slug}
-                  className="group relative h-80 sm:h-84 rounded-none overflow-hidden hover:border-black transition-all duration-300 border border-gray-200 flex flex-col justify-end"
+                  className="group relative h-64 sm:h-84 rounded-none overflow-hidden hover:border-black transition-all duration-300 border border-gray-200 flex flex-col justify-end"
                 >
                   {/* BACKDROP IMAGE */}
                   <div className="absolute inset-0 z-0">

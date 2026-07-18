@@ -29,42 +29,19 @@ export interface APlusSection {
   imageUrl?: string;
   features: { icon: string; title: string; description: string }[];
 }
+
 export interface Product {
-  seoTitle?: string;
-metaDescription?: string;
-metaKeywords?: string;
-canonicalUrl?: string;
-ogImage?: string;
-schemaType?: string;
   id: string;
   name: string;
   slug: string;
   price: number;
   originalPrice: number; // MRP
   collection: ProductCollection;
-  category: string;
+  category: string; // e.g., "Premium Linen", "Regular Fit Jeans"
   images: string[];
-
   colors: { name: string; hex: string }[];
   sizes: string[];
-
-  // Product Variants
-  variants?: {
-    id: string;
-    sku: string;
-    color: string;
-    size: string;
-    stock: number;
-    price?: number;
-    image?: string;
-  }[];
-
   stockStatus: "In Stock" | "Low Stock" | "Out of Stock";
-
-  stockQuantity?: number;
-  lowStockThreshold?: number;
-  warehouseLocation?: string;
-
   sku: string;
   brand: string;
   rating: number;
@@ -72,19 +49,12 @@ schemaType?: string;
   description: string;
   specifications: { label: string; value: string }[];
   aPlusContent: APlusSection;
-
   isTrending?: boolean;
   isNewArrival?: boolean;
-
   seoTitle?: string;
   metaDescription?: string;
-
-  // SEO
-  metaKeywords?: string;
-  canonicalUrl?: string;
-  ogImage?: string;
-  schemaType?: string;
 }
+
 export interface CartItem {
   product: Product;
   selectedColor: string;
@@ -221,18 +191,11 @@ export interface Category {
   slug: string;
   description: string;
   banner: string;
-
-  // Homepage
-  homepageImage?: string;
-  showOnHomepage?: boolean;
-  displayOrder?: number;
-  status?: boolean;
-
-  // SEO
   seoTitle?: string;
   seoDescription?: string;
   keywords?: string;
 }
+
 export interface CollectionMaster {
   id: string;
   name: string;
@@ -284,6 +247,7 @@ export interface MediaAsset {
   type: "image" | "video" | "document";
   size: string;
   createdAt: string;
+  folder?: string;
 }
 
 // Shopify style Theme Editor settings
@@ -451,5 +415,42 @@ export interface ThemeConfig {
   buttonStyle?: string;
   cardStyle?: string;
 }
+
+export interface Address {
+  id: string;
+  name: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+}
+
+export interface ReturnExchangeItem {
+  productId: string;
+  name: string;
+  size: string;
+  color: string;
+  quantity: number;
+  image: string;
+  price: number;
+  exchangeSize?: string;
+  exchangeColor?: string;
+}
+
+export interface OrderReturnRequest {
+  id: string;
+  orderId: string;
+  customerEmail: string;
+  type: "return" | "exchange";
+  items: ReturnExchangeItem[];
+  reason: string;
+  description: string;
+  imageProofUrl?: string;
+  status: "Pending" | "Approved" | "Rejected" | "Pickup Scheduled" | "Completed" | "Refunded";
+  createdAt: string;
+}
+
 
 

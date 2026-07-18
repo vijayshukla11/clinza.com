@@ -371,7 +371,7 @@ function AppContent() {
       )}
 
       {/* DYNAMIC PAGE ROUTE MOUNT */}
-      <main className={`flex-1 ${!isAdminRoute ? "pt-[112px]" : ""}`}>
+      <main className={`flex-1 ${!isAdminRoute ? "pt-[96px] sm:pt-[112px]" : ""}`}>
         
         {/* SUCCESS MODAL REDIRECT */}
         {orderSuccessDetail ? (
@@ -547,15 +547,15 @@ function AppContent() {
                         }
 
                         return (
-                          <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-6 pb-4 lg:pb-0 snap-x scrollbar-none">
+                          <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 sm:gap-6 pb-4 lg:pb-0 snap-x scrollbar-none">
                             {activeOffers.map((offer: any, idx: number) => (
                               <div
                                 id={`offer-card-${idx}`}
                                 key={idx}
-                                className="group relative flex flex-col bg-white border border-gray-150 rounded-none overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-[440px] snap-start min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-shrink-0"
+                                className="group relative flex flex-col bg-white border border-gray-150 rounded-none overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-[370px] sm:h-[440px] snap-start min-w-[270px] sm:min-w-[320px] lg:min-w-0 flex-shrink-0"
                               >
                                 {/* Image Overlay */}
-                                <div className="relative h-64 overflow-hidden bg-gray-50">
+                                <div className="relative h-44 sm:h-64 overflow-hidden bg-gray-50">
                                   <img
                                     src={offer.image || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600"}
                                     alt={offer.title}
@@ -564,24 +564,24 @@ function AppContent() {
                                     referrerPolicy="no-referrer"
                                   />
                                   {offer.badge && (
-                                    <div className="absolute top-4 left-4 bg-orange-600 text-white font-mono text-[9px] font-black uppercase tracking-widest px-3 py-1">
+                                    <div className="absolute top-3 left-3 bg-orange-600 text-white font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-0.5 sm:px-3 sm:py-1">
                                       {offer.badge}
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Info and button */}
-                                <div className="p-5 flex-1 flex flex-col justify-between">
+                                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                                   <div>
                                     {offer.discount && (
-                                      <span className="text-[10px] text-orange-600 font-bold tracking-widest uppercase mb-1 block font-mono">
+                                      <span className="text-[9px] sm:text-[10px] text-orange-600 font-bold tracking-widest uppercase mb-1 block font-mono">
                                         {offer.discount}
                                       </span>
                                     )}
-                                    <h3 className="text-base font-sans font-black text-gray-950 uppercase tracking-tight line-clamp-1">
+                                    <h3 className="text-sm sm:text-base font-sans font-black text-gray-950 uppercase tracking-tight line-clamp-1">
                                       {offer.title}
                                     </h3>
-                                    <p className="text-gray-500 text-xs mt-1.5 line-clamp-2 leading-relaxed font-light">
+                                    <p className="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed font-light">
                                       {offer.subtitle}
                                     </p>
                                   </div>
@@ -596,7 +596,7 @@ function AppContent() {
                                         handleOldRouteTrigger("collections/all");
                                       }
                                     }}
-                                    className="mt-4 w-full bg-zinc-950 hover:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-none transition-colors duration-300 text-center flex items-center justify-center gap-1.5 font-mono cursor-pointer"
+                                    className="mt-3 w-full bg-zinc-950 hover:bg-orange-600 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-colors duration-300 text-center flex items-center justify-center gap-1.5 font-mono cursor-pointer"
                                   >
                                     {offer.buttonText || "Shop Now"}
                                     <ArrowRight className="h-3.5 w-3.5" />
@@ -630,7 +630,7 @@ function AppContent() {
                 >
                   <section id="trending-products-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-y border-gray-100">
                     <div className="max-w-7xl mx-auto">
-                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8">
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-8">
                         <div>
                           <span className="text-[10px] font-black tracking-widest text-[#F27D26] uppercase font-mono block mb-1.5">
                             Highly Coveted Silhouettes
@@ -648,7 +648,7 @@ function AppContent() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {getProducts().filter(p => p.isTrending).slice(0, 4).map((prod) => (
                           <ProductCard
                             key={prod.id}
@@ -675,7 +675,7 @@ function AppContent() {
                 >
                   <section id="new-arrivals-products-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 text-left border-b border-gray-200">
                     <div className="max-w-7xl mx-auto">
-                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8">
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-8">
                         <div>
                           <span className="text-[10px] font-black tracking-widest text-[#F27D26] uppercase font-mono block mb-1.5">
                             Just Released Summer Articles
@@ -693,7 +693,7 @@ function AppContent() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {getProducts().slice(0, 4).map((prod) => (
                           <ProductCard
                             key={prod.id}
@@ -736,32 +736,32 @@ function AppContent() {
                           {
                             name: "Shirts",
                             slug: "shirts",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1784143807685_qi772s.png",
+                            image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=400",
                           },
                           {
                             name: "Jeans",
                             slug: "jeans",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/dark%20blue%20jeans%20for%20men%20(2).png",
+                            image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=400",
                           },
                           {
                             name: "Pants",
                             slug: "pants",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/clinza_1784143010625_m2u2uj.png",
+                            image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=400",
                           },
                           {
-                            name: "cargo",
-                            slug: "cargo-pants",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/cargos.jpg",
+                            name: "Oversized",
+                            slug: "shirts",
+                            image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400",
                           },
                           {
-                            name: "Combos",
+                            name: "Co-ords",
                             slug: "combos",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/Clinza%20combo%20set%20(1).png",
+                            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=400",
                           },
                           {
-                            name: "trending",
-                            slug: "trending",
-                            image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png",
+                            name: "Accessories",
+                            slug: "accessories",
+                            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400",
                           }
                         ].map((cat, idx) => (
                           <div

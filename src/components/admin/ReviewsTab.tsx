@@ -6,6 +6,11 @@
 import React, { useState, useEffect } from "react";
 import { Star, Check, X, Trash2, ShieldAlert } from "lucide-react";
 import { ReviewItem } from "../../types";
+import {
+  syncReviewsFromCloud,
+  saveReviewToCloud,
+  deleteReviewFromCloud,
+} from "../../supabase";
 
 export default function ReviewsTab() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -24,6 +29,16 @@ export default function ReviewsTab() {
       setReviews(initial);
       localStorage.setItem("clinza_product_reviews", JSON.stringify(initial));
     }
+
+    // Load from cloud database
+    syncReviewsFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        setReviews(cloudList);
+        localStorage.setItem("clinza_product_reviews", JSON.stringify(cloudList));
+      }
+    }).catch((err) => {
+      console.warn("Could not sync reviews from cloud:", err);
+    });
   }, []);
 
   const saveToStore = (list: ReviewItem[]) => {
@@ -33,21 +48,38 @@ export default function ReviewsTab() {
   };
 
   const handleApprove = (id: string) => {
-    const updated = reviews.map(r => r.id === id ? { ...r, approved: true } : r);
-    saveToStore(updated);
-    alert("Testimonial review approved and published to client product view cards!");
+    const target = reviews.find(r => r.id === id);
+    if (target) {
+      const updatedReview = { ...target, approved: true };
+      const updated = reviews.map(r => r.id === id ? updatedReview : r);
+      saveToStore(updated);
+      saveReviewToCloud(updatedReview).catch((err) => {
+        console.error("Failed to sync approved review to cloud:", err);
+      });
+      alert("Testimonial review approved and published to client product view cards!");
+    }
   };
 
   const handleReject = (id: string) => {
-    const updated = reviews.map(r => r.id === id ? { ...r, approved: false } : r);
-    saveToStore(updated);
-    alert("Review unapproved successfully.");
+    const target = reviews.find(r => r.id === id);
+    if (target) {
+      const updatedReview = { ...target, approved: false };
+      const updated = reviews.map(r => r.id === id ? updatedReview : r);
+      saveToStore(updated);
+      saveReviewToCloud(updatedReview).catch((err) => {
+        console.error("Failed to sync rejected review to cloud:", err);
+      });
+      alert("Review unapproved successfully.");
+    }
   };
 
   const handleDelete = (id: string) => {
     if (confirm("Remove this client review completely?")) {
       const updated = reviews.filter(r => r.id !== id);
       saveToStore(updated);
+      deleteReviewFromCloud(id).catch((err) => {
+        console.error("Failed to delete review from cloud:", err);
+      });
     }
   };
 

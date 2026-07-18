@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, ChevronLeft, ToggleLeft, ToggleRight, Check } from "lucide-react";
 import { CollectionMaster } from "../../types";
 import MediaUploader from "./MediaUploader";
+import { getCollections, saveCollections } from "../../utils";
 import {
   getCollectionsFromCloud,
   saveCollectionToCloud,
@@ -17,6 +18,7 @@ export default function CollectionsTab() {
   const [collections, setCollections] = useState<CollectionMaster[]>([]);
   const [editorMode, setEditorMode] = useState<"list" | "form">("list");
   const [editingCollection, setEditingCollection] = useState<CollectionMaster | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     id: "",
@@ -32,39 +34,21 @@ export default function CollectionsTab() {
   });
 
   useEffect(() => {
-  loadCollections();
-}, []);
+    setCollections(getCollections());
+    setLoading(true);
+    getCollectionsFromCloud().then((cloudList) => {
+      if (cloudList && cloudList.length > 0) {
+        setCollections(cloudList);
+        saveCollections(cloudList);
+      }
+    }).finally(() => setLoading(false));
+  }, []);
 
-async function loadCollections() {
-  const data = await getCollectionsFromCloud();
-
-  if (data.length > 0) {
-    setCollections(data as CollectionMaster[]);
-  } else {
-    setCollections([]);
-  }
-}
-
-const saveToStore = async (list: CollectionMaster[]) => {
-  setCollections(list);
-
-  for (const collection of list) {
-    await saveCollectionToCloud({
-      id: collection.id,
-      name: collection.name,
-      slug: collection.slug,
-      banner: collection.banner,
-      thumbnail: collection.thumbnail,
-      description: collection.description,
-      seo_title: collection.seoTitle,
-      seo_description: collection.seoDescription,
-      display_order: collection.displayOrder,
-      featured: collection.featured,
-    });
-  }
-
-  await loadCollections();
-};
+  const saveToStore = (list: CollectionMaster[]) => {
+    setCollections(list);
+    saveCollections(list);
+    console.log("Collections lists automatically persistent to Firestore master tables.");
+  };
 
   const handleOpenForm = (col: CollectionMaster | null) => {
     if (col) {
@@ -97,40 +81,39 @@ const saveToStore = async (list: CollectionMaster[]) => {
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {    e.preventDefault();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!form.name || !form.slug) {
       alert("Collection Name and Slug are required!");
       return;
     }
-await saveCollectionToCloud({
-  id: form.id,
-  name: form.name,
-  slug: form.slug,
-  banner: form.banner,
-  thumbnail: form.thumbnail,
-  description: form.description,
-  seo_title: form.seoTitle,
-  seo_description: form.seoDescription,
-  display_order: form.displayOrder,
-  featured: form.featured,
-});
 
-await loadCollections();
+    let updated: CollectionMaster[];
+    if (editingCollection) {
+      updated = collections.map(c => c.id === form.id ? form : c);
+    } else {
+      updated = [...collections, form];
+    }
 
-setEditorMode("list");
-setEditingCollection(null);
+    saveToStore(updated);
+    saveCollectionToCloud(form).catch((err) => {
+      console.error("Failed to sync collection to cloud:", err);
+    });
 
-alert(`Collection "${form.name}" committed successfully!`);
+    setEditorMode("list");
+    setEditingCollection(null);
+    alert(`Collection "${form.name}" committed successfully!`);
   };
 
-  const handleDelete = async (id: string) => {
-  if (!confirm("Permanently erase this Collection from index catalogs?")) {
-    return;
-  }
-
-  await deleteCollectionFromCloud(id);
-  await loadCollections();
-};
+  const handleDelete = (id: string) => {
+    if (confirm("Permanently erase this Collection from index catalogs?")) {
+      const updated = collections.filter(c => c.id !== id);
+      saveToStore(updated);
+      deleteCollectionFromCloud(id).catch((err) => {
+        console.error("Failed to delete collection from cloud:", err);
+      });
+    }
+  };
 
   return (
     <div id="collections-master-cms" className="space-y-6 text-left animate-fade-in">

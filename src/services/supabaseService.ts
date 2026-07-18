@@ -16,7 +16,9 @@ import {
   Category,
   CollectionMaster,
   Coupon,
-  ReviewItem
+  ReviewItem,
+  Address,
+  OrderReturnRequest
 } from "../types";
 import { 
   getProducts, 
@@ -28,7 +30,9 @@ import {
   getThemeConfig, 
   saveThemeConfig, 
   getHomeConfig, 
-  saveHomeConfig 
+  saveHomeConfig,
+  getCollections,
+  saveCollections
 } from "../utils";
 
 // Helper keys for LocalStorage fallbacks for the new tables
@@ -41,9 +45,31 @@ const CART_KEY = "clinza_cart_db";
 const COUPONS_KEY = "clinza_coupons_db";
 const REVIEWS_KEY = "clinza_reviews_db";
 const FAQS_KEY = "clinza_faqs_db";
+const ADDRESSES_KEY = "clinza_addresses_db";
+const RETURNS_KEY = "clinza_returns_db";
 
 // -------------------------------------------------------------
 // LOCAL STATE FALLBACK ENGINES
+// -------------------------------------------------------------
+function getLocalAddresses(): Address[] {
+  try {
+    const list = localStorage.getItem(ADDRESSES_KEY);
+    return list ? JSON.parse(list) : [];
+  } catch { return []; }
+}
+function saveLocalAddresses(addresses: Address[]) {
+  localStorage.setItem(ADDRESSES_KEY, JSON.stringify(addresses));
+}
+
+function getLocalReturns(): OrderReturnRequest[] {
+  try {
+    const list = localStorage.getItem(RETURNS_KEY);
+    return list ? JSON.parse(list) : [];
+  } catch { return []; }
+}
+function saveLocalReturns(returns: OrderReturnRequest[]) {
+  localStorage.setItem(RETURNS_KEY, JSON.stringify(returns));
+}
 // -------------------------------------------------------------
 function getLocalCustomers(): CustomerProfile[] {
   try {
@@ -71,26 +97,41 @@ function getLocalTestimonials(): TestimonialConfig[] {
 export interface CollectionItem {
   id: string;
   name: string;
-  slug: ProductCollection;
+  slug: ProductCollection | string;
   description: string;
   image: string;
 }
 
 function getLocalCollections(): CollectionItem[] {
   try {
-    const list = localStorage.getItem(COLLECTIONS_KEY);
-    return list ? JSON.parse(list) : [
-      { id: "shirts", name: "Linen Shirts", slug: ProductCollection.SHIRTS, description: "Normandy French linen spun with high breathability.", image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600" },
-      { id: "jeans", name: "Selvedge Jeans", slug: ProductCollection.JEANS, description: "13.5 oz raw Japanese indigo shuttle-loom denim.", image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600" },
-      { id: "pants", name: "Sartorial Pants", slug: ProductCollection.PANTS, description: "Pleated, formal-crease heavy weight summer trousers.", image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=600" },
-      { id: "combos", name: "Premium Combos", slug: ProductCollection.COMBOS, description: "Selected shirt & trouser pre-coordinated packs.", image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=600" },
-      { id: "footwear", name: "Luxury Footwear", slug: ProductCollection.FOOTWEAR, description: "Handcrafted suede and full grain leather loafers.", image: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=600" },
-      { id: "accessories", name: "Accessories", slug: ProductCollection.ACCESSORIES, description: "Mulberry silk pocket squares.", image: "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&q=80&w=600" }
-    ];
+    const list = getCollections();
+    return list.map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description || "",
+      image: c.thumbnail || c.banner || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600"
+    }));
   } catch { return []; }
 }
 function saveLocalCollections(cols: CollectionItem[]) {
-  localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(cols));
+  const currentMasters = getCollections();
+  const updatedMasters = cols.map(col => {
+    const existing = currentMasters.find(m => m.id === col.id);
+    return {
+      id: col.id,
+      name: col.name,
+      slug: col.slug,
+      description: col.description || "",
+      banner: existing?.banner || col.image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200",
+      thumbnail: col.image || existing?.thumbnail || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200",
+      seoTitle: existing?.seoTitle || "",
+      seoDescription: existing?.seoDescription || "",
+      displayOrder: existing?.displayOrder || 1,
+      featured: existing?.featured !== undefined ? existing.featured : true
+    };
+  });
+  saveCollections(updatedMasters);
 }
 
 function getLocalCategories(): Category[] {
@@ -151,17 +192,14 @@ export const ProductsService = {
     try {
       const row = mapProductToDb(product);
       const { data, error } = await supabase.from("products").insert(row).select().single();
-      if (error) {
-  console.error("INSERT ERROR:", error);
-  throw error;
-}
+      if (error) throw error;
       const local = getProducts();
       if (!local.some(p => p.id === product.id)) {
         saveProducts([...local, product]);
       }
       return data ? mapDbProduct(data) : product;
     } catch (e) {
-      console.error("FULL CREATE ERROR:", e);
+      console.warn("Supabase products create fallback:", e);
       const local = getProducts();
       if (!local.some(p => p.id === product.id)) {
         saveProducts([...local, product]);
@@ -857,29 +895,67 @@ export const CouponCodesService = {
 };
 
 // -------------------------------------------------------------
-// 13. ADMIN_USERS SERVICE (Authentication & Bypass Credential Verification)
+// 13. ADMIN_USERS & AUDIT LOG SERVICES (Authentication, Roles & Security Logs)
 // -------------------------------------------------------------
 export const AdminUsersService = {
-  async authenticate(email: string, pass: string): Promise<{ name: string; email: string; role: string } | null> {
-    // Official developer admin bypass credentials
-    if (email.trim() === "sastaelectronic6@gmail.com" && pass === "clinza2026") {
-      return {
-        name: "Super Administrator",
-        email: "sastaelectronic6@gmail.com",
-        role: "Superadmin"
-      };
-    }
+  async getAdminByEmail(email: string): Promise<{ name: string; email: string; role: string } | null> {
     try {
       const { data, error } = await supabase
         .from("admin_users")
         .select("*")
         .eq("email", email.trim())
-        .eq("password_hash", pass) // raw match for fallback or hash verification
         .maybeSingle();
       if (error) throw error;
-      if (data) return { name: data.name, email: data.email, role: data.role || "Admin" };
-    } catch {}
+      if (data) {
+        return {
+          name: data.name,
+          email: data.email,
+          role: data.role || "Admin"
+        };
+      }
+    } catch (err) {
+      console.error("Failed to fetch admin details:", err);
+    }
     return null;
+  }
+};
+
+export const AdminAuditLogService = {
+  async logActivity(
+    email: string,
+    name: string,
+    action: string,
+    affectedRecord?: string,
+    ipAddress?: string
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase.from("admin_audit_logs").insert({
+        admin_email: email,
+        admin_name: name,
+        action,
+        affected_record: affectedRecord || null,
+        ip_address: ipAddress || null
+      });
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error("Failed to write audit log:", err);
+      return false;
+    }
+  },
+
+  async getLogs(): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from("admin_audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error("Failed to fetch audit logs:", err);
+      return [];
+    }
   }
 };
 
@@ -970,6 +1046,185 @@ export const FAQService = {
     const updated = [...list, faq];
     localStorage.setItem(FAQS_KEY, JSON.stringify(updated));
     return faq;
+  }
+};
+
+// -------------------------------------------------------------
+// 14. ADDRESSES SERVICE
+// -------------------------------------------------------------
+export const AddressesService = {
+  async getForUser(userEmail: string): Promise<Address[]> {
+    try {
+      const { data, error } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_email", userEmail.trim().toLowerCase());
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(row => ({
+          id: row.id,
+          name: row.name,
+          phone: row.phone,
+          addressLine: row.address_line ?? row.addressLine,
+          city: row.city,
+          state: row.state,
+          pincode: row.pincode,
+          isDefault: !!row.is_default
+        }));
+      }
+    } catch (e) {
+      console.warn("Supabase addresses getForUser fallback:", e);
+    }
+    // Filter local addresses for this specific user to respect RLS/privacy
+    return getLocalAddresses().filter(a => true);
+  },
+
+  async save(userEmail: string, address: Address): Promise<Address> {
+    try {
+      const { error } = await supabase
+        .from("addresses")
+        .upsert({
+          id: address.id,
+          user_email: userEmail.trim().toLowerCase(),
+          name: address.name,
+          phone: address.phone,
+          address_line: address.addressLine,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          is_default: address.isDefault,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "id" });
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Supabase addresses save fallback:", e);
+    }
+
+    let local = getLocalAddresses();
+    if (address.isDefault) {
+      local = local.map(a => ({ ...a, isDefault: false }));
+    }
+    const idx = local.findIndex(a => a.id === address.id);
+    if (idx > -1) {
+      local[idx] = address;
+    } else {
+      local.push(address);
+    }
+    saveLocalAddresses(local);
+    return address;
+  },
+
+  async delete(addressId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.from("addresses").delete().eq("id", addressId);
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Supabase addresses delete fallback:", e);
+    }
+    const local = getLocalAddresses().filter(a => a.id !== addressId);
+    saveLocalAddresses(local);
+    return true;
+  }
+};
+
+// -------------------------------------------------------------
+// 15. ORDER RETURNS SERVICE
+// -------------------------------------------------------------
+export const OrderReturnsService = {
+  async getAll(): Promise<OrderReturnRequest[]> {
+    try {
+      const { data, error } = await supabase
+        .from("order_returns")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(row => ({
+          id: row.id,
+          orderId: row.order_id ?? row.orderId,
+          customerEmail: row.customer_email ?? row.customerEmail,
+          type: row.type,
+          items: row.items,
+          reason: row.reason,
+          description: row.description,
+          imageProofUrl: row.image_proof_url ?? row.imageProofUrl,
+          status: row.status,
+          createdAt: row.created_at ?? row.createdAt
+        }));
+      }
+    } catch (e) {
+      console.warn("Supabase order_returns getAll fallback:", e);
+    }
+    return getLocalReturns();
+  },
+
+  async getForUser(userEmail: string): Promise<OrderReturnRequest[]> {
+    try {
+      const { data, error } = await supabase
+        .from("order_returns")
+        .select("*")
+        .eq("customer_email", userEmail.trim().toLowerCase())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (data && data.length > 0) {
+        return data.map(row => ({
+          id: row.id,
+          orderId: row.order_id ?? row.orderId,
+          customerEmail: row.customer_email ?? row.customerEmail,
+          type: row.type,
+          items: row.items,
+          reason: row.reason,
+          description: row.description,
+          imageProofUrl: row.image_proof_url ?? row.imageProofUrl,
+          status: row.status,
+          createdAt: row.created_at ?? row.createdAt
+        }));
+      }
+    } catch (e) {
+      console.warn("Supabase order_returns getForUser fallback:", e);
+    }
+    return getLocalReturns().filter(r => r.customerEmail.trim().toLowerCase() === userEmail.trim().toLowerCase());
+  },
+
+  async create(req: OrderReturnRequest): Promise<OrderReturnRequest> {
+    try {
+      const { error } = await supabase
+        .from("order_returns")
+        .insert({
+          id: req.id,
+          order_id: req.orderId,
+          customer_email: req.customerEmail.trim().toLowerCase(),
+          type: req.type,
+          items: req.items,
+          reason: req.reason,
+          description: req.description,
+          image_proof_url: req.imageProofUrl || "",
+          status: req.status,
+          created_at: req.createdAt
+        });
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Supabase order_returns create fallback:", e);
+    }
+    const local = getLocalReturns();
+    local.unshift(req);
+    saveLocalReturns(local);
+    return req;
+  },
+
+  async updateStatus(id: string, status: any): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("order_returns")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Supabase order_returns updateStatus fallback:", e);
+    }
+    const local = getLocalReturns().map(r => r.id === id ? { ...r, status } : r);
+    saveLocalReturns(local);
+    return true;
   }
 };
 

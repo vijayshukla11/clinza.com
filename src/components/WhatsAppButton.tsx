@@ -56,7 +56,7 @@ Please assist me.`;
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end select-none">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[90] flex flex-col items-end select-none">
       {/* Tiny descriptive bubble above on hover */}
       <div className="group relative flex items-center justify-end">
         
@@ -77,14 +77,14 @@ Please assist me.`;
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-14 w-14 bg-white text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-[#25D366]/20 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border border-emerald-500/10"
+            className="h-12 w-12 sm:h-14 sm:w-14 bg-white text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-[#25D366]/20 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border border-emerald-500/10"
             title="Chat via WhatsApp with CLINZA styling room"
           >
             <img 
               src="https://i.postimg.cc/fVFPc5Mf/image.png" 
               onError={handleImgError}
               alt="WhatsApp Support" 
-              className="h-10 w-10 object-contain rounded-full"
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain rounded-full"
               referrerPolicy="no-referrer"
             />
           </a>

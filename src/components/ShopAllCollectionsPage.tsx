@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Product, BlogPost } from "../types";
 import { getProducts, getBlogs } from "../utils";
+import { CollectionsService } from "../services/supabaseService";
 import ProductCard from "./ProductCard";
 
 interface ShopAllCollectionsPageProps {
@@ -52,6 +53,8 @@ export default function ShopAllCollectionsPage({
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [loadingCollections, setLoadingCollections] = useState<boolean>(true);
 
   // Filter & Search states
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -68,6 +71,48 @@ export default function ShopAllCollectionsPage({
   const productsSectionRef = useRef<HTMLDivElement>(null);
   const collectionsSectionRef = useRef<HTMLDivElement>(null);
 
+  const getProductCount = (collectionIdOrSlug: string) => {
+    const normalized = (collectionIdOrSlug || "").toLowerCase();
+    if (!normalized) return 0;
+    
+    if (normalized === "premium-linen") {
+      return allProducts.filter(p => p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen")).length;
+    } else if (normalized === "shirts") {
+      return allProducts.filter(p => p.collection?.toLowerCase() === "shirts").length;
+    } else if (normalized === "jeans") {
+      return allProducts.filter(p => p.collection?.toLowerCase() === "jeans").length;
+    } else if (normalized === "pants") {
+      return allProducts.filter(p => p.collection?.toLowerCase() === "pants").length;
+    } else if (normalized === "trending") {
+      return allProducts.filter(p => p.isTrending).length;
+    } else if (normalized === "new-arrivals" || normalized === "new-arrivals-all") {
+      return allProducts.filter(p => p.isNewArrival).length;
+    } else if (normalized === "combo" || normalized === "combos" || normalized === "co-ord") {
+      return allProducts.filter(p => p.collection?.toLowerCase() === "combo" || p.collection?.toLowerCase() === "combos" || p.category.toLowerCase().includes("combo") || p.name.toLowerCase().includes("co-ord") || p.name.toLowerCase().includes("set")).length;
+    } else if (normalized === "shoes" || normalized === "footwear") {
+      return allProducts.filter(p => p.collection?.toLowerCase() === "shoes" || p.collection?.toLowerCase() === "footwear" || p.category.toLowerCase().includes("shoe") || p.category.toLowerCase().includes("loaf")).length;
+    } else {
+      return allProducts.filter(p => 
+        (p.collection && p.collection.toLowerCase() === normalized) ||
+        (p.category && p.category.toLowerCase().includes(normalized)) ||
+        (p.description && p.description.toLowerCase().includes(normalized))
+      ).length;
+    }
+  };
+
+  const getCollectionBadge = (col: any, index: number) => {
+    if (col.badge) return col.badge;
+    const badges = [
+      "SARTORIAL HERITAGE",
+      "CURATED ATELIER",
+      "HEAVY-SPEC CRAFT",
+      "MODERN OFFICE",
+      "LATEST RELEASE",
+      "BEST SELLERS"
+    ];
+    return badges[index % badges.length];
+  };
+
   useEffect(() => {
     // Collect 30 products dynamically or fall back
     const prods = getProducts();
@@ -77,6 +122,20 @@ export default function ShopAllCollectionsPage({
     // Collect high-fidelity blog posts
     const b = getBlogs();
     setBlogs(b);
+
+    // Fetch dynamic collections from Supabase with loading state
+    async function fetchCollections() {
+      setLoadingCollections(true);
+      try {
+        const fetched = await CollectionsService.getAll();
+        setCollections(fetched || []);
+      } catch (error) {
+        console.error("Error fetching collections from Supabase:", error);
+      } finally {
+        setLoadingCollections(false);
+      }
+    }
+    fetchCollections();
   }, []);
 
   // Multi-criteria active cascading filtering engine
@@ -85,27 +144,40 @@ export default function ShopAllCollectionsPage({
 
     // Filter by main product category
     if (selectedCategory !== "all") {
-      result = result.filter(p => p.category.toLowerCase().includes(selectedCategory.toLowerCase()) || p.collection.toLowerCase() === selectedCategory.toLowerCase());
+      const catLower = selectedCategory.toLowerCase();
+      result = result.filter(p => 
+        p.category.toLowerCase().includes(catLower) || 
+        p.collection.toLowerCase() === catLower ||
+        (catLower === "combo" && (p.collection.toLowerCase() === "combo" || p.collection.toLowerCase() === "combos")) ||
+        (catLower === "shoes" && (p.collection.toLowerCase() === "shoes" || p.collection.toLowerCase() === "footwear"))
+      );
     }
 
     // Filter by Shopify collection definitions
     if (selectedCollection !== "all") {
-      if (selectedCollection === "premium-linen") {
+      const colLower = selectedCollection.toLowerCase();
+      if (colLower === "premium-linen") {
         result = result.filter(p => p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen"));
-      } else if (selectedCollection === "shirts") {
-        result = result.filter(p => p.collection.toLowerCase() === "shirts");
-      } else if (selectedCollection === "jeans") {
-        result = result.filter(p => p.collection.toLowerCase() === "jeans");
-      } else if (selectedCollection === "pants") {
-        result = result.filter(p => p.collection.toLowerCase() === "pants");
-      } else if (selectedCollection === "trending") {
+      } else if (colLower === "trending") {
         result = result.filter(p => p.isTrending);
-      } else if (selectedCollection === "new-arrivals") {
+      } else if (colLower === "new-arrivals") {
         result = result.filter(p => p.isNewArrival);
-      } else if (selectedCollection === "co-ord") {
-        result = result.filter(p => p.category.toLowerCase().includes("combo") || p.name.toLowerCase().includes("co-ord") || p.name.toLowerCase().includes("set"));
+      } else if (colLower === "combo" || colLower === "combos" || colLower === "co-ord") {
+        result = result.filter(p => 
+          p.collection.toLowerCase() === "combo" || 
+          p.collection.toLowerCase() === "combos" || 
+          p.category.toLowerCase().includes("combo") || 
+          p.name.toLowerCase().includes("co-ord") || 
+          p.name.toLowerCase().includes("set")
+        );
+      } else if (colLower === "shoes" || colLower === "footwear") {
+        result = result.filter(p => p.collection.toLowerCase() === "shoes" || p.collection.toLowerCase() === "footwear" || p.category.toLowerCase().includes("shoe") || p.category.toLowerCase().includes("loaf"));
       } else {
-        result = result.filter(p => p.category.toLowerCase().includes(selectedCollection) || p.description.toLowerCase().includes(selectedCollection));
+        result = result.filter(p => 
+          p.collection.toLowerCase() === colLower || 
+          p.category.toLowerCase().includes(colLower) || 
+          p.description.toLowerCase().includes(colLower)
+        );
       }
     }
 
@@ -176,58 +248,6 @@ export default function ShopAllCollectionsPage({
     }
   ];
 
-  // Static collections master data
-  const premiumCollections = [
-    {
-      id: "premium-linen",
-      title: "Premium Linen Luxe",
-      description: "Heavyweight Normandy flax threads loomed for airy, refined sophistication.",
-      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/linen%20set%20(7)%20(1).png",
-      itemCount: "12 Garments",
-      badge: "SARTORIAL HERITAGE"
-    },
-    {
-      id: "shirts",
-      title: "Classic Spread Shirts",
-      description: "Crisp spread-collars, mother-of-pearl buttons and tailored flat-felled stitches.",
-      image: "https://images.unsplash.com/photo-1620012253295-c05518e99351?auto=format&fit=crop&q=80&w=800",
-      itemCount: "10 Garments",
-      badge: "CURATED ATELIER"
-    },
-    {
-      id: "jeans",
-      title: "Vintage Selvedge Jeans",
-      description: "13.5 oz raw redline shuttle-woven Japanese denim made to custom model your stance.",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
-      itemCount: "6 Garments",
-      badge: "HEAVY-SPEC CRAFT"
-    },
-    {
-      id: "pants",
-      title: "Sartorial Pleated Pants",
-      description: "Double pleated, tailored trousers offering generous strides and crease drapes.",
-      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=800",
-      itemCount: "8 Garments",
-      badge: "MODERN OFFICE"
-    },
-    {
-      id: "new-arrivals",
-      title: "New Indigo Drop",
-      description: "Freshly loomed autumn coordinates calibrated for everyday confidence.",
-      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=800",
-      itemCount: "14 Garments",
-      badge: "LATEST RELEASE"
-    },
-    {
-      id: "trending",
-      title: "The Coveted Circle",
-      description: "Critically-acclaimed silhouettes selected by verified sartorial wearers.",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800",
-      itemCount: "9 Garments",
-      badge: "BEST SELLERS"
-    }
-  ];
-
   return (
     <div id="shop-all-collections-page" className="bg-zinc-50 font-sans text-left min-h-screen pb-10 sm:pb-12 selection:bg-[#F27D26] selection:text-white animate-fade-in">
       
@@ -284,7 +304,7 @@ export default function ShopAllCollectionsPage({
           <div className="lg:col-span-6 relative bg-zinc-100 rounded-none border border-zinc-200 overflow-hidden leading-none h-full">
             <div className="aspect-[4/3] rounded-none overflow-hidden bg-gray-100 group">
               <img 
-                src="https://i.postimg.cc/BZptYsRq/Grey-Modern-Illustrative-Product-Promotion-Instagram-Post-(1).png" 
+                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1200" 
                 alt="CLINZA Editorial Campaign Model"
                 className="w-full h-full object-cover grayscale opacity-95 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                 referrerPolicy="no-referrer"
@@ -373,7 +393,7 @@ export default function ShopAllCollectionsPage({
               {/* Category selector row */}
               <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-[280px]">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400 mr-2">Category:</span>
-                {["all", "shirts", "jeans", "pants", "combos", "accessories"].map((cat) => (
+                {["all", ...collections.map(c => c.slug)].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
@@ -510,51 +530,79 @@ export default function ShopAllCollectionsPage({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {premiumCollections.map((col) => (
-              <div 
-                key={col.id}
-                className="group bg-white rounded-none overflow-hidden border border-zinc-200 hover:border-black transition-all duration-300 flex flex-col justify-between"
-              >
-                {/* Collection image container with slight zoom */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-zinc-100">
-                  <img 
-                    src={col.image} 
-                    alt={col.title}
-                    className="w-full h-full object-cover group-hover:scale-102 transition-all duration-700 ease-out"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-4 left-4 bg-zinc-950 text-white font-mono text-[8px] font-black tracking-widest px-2.5 py-1 uppercase">
-                    {col.badge}
-                  </div>
-                </div>
-
-                {/* Info and action panel */}
-                <div className="p-5 flex flex-col justify-between flex-1 border-t border-zinc-100">
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <h3 className="text-sm font-sans font-bold text-gray-950 uppercase tracking-tight">
-                        {col.title}
-                      </h3>
-                      <span className="text-[9px] font-bold text-[#F27D26] font-mono uppercase bg-orange-550/5 px-2 py-0.5 border border-orange-550/10">
-                        {col.itemCount}
-                      </span>
-                    </div>
-                    <p className="text-gray-500 text-xs font-light leading-relaxed mb-4">
-                      {col.description}
-                    </p>
-                  </div>
-                  
-                  <button
-                    onClick={() => handleCollectionSelect(col.id)}
-                    className="w-full bg-zinc-950 hover:bg-[#F27D26]/10 hover:text-[#F27D26] text-white hover:border-[#F27D26] font-sans text-[10px] font-bold uppercase tracking-widest py-3.5 transition-colors cursor-pointer flex items-center justify-center gap-1.5 rounded-none border border-zinc-950"
-                  >
-                    <span>Shop Collection</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+            {loadingCollections ? (
+              <div className="col-span-full py-20 text-center space-y-4">
+                <div className="h-8 w-8 border-2 border-[#F27D26] border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs uppercase tracking-widest text-zinc-500 font-mono font-bold animate-pulse">
+                  Querying Atelier Databases...
+                </p>
               </div>
-            ))}
+            ) : collections.length === 0 ? (
+              <div className="col-span-full py-20 text-center space-y-4 border border-zinc-200 bg-white">
+                <Package className="h-8 w-8 text-zinc-300 mx-auto" />
+                <p className="text-xs uppercase tracking-widest text-gray-950 font-bold font-sans">
+                  No Collections Found
+                </p>
+                <p className="text-[11px] text-zinc-400 max-w-sm mx-auto font-light leading-relaxed">
+                  We are currently calibrating new sartorial coordinates. Please check back soon or browse our full catalogue.
+                </p>
+              </div>
+            ) : (
+              collections.map((col, index) => {
+                const title = col.name || col.title || "Premium Collection";
+                const imgUrl = col.image || col.banner || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800";
+                const desc = col.description || "Meticulously stitched premium garment coordinate designed for modern everyday confidence.";
+                const count = getProductCount(col.id || col.slug);
+                const itemCountText = count > 0 ? `${count} Garments` : (col.itemCount || "0 Garments");
+                const badgeText = getCollectionBadge(col, index);
+
+                return (
+                  <div 
+                    key={col.id || index}
+                    className="group bg-white rounded-none overflow-hidden border border-zinc-200 hover:border-black transition-all duration-300 flex flex-col justify-between"
+                  >
+                    {/* Collection image container with slight zoom */}
+                    <div className="relative aspect-[3/4] overflow-hidden bg-zinc-100">
+                      <img 
+                        src={imgUrl} 
+                        alt={title}
+                        className="w-full h-full object-cover group-hover:scale-102 transition-all duration-700 ease-out"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute top-4 left-4 bg-zinc-950 text-white font-mono text-[8px] font-black tracking-widest px-2.5 py-1 uppercase">
+                        {badgeText}
+                      </div>
+                    </div>
+
+                    {/* Info and action panel */}
+                    <div className="p-5 flex flex-col justify-between flex-1 border-t border-zinc-100">
+                      <div>
+                        <div className="flex justify-between items-baseline mb-2">
+                          <h3 className="text-sm font-sans font-bold text-gray-950 uppercase tracking-tight">
+                            {title}
+                          </h3>
+                          <span className="text-[9px] font-bold text-[#F27D26] font-mono uppercase bg-orange-550/5 px-2 py-0.5 border border-[#F27D26]/10">
+                            {itemCountText}
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-xs font-light leading-relaxed mb-4">
+                          {desc}
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleCollectionSelect(col.id || col.slug)}
+                        className="w-full bg-zinc-950 hover:bg-[#F27D26]/10 hover:text-[#F27D26] text-white hover:border-[#F27D26] font-sans text-[10px] font-bold uppercase tracking-widest py-3.5 transition-colors cursor-pointer flex items-center justify-center gap-1.5 rounded-none border border-zinc-950"
+                      >
+                        <span>Shop Collection</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
         </div>

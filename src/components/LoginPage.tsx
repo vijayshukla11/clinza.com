@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Mail, Lock, Sparkles, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
-import { signInWithEmail } from "../supabase";
+import { signInWithEmail, supabase } from "../supabase";
 
 interface LoginPageProps {
   onLoginSuccess: (user: any) => void;
@@ -104,6 +104,29 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Password</label>
+              <button
+                type="button"
+                onClick={async () => {
+                  const resetEmail = prompt("Please enter your registered email address to receive a secure password reset link:");
+                  if (!resetEmail) return;
+                  if (!resetEmail.includes("@")) {
+                    alert("Please specify a valid email coordinate.");
+                    return;
+                  }
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+                      redirectTo: window.location.origin
+                    });
+                    if (error) throw error;
+                    alert(`Secure reset coordinates dispatched successfully to "${resetEmail}". Verify your spam/inbox folders.`);
+                  } catch (err: any) {
+                    alert(err?.message || "Password recovery error. Verify email credentials.");
+                  }
+                }}
+                className="text-[10px] text-zinc-400 hover:text-[#F27D26] hover:underline font-mono"
+              >
+                Forgot Password?
+              </button>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-gray-400" />

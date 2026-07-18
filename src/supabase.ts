@@ -1,22 +1,22 @@
-/**getCustomersFromCloud
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { createClient } from "@supabase/supabase-js";
-import {
-  Product,
-  BlogPost,
-  Order,
-  HomepageConfig,
-  ThemeConfig,
-  CustomerProfile,
-} from "./types";
+import { Product, BlogPost, Order, HomepageConfig, ThemeConfig, CollectionMaster, Category, Coupon, CustomerProfile, ReviewItem, OrderReturnRequest } from "./types";
 
 // Fallbacks are provided directly from user specification for immediate, robust operation
 const viteEnv = (import.meta as any).env || {};
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = 
+  viteEnv.VITE_SUPABASE_URL || 
+  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://zvlcraiwdwohdqfpqjtz.supabase.co";
+
+const SUPABASE_ANON_KEY = 
+  viteEnv.VITE_SUPABASE_ANON_KEY || 
+  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_T5AXsc3Zotfbi_J18VwJXw_jZR3wlOp";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -83,25 +83,9 @@ export async function signInWithEmail(email: string, pass: string) {
       email: email.trim(),
       password: pass,
     });
-    if (error) {
-      // Allow bypass if they are logging in with the developer credential
-      if (email.trim() === "sastaelectronic6@gmail.com" && pass === "clinza2026") {
-        return {
-          email: "sastaelectronic6@gmail.com",
-          user_metadata: { name: "Super Administrator" }
-        };
-      }
-      throw error;
-    }
+    if (error) throw error;
     return data.user;
   } catch (err) {
-    // Elegant fallback developer bypass
-    if (email.trim() === "sastaelectronic6@gmail.com" && pass === "clinza2026") {
-      return {
-        email: "sastaelectronic6@gmail.com",
-        user_metadata: { name: "Super Administrator" }
-      };
-    }
     console.error("Supabase Email Auth failed:", err);
     throw err;
   }
@@ -370,54 +354,6 @@ export async function getSingleOrderFromCloud(orderId: string): Promise<Order | 
     return null;
   }
 }
-// =====================
-// CUSTOMERS
-// =====================
-
-export async function syncCustomersFromCloud() {  try {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.warn("Could not fetch customers:", error.message);
-    return [];
-  }
-
-  return data || [];
-} catch (err) {
-  console.error("Customer sync failed:", err);
-  return [];
-}
-}
-
-export async function saveCustomerToCloud(customer: CustomerProfile) { try {
-  const { error } = await supabase
-    .from("customers")
-    .upsert(customer, { onConflict: "id" });
-
-  if (error) {
-    console.warn("Customer save failed:", error.message);
-  }
-} catch (err) {
-  console.error("Customer save failed:", err);
-}
-}
-
-export async function deleteCustomerFromCloud(id: string) { try {
-  const { error } = await supabase
-    .from("customers")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.warn("Customer delete failed:", error.message);
-  }
-} catch (err) {
-  console.error("Customer delete failed:", err);
-}
-}
 
 // 4. Sync Homepage Configs
 export async function syncHomepageConfigFromCloud(): Promise<HomepageConfig | null> {
@@ -533,13 +469,36 @@ export async function createBackupThemeConfigInCloud(config: ThemeConfig): Promi
 }
 
 /**
- * Uploads a file to a Supabase Storage bucket and returns its public URL
+ * Uploads a file to a Supabase Storage bucket and returns its public URL.
+ * Supports centralized 'clinza-media' bucket with folder names, as well as specific bucket fallbacks.
  */
-export async function uploadFileToSupabase(bucketName: string, file: File): Promise<string> {
+export async function uploadFileToSupabase(bucketName: string, file: File, folderName?: string): Promise<string> {
   try {
-    // Generate a unique file name
     const extension = file.name.split('.').pop() || 'png';
     const cleanFileName = `clinza_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
+    
+    // Support centralized bucket 'clinza-media' with subfolders
+    const centralBucket = "clinza-media";
+    const targetFolder = folderName || bucketName; // e.g. "brand", "homepage", "collections", "categories", "products", "blogs", "banners", "icons", "uploads"
+    const uploadPath = `${targetFolder}/${cleanFileName}`;
+
+    // Try uploading to central bucket first
+    const { data: centralData, error: centralError } = await supabase.storage
+      .from(centralBucket)
+      .upload(uploadPath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (!centralError) {
+      const { data: { publicUrl } } = supabase.storage
+        .from(centralBucket)
+        .getPublicUrl(uploadPath);
+      return publicUrl;
+    }
+
+    // Fall back to specific bucket if central bucket is not configured or fails
+    console.warn(`Centralized storage bucket [${centralBucket}] failed/not initialized (${centralError.message}). Falling back to specific bucket [${bucketName}]...`);
     
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -549,7 +508,7 @@ export async function uploadFileToSupabase(bucketName: string, file: File): Prom
       });
 
     if (error) {
-      console.warn(`Supabase explicit upload error on bucket [${bucketName}]:`, error.message);
+      console.warn(`Supabase fallback upload error on bucket [${bucketName}]:`, error.message);
       throw error;
     }
 
@@ -684,54 +643,473 @@ export async function getStyleAnalysisLeadsFromCloud(): Promise<any[]> {
   }
 }
 
-// ===============================
-// COLLECTIONS
-// ===============================
-export async function getCollectionsFromCloud() {
-  const { data, error } = await supabase
-    .from("collections")
-    .select("*")
-    .order("display_order", { ascending: true });
-
-  if (error) {
-    console.error(error);
+// ---- CUSTOMERS INTEGRATION ----
+export async function getCustomersFromCloud(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.warn("Could not load customers:", error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error("Customers query failure:", err);
     return [];
   }
-
-  return (data || []).map((item: any) => ({
-    id: item.id,
-    name: item.name,
-    slug: item.slug,
-    banner: item.banner || "",
-    thumbnail: item.thumbnail || "",
-    description: item.description || "",
-    seoTitle: item.seo_title || "",
-    seoDescription: item.seo_description || "",
-    displayOrder: item.display_order || 0,
-    featured: item.featured ?? true,
-  }));
 }
- 
 
-export async function saveCollectionToCloud(collection: any) {
-  const { error } = await supabase
-    .from("collections")
-    .upsert(collection, {
-      onConflict: "id",
-    });
+export async function saveCustomerToCloud(customer: any): Promise<void> {
+  try {
+    const dbRow = {
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || "",
+      address_book: customer.addressBook || customer.address_book || customer.addresses || [],
+      total_spend: customer.totalSpend ?? customer.total_spend ?? 0,
+      wishlist: customer.wishlist || []
+    };
 
-  if (error) {
-    console.error("Collection save failed:", error);
+    const { error } = await supabase
+      .from("customers")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Could not save customer details to cloud:", error.message);
+    }
+  } catch (err) {
+    console.error("Customer cloud state insertion issue:", err);
   }
 }
 
-export async function deleteCollectionFromCloud(id: string) {
-  const { error } = await supabase
-    .from("collections")
-    .delete()
-    .eq("id", id);
+// ---- COLLECTIONS CMS INTEGRATION ----
+export async function getCollectionsFromCloud(): Promise<CollectionMaster[]> {
+  try {
+    const { data, error } = await supabase
+      .from("collections")
+      .select("*")
+      .order("display_order", { ascending: true });
 
-  if (error) {
-    console.error("Collection delete failed:", error);
+    if (error) {
+      console.warn("Could not query collections from Supabase, using local defaults:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      banner: row.banner || "",
+      thumbnail: row.thumbnail || "",
+      description: row.description || "",
+      seoTitle: row.seo_title || row.seoTitle || "",
+      seoDescription: row.seo_description || row.seoDescription || "",
+      displayOrder: Number(row.display_order ?? row.displayOrder ?? 0),
+      featured: !!(row.featured)
+    }));
+  } catch (err) {
+    console.error("Collections cloud query failure:", err);
+    return [];
   }
 }
+
+export async function saveCollectionToCloud(collection: CollectionMaster): Promise<void> {
+  try {
+    const dbRow = {
+      id: collection.id,
+      name: collection.name,
+      slug: collection.slug,
+      banner: collection.banner || "",
+      thumbnail: collection.thumbnail || "",
+      description: collection.description || "",
+      seo_title: collection.seoTitle || "",
+      seo_description: collection.seoDescription || "",
+      display_order: collection.displayOrder ?? 0,
+      featured: !!collection.featured
+    };
+
+    const { error } = await supabase
+      .from("collections")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Supabase upsert failed - collections table offline or missing:", error.message);
+    }
+
+    // Enforce Category follows Collection automatically
+    const catRow = {
+      id: collection.id,
+      name: collection.name,
+      slug: collection.slug,
+      banner: collection.banner || "",
+      thumbnail: collection.thumbnail || "",
+      description: collection.description || "",
+      seo_title: collection.seoTitle || "",
+      seo_description: collection.seoDescription || "",
+      display_order: collection.displayOrder ?? 0,
+      featured: !!collection.featured,
+      keywords: collection.slug
+    };
+
+    const { error: catError } = await supabase
+      .from("categories")
+      .upsert(catRow, { onConflict: "id" });
+
+    if (catError) {
+      console.warn("Supabase categories auto-sync upsert failed:", catError.message);
+    }
+  } catch (err) {
+    console.error("Collections and categories cloud sync error:", err);
+  }
+}
+
+export async function deleteCollectionFromCloud(collectionId: string): Promise<void> {
+  try {
+    // Delete master collection
+    const { error } = await supabase
+      .from("collections")
+      .delete()
+      .eq("id", collectionId);
+
+    if (error) {
+      console.warn("Supabase collection delete failed:", error.message);
+    }
+
+    // Delete linked category automatically
+    const { error: catError } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", collectionId);
+
+    if (catError) {
+      console.warn("Supabase linked category auto-delete failed:", catError.message);
+    }
+  } catch (err) {
+    console.error("Collection and category cloud delete failure:", err);
+  }
+}
+
+// ---- CUSTOMERS CMS INTEGRATION ----
+export async function syncCustomersFromCloud(): Promise<CustomerProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.warn("Could not query customers from Supabase, using local defaults:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone || "",
+      addressBook: Array.isArray(row.address_book) ? row.address_book : (row.addressBook || []),
+      totalSpend: Number(row.total_spend ?? row.totalSpend ?? 0),
+      wishlist: Array.isArray(row.wishlist) ? row.wishlist : []
+    }));
+  } catch (err) {
+    console.error("Customers cloud query failure:", err);
+    return [];
+  }
+}
+export async function deleteCustomerFromCloud(customerId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("customers")
+      .delete()
+      .eq("id", customerId);
+
+    if (error) {
+      console.warn("Supabase customer delete failed:", error.message);
+    }
+  } catch (err) {
+    console.error("Customer cloud delete failure:", err);
+  }
+}
+
+// ---- CATEGORIES CMS INTEGRATION ----
+export async function syncCategoriesFromCloud(): Promise<Category[]> {
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.warn("Could not query categories from Supabase, using local defaults:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description || "",
+      banner: row.banner || "",
+      seoTitle: row.seo_title || row.seoTitle || "",
+      seoDescription: row.seo_description || row.seoDescription || "",
+      keywords: row.keywords || ""
+    }));
+  } catch (err) {
+    console.error("Categories cloud query failure:", err);
+    return [];
+  }
+}
+
+export async function saveCategoryToCloud(category: Category): Promise<void> {
+  try {
+    const dbRow = {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description || "",
+      banner: category.banner || "",
+      seo_title: category.seoTitle || "",
+      seo_description: category.seoDescription || "",
+      keywords: category.keywords || ""
+    };
+
+    const { error } = await supabase
+      .from("categories")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Supabase upsert failed - categories table offline or missing:", error.message);
+    }
+  } catch (err) {
+    console.error("Categories cloud sync error:", err);
+  }
+}
+
+export async function deleteCategoryFromCloud(categoryId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", categoryId);
+
+    if (error) {
+      console.warn("Supabase category delete failed:", error.message);
+    }
+  } catch (err) {
+    console.error("Category cloud delete failure:", err);
+  }
+}
+
+// ---- REVIEWS CMS INTEGRATION ----
+export async function syncReviewsFromCloud(): Promise<ReviewItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("*")
+      .order("date", { ascending: false });
+
+    if (error) {
+      console.warn("Could not query reviews from Supabase:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      productId: row.product_id ?? row.productId,
+      productName: row.product_name ?? row.productName,
+      rating: Number(row.rating),
+      userName: row.user_name ?? row.userName,
+      comment: row.comment,
+      location: row.location || "",
+      approved: !!(row.approved),
+      date: row.date
+    }));
+  } catch (err) {
+    console.error("Reviews cloud query failure:", err);
+    return [];
+  }
+}
+
+export async function saveReviewToCloud(review: ReviewItem): Promise<void> {
+  try {
+    const dbRow = {
+      id: review.id,
+      product_id: review.productId,
+      product_name: review.productName,
+      rating: review.rating,
+      user_name: review.userName,
+      comment: review.comment,
+      location: review.location,
+      approved: !!review.approved,
+      date: review.date
+    };
+
+    const { error } = await supabase
+      .from("reviews")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Supabase upsert failed - reviews table offline or missing:", error.message);
+    }
+  } catch (err) {
+    console.error("Reviews cloud sync error:", err);
+  }
+}
+
+export async function deleteReviewFromCloud(reviewId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("reviews")
+      .delete()
+      .eq("id", reviewId);
+
+    if (error) {
+      console.warn("Supabase review delete failed:", error.message);
+    }
+  } catch (err) {
+    console.error("Review cloud delete failure:", err);
+  }
+}
+
+// ---- COUPONS CMS INTEGRATION ----
+export async function syncCouponsFromCloud(): Promise<Coupon[]> {
+  try {
+    const { data, error } = await supabase
+      .from("coupon_codes")
+      .select("*")
+      .order("code", { ascending: true });
+
+    if (error) {
+      console.warn("Could not query coupon_codes from Supabase:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      code: row.code,
+      type: row.type,
+      value: Number(row.value),
+      minCartValue: Number(row.min_cart_value ?? row.minCartValue ?? 0),
+      expiryDate: row.expiry_date ?? row.expiryDate ?? ""
+    }));
+  } catch (err) {
+    console.error("Coupons cloud query failure:", err);
+    return [];
+  }
+}
+
+export async function saveCouponToCloud(coupon: Coupon): Promise<void> {
+  try {
+    const dbRow = {
+      id: coupon.id,
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      min_cart_value: coupon.minCartValue,
+      expiry_date: coupon.expiryDate
+    };
+
+    const { error } = await supabase
+      .from("coupon_codes")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Supabase upsert failed - coupon_codes table offline or missing:", error.message);
+    }
+  } catch (err) {
+    console.error("Coupons cloud sync error:", err);
+  }
+}
+
+export async function deleteCouponFromCloud(couponId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("coupon_codes")
+      .delete()
+      .eq("id", couponId);
+
+    if (error) {
+      console.warn("Supabase coupon delete failed:", error.message);
+    }
+  } catch (err) {
+    console.error("Coupon cloud delete failure:", err);
+  }
+}
+
+// ---- RETURNS (ORDER RETURN REQUESTS) CMS INTEGRATION ----
+export async function syncReturnsFromCloud(): Promise<OrderReturnRequest[]> {
+  try {
+    const { data, error } = await supabase
+      .from("order_returns")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Could not query order_returns from Supabase:", error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      orderId: row.order_id ?? row.orderId,
+      customerEmail: row.customer_email ?? row.customerEmail,
+      type: row.type,
+      items: Array.isArray(row.items) ? row.items : [],
+      reason: row.reason,
+      description: row.description || "",
+      imageProofUrl: row.image_proof_url ?? row.imageProofUrl,
+      status: row.status,
+      createdAt: row.created_at ?? row.createdAt
+    }));
+  } catch (err) {
+    console.error("Returns cloud query failure:", err);
+    return [];
+  }
+}
+
+export async function saveReturnToCloud(returnReq: OrderReturnRequest): Promise<void> {
+  try {
+    const dbRow = {
+      id: returnReq.id,
+      order_id: returnReq.orderId,
+      customer_email: returnReq.customerEmail,
+      type: returnReq.type,
+      items: returnReq.items,
+      reason: returnReq.reason,
+      description: returnReq.description || "",
+      image_proof_url: returnReq.imageProofUrl || "",
+      status: returnReq.status,
+      created_at: returnReq.createdAt
+    };
+
+    const { error } = await supabase
+      .from("order_returns")
+      .upsert(dbRow, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Supabase upsert failed - order_returns table offline or missing:", error.message);
+    }
+  } catch (err) {
+    console.error("Returns cloud sync error:", err);
+  }
+}
+
+export async function deleteReturnFromCloud(returnId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("order_returns")
+      .delete()
+      .eq("id", returnId);
+
+    if (error) {
+      console.warn("Supabase return delete failed:", error.message);
+    }
+  } catch (err) {
+    console.error("Return cloud delete failure:", err);
+  }
+}
+
+
