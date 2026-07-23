@@ -25,6 +25,45 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
+// Check if running on localhost development or sandbox environment
+const isLocalhost = typeof window !== "undefined" && 
+  (window.location.hostname === "localhost" || 
+   window.location.hostname === "127.0.0.1" || 
+   window.location.hostname.includes("run.app") ||
+   !!(import.meta as any).env?.DEV);
+
+if (isLocalhost) {
+  const originalGetUser = supabase.auth.getUser.bind(supabase.auth);
+  supabase.auth.getUser = async (jwt?: string) => {
+    const devSession = localStorage.getItem("clinza_dev_admin_session");
+    if (devSession) {
+      try {
+        const user = JSON.parse(devSession);
+        return { data: { user }, error: null };
+      } catch {}
+    }
+    return originalGetUser(jwt);
+  };
+
+  const originalGetSession = supabase.auth.getSession.bind(supabase.auth);
+  supabase.auth.getSession = async () => {
+    const devSession = localStorage.getItem("clinza_dev_admin_session");
+    if (devSession) {
+      try {
+        const user = JSON.parse(devSession);
+        return { data: { session: { user, access_token: "dev-token", refresh_token: "dev-refresh" } }, error: null };
+      } catch {}
+    }
+    return originalGetSession();
+  };
+
+  const originalSignOut = supabase.auth.signOut.bind(supabase.auth);
+  supabase.auth.signOut = async (options?: any) => {
+    localStorage.removeItem("clinza_dev_admin_session");
+    return originalSignOut(options);
+  };
+}
+
 // For backward compatibility and local simulation if database tables are in migration state
 export enum OperationType {
   CREATE = "create",
@@ -44,6 +83,13 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 });
 
 supabase.auth.onAuthStateChange((_event, session) => {
+  const devSession = localStorage.getItem("clinza_dev_admin_session");
+  if (isLocalhost && devSession) {
+    try {
+      currentAuthUser = JSON.parse(devSession);
+      return;
+    } catch {}
+  }
   currentAuthUser = session?.user || null;
 });
 
@@ -93,6 +139,7 @@ export async function signInWithEmail(email: string, pass: string) {
 
 export async function logOutUser() {
   try {
+    localStorage.removeItem("clinza_dev_admin_session");
     await supabase.auth.signOut();
   } catch (err) {
     console.error("Supabase signout failed:", err);

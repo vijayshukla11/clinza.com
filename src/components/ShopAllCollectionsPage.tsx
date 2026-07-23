@@ -30,8 +30,7 @@ import {
   FileText 
 } from "lucide-react";
 import { Product, BlogPost } from "../types";
-import { getProducts, getBlogs } from "../utils";
-import { CollectionsService } from "../services/supabaseService";
+import { CollectionsService, ProductsService, BlogsService } from "../services/supabaseService";
 import ProductCard from "./ProductCard";
 
 interface ShopAllCollectionsPageProps {
@@ -114,28 +113,25 @@ export default function ShopAllCollectionsPage({
   };
 
   useEffect(() => {
-    // Collect 30 products dynamically or fall back
-    const prods = getProducts();
-    setAllProducts(prods);
-    setFilteredProducts(prods);
-
-    // Collect high-fidelity blog posts
-    const b = getBlogs();
-    setBlogs(b);
-
-    // Fetch dynamic collections from Supabase with loading state
-    async function fetchCollections() {
+    async function fetchAllData() {
       setLoadingCollections(true);
       try {
-        const fetched = await CollectionsService.getAll();
-        setCollections(fetched || []);
+        const [fetchedProds, fetchedBlogs, fetchedCols] = await Promise.all([
+          ProductsService.getAll(),
+          BlogsService.getAll(),
+          CollectionsService.getAll()
+        ]);
+        setAllProducts(fetchedProds || []);
+        setFilteredProducts(fetchedProds || []);
+        setBlogs(fetchedBlogs || []);
+        setCollections(fetchedCols || []);
       } catch (error) {
-        console.error("Error fetching collections from Supabase:", error);
+        console.error("Error fetching landing data from Supabase:", error);
       } finally {
         setLoadingCollections(false);
       }
     }
-    fetchCollections();
+    fetchAllData();
   }, []);
 
   // Multi-criteria active cascading filtering engine

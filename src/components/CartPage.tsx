@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { Trash2, ShoppingBag, ArrowRight, Tag, Percent, ArrowLeft, RefreshCw } from "lucide-react";
 import { CartItem } from "../types";
+import { calculateCartTotals } from "../utils";
 
 interface CartPageProps {
   cart: CartItem[];
@@ -25,15 +26,15 @@ export default function CartPage({
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ status: "success" | "error"; text: string } | null>(null);
-  const [discountPercent, setDiscountPercent] = useState(0);
 
   // Math totals calculation
-  const subtotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
-  const discountAmount = Math.round(subtotal * (discountPercent / 100));
-  const baseForTax = subtotal - discountAmount;
-  const standardGST = Math.round(baseForTax * 0.05); // Standard textile GST 5%
-  const shippingCharge = baseForTax > 1500 ? 0 : 150; // Free shipping over ₹1500
-  const grandTotal = baseForTax + standardGST + shippingCharge;
+  const totals = calculateCartTotals(cart, appliedCoupon);
+  const subtotal = totals.subtotal;
+  const discountAmount = totals.discount;
+  const discountPercent = totals.discountPercent;
+  const standardGST = totals.tax;
+  const shippingCharge = totals.shipping;
+  const grandTotal = totals.total;
 
   const handleApplyCoupon = () => {
     const code = couponCode.trim().toUpperCase();
@@ -43,7 +44,6 @@ export default function CartPage({
     }
     
     if (code === "CLINZA10") {
-      setDiscountPercent(10);
       setAppliedCoupon("CLINZA10");
       setCouponMsg({ status: "success", text: "CLINZA10 applied successfully! Enjoy 10% off your wardrobe order." });
     } else if (code === "LUXURY20") {
@@ -51,7 +51,6 @@ export default function CartPage({
         setCouponMsg({ status: "error", text: "Code LUXURY20 is applicable only on orders above ₹4,000." });
         return;
       }
-      setDiscountPercent(20);
       setAppliedCoupon("LUXURY20");
       setCouponMsg({ status: "success", text: "LUXURY20 applied! Premium 20% savings credited." });
     } else {
@@ -60,7 +59,6 @@ export default function CartPage({
   };
 
   const handleRemoveCoupon = () => {
-    setDiscountPercent(0);
     setAppliedCoupon(null);
     setCouponMsg(null);
     setCouponCode("");
@@ -261,28 +259,31 @@ export default function CartPage({
                 Order Summary
               </h3>
 
+              {subtotal >= 3000 && (
+                <div className="bg-emerald-600/5 border border-emerald-600/10 p-3 rounded-xl text-left mb-4 select-none">
+                  <p className="text-[11px] font-black text-emerald-700 uppercase font-mono">⚡ 20% Automatic Savings Applied</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5 font-sans">Congrats! Your subtotal is ₹3,000 or more, unlocking a premium 20% automatic discount on this order.</p>
+                </div>
+              )}
+
               <div className="space-y-3 pb-4 border-b border-gray-150 text-xs text-gray-650 font-sans font-medium">
                 <div className="flex justify-between">
                   <span>Bag Subtotal</span>
                   <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600 font-bold">
+                  <div className="flex justify-between text-emerald-600 font-bold">
                     <span>Discount Credit ({discountPercent}%)</span>
                     <span>- ₹{discountAmount.toLocaleString("en-IN")}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Standard Integrated GST (5%)</span>
-                  <span>₹{standardGST.toLocaleString("en-IN")}</span>
+                  <span>Standard Integrated GST (0%)</span>
+                  <span>₹0</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Standard Cash delivery Shipping</span>
-                  {shippingCharge === 0 ? (
-                    <span className="text-green-600 font-bold uppercase text-[10px] tracking-wider bg-green-50 px-2 py-0.5 rounded">Free</span>
-                  ) : (
-                    <span>₹{shippingCharge.toLocaleString("en-IN")}</span>
-                  )}
+                  <span>₹{shippingCharge.toLocaleString("en-IN")}</span>
                 </div>
               </div>
 

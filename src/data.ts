@@ -3,7 +3,70 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Product, ProductCollection, BlogPost } from "./types";
+import { Product, ProductCollection, BlogPost, Category } from "./types";
+
+export const INITIAL_CATEGORIES: Category[] = [
+  {
+    id: "cat-linen-shirts",
+    name: "Linen Shirts",
+    slug: "linen-shirts",
+    description: "Breathable pure Italian linen shirts tailored for summer.",
+    banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "Linen Shirts Collection | CLINZA",
+    seoDescription: "Shop pure European flax linen shirts for men.",
+    keywords: "linen shirts, resort shirts"
+  },
+  {
+    id: "cat-cotton-shirts",
+    name: "Cotton Shirts",
+    slug: "cotton-shirts",
+    description: "Soft pre-washed organic cotton shirts.",
+    banner: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "Cotton Shirts | CLINZA",
+    seoDescription: "Organic lightweight cotton shirts.",
+    keywords: "cotton shirts, casual shirts"
+  },
+  {
+    id: "cat-linen-pants",
+    name: "Linen Pants",
+    slug: "linen-pants",
+    description: "Relaxed linen trousers with side adjusters.",
+    banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "Linen Pants & Trousers | CLINZA",
+    seoDescription: "Tailored double pleated linen pants.",
+    keywords: "linen pants, trousers"
+  },
+  {
+    id: "cat-jeans",
+    name: "Jeans",
+    slug: "jeans",
+    description: "Japanese raw redline selvedge denim.",
+    banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "Selvedge Denim Jeans | CLINZA",
+    seoDescription: "Heritage shuttle-loom selvedge denim jeans.",
+    keywords: "jeans, denim, selvedge"
+  },
+  {
+    id: "cat-combos",
+    name: "Combos",
+    slug: "combos",
+    description: "Dye-matched linen shirt & trouser co-ord sets.",
+    banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "Linen Combo Sets | CLINZA",
+    seoDescription: "Curated linen shirt & trouser combo sets.",
+    keywords: "combos, coord sets"
+  },
+  {
+    id: "cat-new-arrivals",
+    name: "New Arrivals",
+    slug: "new-arrivals",
+    description: "Latest sartorial drop for the modern wardrobe.",
+    banner: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=800",
+    seoTitle: "New Arrivals | CLINZA",
+    seoDescription: "Explore our latest collection drops.",
+    keywords: "new arrivals, fresh drops"
+  }
+];
 
 export const INITIAL_PRODUCTS: Product[] = [
   // === SHIRTS (1 to 7) ===

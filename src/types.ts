@@ -42,17 +42,25 @@ export interface Product {
   colors: { name: string; hex: string }[];
   sizes: string[];
   stockStatus: "In Stock" | "Low Stock" | "Out of Stock";
+  stockQuantity?: number;
   sku: string;
   brand: string;
   rating: number;
   reviews: Review[];
   description: string;
+  shortDescription?: string;
+  fabric?: string;
+  fit?: string;
+  fabricCare?: string;
+  shippingInfo?: string;
+  faqs?: { question: string; answer: string }[];
   specifications: { label: string; value: string }[];
   aPlusContent: APlusSection;
   isTrending?: boolean;
   isNewArrival?: boolean;
   seoTitle?: string;
   metaDescription?: string;
+  seoImage?: string;
 }
 
 export interface CartItem {
@@ -166,6 +174,54 @@ export interface OfferItem {
   endDate: string;
 }
 
+export interface NewArrivalsFeatureItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface NewArrivalsBannerConfig {
+  isPublished?: boolean;
+  label: string;
+  heading: string;
+  headingHighlight?: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+  image: string;
+  features: NewArrivalsFeatureItem[];
+}
+
+export interface LookbookSectionConfig {
+  isPublished?: boolean;
+  label: string;
+  heading: string;
+  headingLine2?: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  mainImage: string;
+  secondaryImage?: string;
+}
+
+export interface SummerHighlightItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface SummerEssentialsSectionConfig {
+  isPublished?: boolean;
+  label: string;
+  heading: string;
+  headingHighlight?: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  image: string;
+  highlights: SummerHighlightItem[];
+}
+
 export interface HomepageConfig {
   slides: HomeSlide[];
   trendingTitle: string;
@@ -183,6 +239,9 @@ export interface HomepageConfig {
     bgImage: string;
     bgColor: string;
   };
+  newArrivalsBanner?: NewArrivalsBannerConfig;
+  lookbookSection?: LookbookSectionConfig;
+  summerEssentialsSection?: SummerEssentialsSectionConfig;
 }
 
 export interface Category {
@@ -203,10 +262,17 @@ export interface CollectionMaster {
   banner: string;
   thumbnail: string;
   description: string;
+  shortDescription?: string;
+  buttonText?: string;
   seoTitle?: string;
   seoDescription?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  altText?: string;
   displayOrder: number;
   featured: boolean;
+  showOnHomepage?: boolean;
+  isActive?: boolean;
 }
 
 export interface Coupon {
@@ -414,6 +480,9 @@ export interface ThemeConfig {
   borderRadius?: string;
   buttonStyle?: string;
   cardStyle?: string;
+  newArrivalsBanner?: NewArrivalsBannerConfig;
+  lookbookSection?: LookbookSectionConfig;
+  summerEssentialsSection?: SummerEssentialsSectionConfig;
 }
 
 export interface Address {

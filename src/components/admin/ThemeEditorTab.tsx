@@ -35,8 +35,9 @@ import {
   Award
 } from "lucide-react";
 import { ThemeConfig, ThemeSlide, Product, BlogPost, Order } from "../../types";
-import { getThemeConfig, saveThemeConfig, publishThemeConfig, rollbackThemeConfig, DEFAULT_THEME_CONFIG } from "../../utils";
+import { getThemeConfig, saveThemeConfig, publishThemeConfig, rollbackThemeConfig, DEFAULT_THEME_CONFIG, DEFAULT_HOME_CONFIG } from "../../utils";
 import { syncThemeConfigFromCloud, saveThemeConfigToCloud } from "../../supabase";
+import { HomepageSettingsService } from "../../services/supabaseService";
 import MediaUploader from "./MediaUploader";
 
 interface ThemeEditorTabProps {
@@ -72,10 +73,20 @@ function mergeWithDefaultThemeConfig(config: any): ThemeConfig {
       ...(config.sliderSettings || {})
     },
     slides: Array.isArray(config.slides) && config.slides.length > 0 
-      ? config.slides.map((s: any, idx: number) => ({
-          ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
-          ...s
-        }))
+      ? (
+          config.slides.length >= DEFAULT_THEME_CONFIG.slides.length
+            ? config.slides.map((s: any, idx: number) => ({
+                ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
+                ...s
+              }))
+            : [
+                ...config.slides.map((s: any, idx: number) => ({
+                  ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
+                  ...s
+                })),
+                ...DEFAULT_THEME_CONFIG.slides.slice(config.slides.length)
+              ]
+        )
       : DEFAULT_THEME_CONFIG.slides,
     featuredCollections: {
       ...DEFAULT_THEME_CONFIG.featuredCollections,
@@ -107,6 +118,24 @@ function mergeWithDefaultThemeConfig(config: any): ThemeConfig {
     policies: {
       ...DEFAULT_THEME_CONFIG.policies,
       ...(config.policies || {})
+    },
+    newArrivalsBanner: {
+      ...DEFAULT_THEME_CONFIG.newArrivalsBanner,
+      ...(config.newArrivalsBanner || {}),
+      features: Array.isArray(config.newArrivalsBanner?.features)
+        ? config.newArrivalsBanner.features
+        : DEFAULT_THEME_CONFIG.newArrivalsBanner?.features || []
+    },
+    lookbookSection: {
+      ...DEFAULT_THEME_CONFIG.lookbookSection,
+      ...(config.lookbookSection || {})
+    },
+    summerEssentialsSection: {
+      ...DEFAULT_THEME_CONFIG.summerEssentialsSection,
+      ...(config.summerEssentialsSection || {}),
+      highlights: Array.isArray(config.summerEssentialsSection?.highlights)
+        ? config.summerEssentialsSection.highlights
+        : DEFAULT_THEME_CONFIG.summerEssentialsSection?.highlights || []
     }
   };
 }
@@ -212,6 +241,19 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
     try {
       // Save theme config draft to Supabase
       await saveThemeConfigToCloud(draftConfig, true);
+      
+      // Also update Homepage config in Supabase if newArrivalsBanner, lookbookSection or summerEssentialsSection exist
+      if (draftConfig.newArrivalsBanner || draftConfig.lookbookSection || draftConfig.summerEssentialsSection) {
+        const currentHp = (await HomepageSettingsService.getById("homepage")) || DEFAULT_HOME_CONFIG;
+        await HomepageSettingsService.update("homepage", {
+          ...DEFAULT_HOME_CONFIG,
+          ...currentHp,
+          ...(draftConfig.newArrivalsBanner ? { newArrivalsBanner: draftConfig.newArrivalsBanner } : {}),
+          ...(draftConfig.lookbookSection ? { lookbookSection: draftConfig.lookbookSection } : {}),
+          ...(draftConfig.summerEssentialsSection ? { summerEssentialsSection: draftConfig.summerEssentialsSection } : {})
+        });
+      }
+
       // Also save to localStorage
       localStorage.setItem("clinza_theme_draft", JSON.stringify(draftConfig));
       setStatusMessage({ type: "success", text: "Draft changes safely saved to Supabase configurations! Share this workspace URL to preview." });
@@ -251,6 +293,16 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
     setStatusMessage({ type: "info", text: "Backing up active configuration and pushing theme draft live..." });
     try {
       await publishThemeConfig(draftConfig);
+      if (draftConfig.newArrivalsBanner || draftConfig.lookbookSection || draftConfig.summerEssentialsSection) {
+        const currentHp = (await HomepageSettingsService.getById("homepage")) || DEFAULT_HOME_CONFIG;
+        await HomepageSettingsService.update("homepage", {
+          ...DEFAULT_HOME_CONFIG,
+          ...currentHp,
+          ...(draftConfig.newArrivalsBanner ? { newArrivalsBanner: draftConfig.newArrivalsBanner } : {}),
+          ...(draftConfig.lookbookSection ? { lookbookSection: draftConfig.lookbookSection } : {}),
+          ...(draftConfig.summerEssentialsSection ? { summerEssentialsSection: draftConfig.summerEssentialsSection } : {})
+        });
+      }
       setStatusMessage({ type: "success", text: "Congratulations! Theme has been published live. Standard users will now experience the updated styling." });
     } catch (e: any) {
       console.error("Publish error:", e);
@@ -1367,6 +1419,524 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                         }))}
                         className="w-full bg-zinc-900 border border-zinc-800 rounded p-1.5 text-xs text-zinc-300"
                       />
+                    </div>
+                  </div>
+
+                  {/* 4. New Arrivals Promotional Banner CMS (Phase 5) */}
+                  <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-850 space-y-4 text-left">
+                    <div className="flex justify-between items-center border-b border-zinc-850 pb-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-white uppercase font-mono block">4. New Arrivals Editorial Banner (Phase 5)</span>
+                        <span className="text-[10px] text-zinc-500">Full-width editorial promotional banner below Best Sellers</span>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <span className="text-[10px] text-zinc-400 font-mono uppercase">{draftConfig.newArrivalsBanner?.isPublished !== false ? "Published" : "Draft (Hidden)"}</span>
+                        <input
+                          type="checkbox"
+                          checked={draftConfig.newArrivalsBanner?.isPublished !== false}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: {
+                              ...prev.newArrivalsBanner!,
+                              isPublished: e.target.checked
+                            }
+                          }))}
+                          className="accent-orange-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Small Label</label>
+                        <input
+                          type="text"
+                          value={draftConfig.newArrivalsBanner?.label || "NEW ARRIVALS"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: { ...prev.newArrivalsBanner!, label: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Heading Highlight Text</label>
+                        <input
+                          type="text"
+                          value={draftConfig.newArrivalsBanner?.headingHighlight || "New Vibes."}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: { ...prev.newArrivalsBanner!, headingHighlight: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Main Heading</label>
+                      <input
+                        type="text"
+                        value={draftConfig.newArrivalsBanner?.heading || "Fresh Styles."}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          newArrivalsBanner: { ...prev.newArrivalsBanner!, heading: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Editorial Description</label>
+                      <textarea
+                        rows={2}
+                        value={draftConfig.newArrivalsBanner?.description || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          newArrivalsBanner: { ...prev.newArrivalsBanner!, description: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-zinc-300"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Primary CTA Text</label>
+                        <input
+                          type="text"
+                          value={draftConfig.newArrivalsBanner?.ctaText || "SHOP NEW ARRIVALS"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: { ...prev.newArrivalsBanner!, ctaText: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Primary CTA Link</label>
+                        <input
+                          type="text"
+                          value={draftConfig.newArrivalsBanner?.ctaLink || "collections/new-arrivals"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: { ...prev.newArrivalsBanner!, ctaLink: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Lifestyle Model Banner Image URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={draftConfig.newArrivalsBanner?.image || ""}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            newArrivalsBanner: { ...prev.newArrivalsBanner!, image: e.target.value }
+                          }))}
+                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                        <MediaUploader bucketName="sliders" onUploadSuccess={(url) => updateDraft(prev => ({
+                          ...prev,
+                          newArrivalsBanner: { ...prev.newArrivalsBanner!, image: url }
+                        }))} />
+                      </div>
+                    </div>
+
+                    {/* Features List */}
+                    <div className="space-y-3 pt-2 border-t border-zinc-850">
+                      <span className="text-[10px] font-bold text-zinc-300 uppercase font-mono block">Feature Cards (Right Column)</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {(draftConfig.newArrivalsBanner?.features || []).map((feat, idx) => (
+                          <div key={idx} className="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-mono text-zinc-400 uppercase font-bold">Feature #{idx + 1}</span>
+                              <select
+                                value={feat.icon}
+                                onChange={(e) => updateDraft(prev => {
+                                  const updated = [...(prev.newArrivalsBanner?.features || [])];
+                                  updated[idx] = { ...updated[idx], icon: e.target.value };
+                                  return {
+                                    ...prev,
+                                    newArrivalsBanner: { ...prev.newArrivalsBanner!, features: updated }
+                                  };
+                                })}
+                                className="bg-zinc-950 border border-zinc-800 text-[10px] text-white rounded p-1"
+                              >
+                                <option value="Sparkles">Sparkles</option>
+                                <option value="Shirt">Shirt</option>
+                                <option value="Layers">Layers</option>
+                                <option value="ShieldCheck">ShieldCheck</option>
+                              </select>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Feature Title"
+                              value={feat.title}
+                              onChange={(e) => updateDraft(prev => {
+                                const updated = [...(prev.newArrivalsBanner?.features || [])];
+                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                return {
+                                  ...prev,
+                                  newArrivalsBanner: { ...prev.newArrivalsBanner!, features: updated }
+                                };
+                              })}
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs text-white font-bold"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Short Description"
+                              value={feat.description}
+                              onChange={(e) => updateDraft(prev => {
+                                const updated = [...(prev.newArrivalsBanner?.features || [])];
+                                updated[idx] = { ...updated[idx], description: e.target.value };
+                                return {
+                                  ...prev,
+                                  newArrivalsBanner: { ...prev.newArrivalsBanner!, features: updated }
+                                };
+                              })}
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-[11px] text-zinc-300"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. Lookbook Editorial Experience CMS (Phase 6) */}
+                  <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-850 space-y-4 text-left">
+                    <div className="flex justify-between items-center border-b border-zinc-850 pb-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-white uppercase font-mono block">5. Lookbook Editorial Experience (Phase 6)</span>
+                        <span className="text-[10px] text-zinc-500">Luxury fashion storytelling section below New Arrivals</span>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <span className="text-[10px] text-zinc-400 font-mono uppercase">{draftConfig.lookbookSection?.isPublished !== false ? "Published" : "Draft (Hidden)"}</span>
+                        <input
+                          type="checkbox"
+                          checked={draftConfig.lookbookSection?.isPublished !== false}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: {
+                              ...prev.lookbookSection!,
+                              isPublished: e.target.checked
+                            }
+                          }))}
+                          className="accent-orange-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Small Label</label>
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.label || "LOOKBOOK"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, label: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Heading Line 2 (Italic / Subdued)</label>
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.headingLine2 || "Modern Living."}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, headingLine2: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Main Heading (Line 1)</label>
+                      <input
+                        type="text"
+                        value={draftConfig.lookbookSection?.heading || "Designed for"}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          lookbookSection: { ...prev.lookbookSection!, heading: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Editorial Description</label>
+                      <textarea
+                        rows={3}
+                        value={draftConfig.lookbookSection?.description || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          lookbookSection: { ...prev.lookbookSection!, description: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-zinc-300"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Button Text</label>
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.buttonText || "EXPLORE LOOKBOOK"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, buttonText: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Button Link</label>
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.buttonLink || "collections/all"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, buttonLink: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Main Editorial Lifestyle Image URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.mainImage || ""}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, mainImage: e.target.value }
+                          }))}
+                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                        <MediaUploader bucketName="sliders" onUploadSuccess={(url) => updateDraft(prev => ({
+                          ...prev,
+                          lookbookSection: { ...prev.lookbookSection!, mainImage: url }
+                        }))} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Secondary Overlapping Image URL (Desktop Floating)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={draftConfig.lookbookSection?.secondaryImage || ""}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            lookbookSection: { ...prev.lookbookSection!, secondaryImage: e.target.value }
+                          }))}
+                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                        <MediaUploader bucketName="sliders" onUploadSuccess={(url) => updateDraft(prev => ({
+                          ...prev,
+                          lookbookSection: { ...prev.lookbookSection!, secondaryImage: url }
+                        }))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 6. Summer Essentials Editorial Campaign CMS (Phase 7) */}
+                  <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-850 space-y-4 text-left">
+                    <div className="flex justify-between items-center border-b border-zinc-850 pb-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-white uppercase font-mono block">6. Summer Essentials Campaign (Phase 7)</span>
+                        <span className="text-[10px] text-zinc-500">Seasonal campaign banner section below Lookbook</span>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <span className="text-[10px] text-zinc-400 font-mono uppercase">{draftConfig.summerEssentialsSection?.isPublished !== false ? "Published" : "Draft (Hidden)"}</span>
+                        <input
+                          type="checkbox"
+                          checked={draftConfig.summerEssentialsSection?.isPublished !== false}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: {
+                              ...prev.summerEssentialsSection!,
+                              isPublished: e.target.checked
+                            }
+                          }))}
+                          className="accent-orange-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Small Label</label>
+                        <input
+                          type="text"
+                          value={draftConfig.summerEssentialsSection?.label || "SUMMER ESSENTIALS"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: { ...prev.summerEssentialsSection!, label: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Heading Highlight Text (Italic Accent)</label>
+                        <input
+                          type="text"
+                          value={draftConfig.summerEssentialsSection?.headingHighlight || "Premium."}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: { ...prev.summerEssentialsSection!, headingHighlight: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Main Heading</label>
+                      <input
+                        type="text"
+                        value={draftConfig.summerEssentialsSection?.heading || "Lightweight. Effortless."}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          summerEssentialsSection: { ...prev.summerEssentialsSection!, heading: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Editorial Description</label>
+                      <textarea
+                        rows={2}
+                        value={draftConfig.summerEssentialsSection?.description || ""}
+                        onChange={(e) => updateDraft(prev => ({
+                          ...prev,
+                          summerEssentialsSection: { ...prev.summerEssentialsSection!, description: e.target.value }
+                        }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-zinc-300"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">CTA Button Text</label>
+                        <input
+                          type="text"
+                          value={draftConfig.summerEssentialsSection?.buttonText || "SHOP SUMMER COLLECTION"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: { ...prev.summerEssentialsSection!, buttonText: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">CTA Button Link</label>
+                        <input
+                          type="text"
+                          value={draftConfig.summerEssentialsSection?.buttonLink || "collections/summer"}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: { ...prev.summerEssentialsSection!, buttonLink: e.target.value }
+                          }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] uppercase font-mono text-zinc-400 mb-1">Primary Banner Image URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={draftConfig.summerEssentialsSection?.image || ""}
+                          onChange={(e) => updateDraft(prev => ({
+                            ...prev,
+                            summerEssentialsSection: { ...prev.summerEssentialsSection!, image: e.target.value }
+                          }))}
+                          className="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white"
+                        />
+                        <MediaUploader bucketName="sliders" onUploadSuccess={(url) => updateDraft(prev => ({
+                          ...prev,
+                          summerEssentialsSection: { ...prev.summerEssentialsSection!, image: url }
+                        }))} />
+                      </div>
+                    </div>
+
+                    {/* Highlights List */}
+                    <div className="space-y-3 pt-2 border-t border-zinc-850">
+                      <span className="text-[10px] font-bold text-zinc-300 uppercase font-mono block">Feature Highlights Strip (3–4 Items)</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {(draftConfig.summerEssentialsSection?.highlights || []).map((highlight, idx) => (
+                          <div key={idx} className="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-mono text-zinc-400 uppercase font-bold">Highlight #{idx + 1}</span>
+                              <select
+                                value={highlight.icon}
+                                onChange={(e) => updateDraft(prev => {
+                                  const updated = [...(prev.summerEssentialsSection?.highlights || [])];
+                                  updated[idx] = { ...updated[idx], icon: e.target.value };
+                                  return {
+                                    ...prev,
+                                    summerEssentialsSection: { ...prev.summerEssentialsSection!, highlights: updated }
+                                  };
+                                })}
+                                className="bg-zinc-950 border border-zinc-800 text-[10px] text-white rounded p-1"
+                              >
+                                <option value="Feather">Feather</option>
+                                <option value="Sparkles">Sparkles</option>
+                                <option value="Sun">Sun</option>
+                                <option value="Scissors">Scissors</option>
+                                <option value="Shirt">Shirt</option>
+                                <option value="ShieldCheck">ShieldCheck</option>
+                                <option value="Layers">Layers</option>
+                              </select>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Title (e.g. Breathable Linen)"
+                              value={highlight.title}
+                              onChange={(e) => updateDraft(prev => {
+                                const updated = [...(prev.summerEssentialsSection?.highlights || [])];
+                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                return {
+                                  ...prev,
+                                  summerEssentialsSection: { ...prev.summerEssentialsSection!, highlights: updated }
+                                };
+                              })}
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs text-white font-bold"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Short Description"
+                              value={highlight.description}
+                              onChange={(e) => updateDraft(prev => {
+                                const updated = [...(prev.summerEssentialsSection?.highlights || [])];
+                                updated[idx] = { ...updated[idx], description: e.target.value };
+                                return {
+                                  ...prev,
+                                  summerEssentialsSection: { ...prev.summerEssentialsSection!, highlights: updated }
+                                };
+                              })}
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-[11px] text-zinc-300"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

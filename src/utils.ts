@@ -97,10 +97,10 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
       desktopImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
       mobileImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=640",
       badge: "SARTORIAL SEASON",
-      subtitle: "The Premium Summer Collection",
+      subtitle: "Linen Shirts Collection",
       title: "ELEVATED CUBAN CUTS",
       description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      button1Text: "Explore Shirts",
+      button1Text: "Explore Linen Shirts",
       button1Link: "collections/shirts",
       button2Text: "Shop All Designs",
       button2Link: "collections/all",
@@ -111,16 +111,50 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     },
     {
       id: "2",
-      desktopImage: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
-      mobileImage: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=640",
-      badge: "EUROPEAN FLAX",
-      subtitle: "Premium Linen Series",
-      title: "TACTILE TEXTURAL LINEN",
-      description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      button1Text: "Sartorial Trousers",
-      button1Link: "collections/pants",
+      desktopImage: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
+      mobileImage: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=640",
+      badge: "PRE-WASHED COTTON",
+      subtitle: "Shirts Collection",
+      title: "COTTON RESORT SHIRTS",
+      description: "Tailored lightweight linen-cotton shirts in earthy resort hues, boasting premium mother-of-pearl button detailing.",
+      button1Text: "Explore Shirts",
+      button1Link: "collections/shirts",
       button2Text: "Curated Style Room",
       button2Link: "blog",
+      bgOverlay: 30,
+      textPosition: "center",
+      textColor: "#ffffff",
+      enabled: true
+    },
+    {
+      id: "3",
+      desktopImage: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
+      mobileImage: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=640",
+      badge: "HEAVYWEIGHT SELVEDGE",
+      subtitle: "Jeans Collection",
+      title: "RAW REDLINE DENIM",
+      description: "Premium 13.5 oz selvedge shuttle denim crafted in vintage straight-leg and tapered fits. Built to age like gold.",
+      button1Text: "Shop Selvedge Jeans",
+      button1Link: "collections/jeans",
+      button2Text: "Curated Style Room",
+      button2Link: "blog",
+      bgOverlay: 35,
+      textPosition: "left",
+      textColor: "#ffffff",
+      enabled: true
+    },
+    {
+      id: "4",
+      desktopImage: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1600",
+      mobileImage: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=640",
+      badge: "LUXURY DRAPE",
+      subtitle: "Pants Collection",
+      title: "SARTORIAL PLEATED TROUSERS",
+      description: "Elegant double-pleated flax trousers in structured relaxed silhouettes with clean waistband adjusters.",
+      button1Text: "Shop Luxury Pants",
+      button1Link: "collections/pants",
+      button2Text: "Explore All Designs",
+      button2Link: "collections/all",
       bgOverlay: 30,
       textPosition: "center",
       textColor: "#ffffff",
@@ -193,7 +227,50 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   heroOverlayOpacity: 40,
   borderRadius: "rounded-xl",
   buttonStyle: "rounded",
-  cardStyle: "bordered"
+  cardStyle: "bordered",
+  newArrivalsBanner: {
+    isPublished: true,
+    label: "NEW ARRIVALS",
+    heading: "Fresh Styles.",
+    headingHighlight: "New Vibes.",
+    description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
+    ctaText: "SHOP NEW ARRIVALS",
+    ctaLink: "collections/new-arrivals",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
+    features: [
+      { icon: "Sparkles", title: "Premium Fabrics", description: "High-grade Italian & Japanese linen-cotton weaves." },
+      { icon: "Shirt", title: "Modern Fit", description: "Precision tailoring designed for effortless drapes." },
+      { icon: "Layers", title: "Versatile Styles", description: "Day-to-night minimalist essentials for any occasion." },
+      { icon: "ShieldCheck", title: "Quality Assured", description: "Double-stitched seams & handcrafted finishes." }
+    ]
+  },
+  lookbookSection: {
+    isPublished: true,
+    label: "LOOKBOOK",
+    heading: "Designed for",
+    headingLine2: "Modern Living.",
+    description: "Discover effortless dressing with breathable fabrics, refined tailoring and timeless silhouettes designed for everyday confidence.",
+    buttonText: "EXPLORE LOOKBOOK",
+    buttonLink: "collections/all",
+    mainImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1400",
+    secondaryImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=900"
+  },
+  summerEssentialsSection: {
+    isPublished: true,
+    label: "SUMMER ESSENTIALS",
+    heading: "Lightweight. Effortless.",
+    headingHighlight: "Premium.",
+    description: "Experience the ultimate seasonal campaign with refined Italian linen, relaxed resort tailoring, and airy silhouettes designed for modern warm-weather luxury.",
+    buttonText: "SHOP SUMMER COLLECTION",
+    buttonLink: "collections/summer",
+    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1920",
+    highlights: [
+      { icon: "Feather", title: "Breathable Linen", description: "Pure natural flax fibers woven for maximum air permeability." },
+      { icon: "Sparkles", title: "Premium Cotton", description: "Ultra-soft extra-long staple organic cotton for weightless comfort." },
+      { icon: "Sun", title: "Everyday Comfort", description: "Unstructured silhouettes engineered for fluid movement." },
+      { icon: "Scissors", title: "Modern Tailoring", description: "Hand-finished double lapels and French seams." }
+    ]
+  }
 };
 
 export const DEFAULT_HOME_CONFIG: HomepageConfig = {
@@ -299,7 +376,50 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
       startDate: "2026-07-01",
       endDate: "2026-12-31"
     }
-  ]
+  ],
+  newArrivalsBanner: {
+    isPublished: true,
+    label: "NEW ARRIVALS",
+    heading: "Fresh Styles.",
+    headingHighlight: "New Vibes.",
+    description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
+    ctaText: "SHOP NEW ARRIVALS",
+    ctaLink: "collections/new-arrivals",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
+    features: [
+      { icon: "Sparkles", title: "Premium Fabrics", description: "High-grade Italian & Japanese linen-cotton weaves." },
+      { icon: "Shirt", title: "Modern Fit", description: "Precision tailoring designed for effortless drapes." },
+      { icon: "Layers", title: "Versatile Styles", description: "Day-to-night minimalist essentials for any occasion." },
+      { icon: "ShieldCheck", title: "Quality Assured", description: "Double-stitched seams & handcrafted finishes." }
+    ]
+  },
+  lookbookSection: {
+    isPublished: true,
+    label: "LOOKBOOK",
+    heading: "Designed for",
+    headingLine2: "Modern Living.",
+    description: "Discover effortless dressing with breathable fabrics, refined tailoring and timeless silhouettes designed for everyday confidence.",
+    buttonText: "EXPLORE LOOKBOOK",
+    buttonLink: "collections/all",
+    mainImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1400",
+    secondaryImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=900"
+  },
+  summerEssentialsSection: {
+    isPublished: true,
+    label: "SUMMER ESSENTIALS",
+    heading: "Lightweight. Effortless.",
+    headingHighlight: "Premium.",
+    description: "Experience the ultimate seasonal campaign with refined Italian linen, relaxed resort tailoring, and airy silhouettes designed for modern warm-weather luxury.",
+    buttonText: "SHOP SUMMER COLLECTION",
+    buttonLink: "collections/summer",
+    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1920",
+    highlights: [
+      { icon: "Feather", title: "Breathable Linen", description: "Pure natural flax fibers woven for maximum air permeability." },
+      { icon: "Sparkles", title: "Premium Cotton", description: "Ultra-soft extra-long staple organic cotton for weightless comfort." },
+      { icon: "Sun", title: "Everyday Comfort", description: "Unstructured silhouettes engineered for fluid movement." },
+      { icon: "Scissors", title: "Modern Tailoring", description: "Hand-finished double lapels and French seams." }
+    ]
+  }
 };
 
 export function initializeDatabase() {
@@ -552,6 +672,13 @@ export function createOrder(order: Omit<Order, "id" | "status" | "trackingHistor
 
   currentList.unshift(fullOrder);
   saveOrders(currentList);
+  
+  // Deduct stock for each ordered item
+  if (order.items && Array.isArray(order.items)) {
+    for (const item of order.items) {
+      deductProductStock(item.productId, item.quantity);
+    }
+  }
   
   // Sync to Firestore
   saveOrderToCloud(fullOrder).catch(err => console.error("Firestore order logging failed:", err));
@@ -828,16 +955,18 @@ export function getCollections(): CollectionMaster[] {
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      // Check if stale or wrong collection configuration exists
+      // Check if stale or wrong collection configuration exists, or if images are missing/empty
       const hasStaleData = parsed.some((c: any) => 
         c.slug === "linen-collection" || 
         c.slug === "aesthetic-coords" || 
         c.slug === "footwear" || 
-        c.slug === "combos"
+        c.slug === "combos" ||
+        !c.banner ||
+        !c.thumbnail
       ) || parsed.length !== 6;
       
       if (hasStaleData) {
-        console.warn("getCollections() detected stale collections. Evicting cache to synchronize 6 master collections...");
+        console.warn("getCollections() detected stale or incomplete collections. Evicting cache to synchronize 6 master collections with rich images...");
         localStorage.removeItem("clinza_collections_master");
       } else {
         console.log("getCollections() successfully read from localstorage key: clinza_collections_master", parsed);
@@ -854,8 +983,8 @@ export function getCollections(): CollectionMaster[] {
       id: "combo", 
       name: "Combo", 
       slug: "combo", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=300", 
       description: "Pre-coordinated matching clothing sets curated for effortless styling.", 
       displayOrder: 1, 
       featured: true, 
@@ -866,8 +995,8 @@ export function getCollections(): CollectionMaster[] {
       id: "shirts", 
       name: "Shirts", 
       slug: "shirts", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=300", 
       description: "Premium linen and organic cotton shirts crafted for supreme breathability.", 
       displayOrder: 2, 
       featured: true, 
@@ -878,8 +1007,8 @@ export function getCollections(): CollectionMaster[] {
       id: "pants", 
       name: "Pants", 
       slug: "pants", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=300", 
       description: "Pleated heavyweight trousers and tailored modern chinos.", 
       displayOrder: 3, 
       featured: true, 
@@ -890,8 +1019,8 @@ export function getCollections(): CollectionMaster[] {
       id: "jeans", 
       name: "Jeans", 
       slug: "jeans", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=300", 
       description: "Selvedge denim jeans structured for timeless shapes.", 
       displayOrder: 4, 
       featured: true, 
@@ -902,8 +1031,8 @@ export function getCollections(): CollectionMaster[] {
       id: "shoes", 
       name: "Shoes", 
       slug: "shoes", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=300", 
       description: "Luxury leather footwear handcrafted to perfect your silhouette.", 
       displayOrder: 5, 
       featured: true, 
@@ -914,8 +1043,8 @@ export function getCollections(): CollectionMaster[] {
       id: "linen-combo-set", 
       name: "Linen Combo Set", 
       slug: "linen-combo-set", 
-      banner: "", 
-      thumbnail: "", 
+      banner: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=300", 
       description: "Pure linen matching shirt and trouser sets curated for absolute luxury.", 
       displayOrder: 6, 
       featured: true, 
@@ -939,6 +1068,61 @@ export function saveCollections(list: CollectionMaster[]): void {
   // Keep categories list matched to collections!
   const matchingCategories = list.map(mapCollectionToCategory);
   localStorage.setItem("clinza_categories", JSON.stringify(matchingCategories));
+}
+
+export function calculateCartTotals(cart: CartItem[], appliedCoupon: string | null) {
+  const subtotal = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  
+  // Automatic 20% discount when subtotal >= 3000
+  let discountPercent = 0;
+  if (subtotal >= 3000) {
+    discountPercent = 20;
+  } else if (appliedCoupon) {
+    if (appliedCoupon === "CLINZA10") {
+      discountPercent = 10;
+    } else if (appliedCoupon === "LUXURY20") {
+      discountPercent = 20;
+    }
+  }
+
+  const discount = Math.round(subtotal * (discountPercent / 100));
+  const tax = 0; // Tax is ALWAYS ₹0
+  const shipping = 50; // Shipping is ALWAYS ₹50 flat
+  const total = subtotal - discount + tax + shipping;
+
+  return {
+    subtotal,
+    discount,
+    tax,
+    shipping,
+    total,
+    discountPercent,
+    appliedCoupon
+  };
+}
+
+export function deductProductStock(productId: string, qtyToDeduct: number) {
+  const current = getProducts();
+  const index = current.findIndex(p => p.id === productId);
+  if (index !== -1) {
+    const product = current[index];
+    const currentQty = (product as any).stockQuantity !== undefined
+      ? (product as any).stockQuantity
+      : (product.stockStatus === "Out of Stock" ? 0 : 120);
+    
+    const newQty = Math.max(0, currentQty - qtyToDeduct);
+    
+    const updatedProduct = {
+      ...product,
+      stockQuantity: newQty,
+      stockStatus: newQty <= 0 ? "Out of Stock" as const : (newQty < 20 ? "Low Stock" as const : "In Stock" as const)
+    };
+    
+    current[index] = updatedProduct;
+    saveProducts(current);
+    
+    saveProductToCloud(updatedProduct).catch(err => console.error("Cloud product stock deduction failed:", err));
+  }
 }
 
 

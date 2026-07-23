@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Loader } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { getHomeConfig } from "../utils";
+import { HomepageSlidesService } from "../services/supabaseService";
 
 interface HeroSliderProps {
   setRoute: (route: string) => void;
@@ -14,20 +14,37 @@ interface HeroSliderProps {
 }
 
 export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
-  const slides = getHomeConfig().slides;
+  const [slides, setSlides] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load from Supabase on mount
+  useEffect(() => {
+    async function loadSlides() {
+      try {
+        setLoading(true);
+        const list = await HomepageSlidesService.getSlides();
+        setSlides(list || []);
+      } catch (err) {
+        console.error("Failed to load hero slides from Supabase:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadSlides();
+  }, []);
 
   // Auto slide every 5 seconds as requested, pause on hover
   useEffect(() => {
-    if (slides.length <= 1 || isHovered) return;
+    if (slides.length <= 1 || isHovered || loading) return;
     const timer = setInterval(() => {
       handleNext();
     }, 5000);
     return () => clearInterval(timer);
-  }, [activeIdx, slides.length, isHovered]);
+  }, [activeIdx, slides.length, isHovered, loading]);
 
   const handleNext = () => {
     if (animating || slides.length === 0) return;
@@ -59,151 +76,193 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
     }
   };
 
-  if (slides.length === 0) {
-    return null;
+  if (loading) {
+    return (
+      <section className="relative h-[55vh] xs:h-[60vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-zinc-950 flex flex-col items-center justify-center text-zinc-400 font-mono text-xs gap-3">
+        <Loader className="h-6 w-6 animate-spin text-orange-500" />
+        INITIALIZING LUXURY SLIDER...
+      </section>
+    );
   }
 
-  const currentSlide = slides[activeIdx] as any;
+  if (slides.length === 0) {
+    // Elegant fallback empty state as requested: "If a table is empty, show a proper empty state instead of loading demo data."
+    return (
+      <section className="relative h-[55vh] xs:h-[60vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-zinc-950 flex flex-col items-center justify-center text-center px-4">
+        <div className="max-w-xl space-y-6">
+          <span className="text-[10px] font-black tracking-[0.3em] text-orange-500 uppercase font-mono block">
+            CLINZA ATELIER
+          </span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-sans font-black tracking-tight text-white uppercase leading-none">
+            LUXURY APPAREL
+          </h1>
+          <p className="text-zinc-400 text-xs sm:text-sm font-sans font-light leading-relaxed max-w-md mx-auto">
+            Our homepage showcase is ready for curation. Add beautiful high-fidelity slides inside the Admin Panel to feature products here.
+          </p>
+          <button
+            onClick={() => setRoute("shop-all-collections")}
+            className="inline-block px-8 py-4 bg-white text-black text-xs font-mono font-black uppercase tracking-widest hover:bg-orange-500 hover:text-black transition-colors"
+          >
+            Explore Wardrobe
+          </button>
+        </div>
+      </section>
+    );
+  }
 
-  // Extract dynamic values with fallback defaults to ensure backward compatibility and graceful loading
-  const title = currentSlide.title || "Premium Everyday Fashion";
-  const subtitle = currentSlide.subtitle || "The Premium Summer Collection";
-  const description = currentSlide.description || "Timeless fits. Premium fabrics. Designed for modern India.";
-  const image = currentSlide.image || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600";
+  const defaultSlides = [
+    {
+      id: "hero-slide-1",
+      badge: "NEW COLLECTION",
+      title: "EFFORTLESS STYLE.\nEVERYDAY YOU.",
+      description: "Premium fabrics. Timeless designs.\nMade for the modern man.",
+      image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=2000",
+      button1Text: "SHOP NOW",
+      button1Link: "collections/all",
+      button2Text: "EXPLORE COMBOS",
+      button2Link: "collections/combos"
+    },
+    {
+      id: "hero-slide-2",
+      badge: "EUROPEAN FLAX",
+      title: "TACTILE TEXTURAL\nLINEN SHIRTS",
+      description: "Breathable European flax and pure combed yarns crafted for the modern wardrobe.",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=2000",
+      button1Text: "SHOP NOW",
+      button1Link: "collections/shirts",
+      button2Text: "EXPLORE COMBOS",
+      button2Link: "collections/combos"
+    }
+  ];
+
+  const activeSlides = slides.length > 0 ? slides : defaultSlides;
+  const currentSlide = activeSlides[activeIdx % activeSlides.length] as any;
+
+  // Extract dynamic values with fallback
+  const title = currentSlide.title || "EFFORTLESS STYLE.\nEVERYDAY YOU.";
+  const description = currentSlide.description || "Premium fabrics. Timeless designs.\nMade for the modern man.";
+  const image = currentSlide.image || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=2000";
   const badgeText = currentSlide.badge || "NEW COLLECTION";
-
-  // Primary and Secondary action buttons customization from CMS
-  const primaryButtonText = currentSlide.button1Text || currentSlide.primaryButtonText || "Shop Collection";
-  const primaryButtonLink = currentSlide.button1Link || currentSlide.primaryButtonLink || currentSlide.route || "collections/all";
-  const secondaryButtonText = currentSlide.button2Text || currentSlide.secondaryButtonText || "Shop All Collections";
-  const secondaryButtonLink = currentSlide.button2Link || currentSlide.secondaryButtonLink || "shop-all-collections";
+  const primaryButtonText = currentSlide.button1Text || "SHOP NOW";
+  const primaryButtonLink = currentSlide.button1Link || "collections/all";
+  const secondaryButtonText = currentSlide.button2Text || "EXPLORE COMBOS";
+  const secondaryButtonLink = currentSlide.button2Link || "collections/combos";
 
   return (
     <section 
-      id="hero-minimal-luxury-slider" 
-      className="relative h-[55vh] xs:h-[60vh] sm:h-[92vh] sm:min-h-[700px] sm:max-h-[950px] w-full bg-[#fafafa] overflow-hidden select-none"
+      id="hero-minimal-editorial-slider" 
+      className="relative w-full h-[520px] sm:h-[620px] md:h-[700px] lg:h-[760px] bg-[#F5F3EF] overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 1. HERO VISUAL - LIGHT GRADIENT OVERLAY ONLY */}
-      <div className="absolute inset-0 z-0">
+      {/* 1. FULL WIDTH LIFESTYLE CAMPAIGN IMAGE */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeIdx}
+          initial={{ opacity: 0, scale: 1.01 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full"
+        >
+          <img
+            src={image}
+            alt="Clinza Luxury Fashion Campaign"
+            className="w-full h-full object-cover object-center"
+            loading="eager"
+          />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* 2. LIGHT SOFT VIGNETTE OVERLAY BEHIND TEXT */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: "linear-gradient(90deg, rgba(245,243,239,0.75) 0%, rgba(245,243,239,0.45) 40%, rgba(245,243,239,0.05) 70%, transparent 100%)"
+        }}
+      />
+
+      {/* 3. CONTENT OVERLAY (POSITIONED ~8% FROM LEFT) */}
+      <div className="absolute left-6 sm:left-12 lg:left-[8%] top-1/2 -translate-y-1/2 z-20 max-w-[500px] pr-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeIdx}
-            className="absolute inset-0"
-            initial={{ opacity: 0, scale: 1 }}
-            animate={{ opacity: 1, scale: 1.02 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="space-y-5 text-left"
           >
-            {/* Elegant gradient overlay: vertical on mobile, horizontal on desktop */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/10 sm:bg-gradient-to-r sm:from-black/55 sm:via-black/35 sm:to-transparent z-10 pointer-events-none" />
-            <img
-              src={image}
-              alt="Premium Collection model showcase"
-              className="h-full w-full object-cover object-center"
-              loading="eager"
-              referrerPolicy="no-referrer"
-            />
+            {/* SMALL UPPERCASE LABEL */}
+            {badgeText && (
+              <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#111111] block">
+                {badgeText}
+              </span>
+            )}
+
+            {/* MAIN EDITORIAL HEADING */}
+            <h1 className="text-[36px] sm:text-[50px] lg:text-[62px] font-bold leading-[1.02] text-[#111111] uppercase tracking-tight whitespace-pre-line">
+              {title}
+            </h1>
+
+            {/* DESCRIPTION */}
+            {description && (
+              <p className="text-sm sm:text-base lg:text-[17px] font-normal leading-relaxed text-[#333333] max-w-[440px] whitespace-pre-line">
+                {description}
+              </p>
+            )}
+
+            {/* BUTTONS */}
+            <div className="flex flex-row items-center gap-3.5 pt-2">
+              <button
+                id="hero-shop-now-btn"
+                onClick={() => setRoute(primaryButtonLink)}
+                className="h-[48px] px-8 bg-[#111111] text-white text-xs font-bold uppercase tracking-[0.15em] rounded-[4px] hover:bg-black hover:shadow-md transition-all duration-250 cursor-pointer flex items-center justify-center border border-[#111111]"
+              >
+                {primaryButtonText}
+              </button>
+
+              <button
+                id="hero-explore-combos-btn"
+                onClick={() => setRoute(secondaryButtonLink)}
+                className="h-[48px] px-8 bg-[#EAE7E0] hover:bg-[#E2DFD7] text-[#111111] border border-[#D5D2C9] text-xs font-bold uppercase tracking-[0.15em] rounded-[4px] transition-all duration-250 cursor-pointer flex items-center justify-center"
+              >
+                {secondaryButtonText}
+              </button>
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Subtle modern soft lighting flare */}
-      <div className="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-white/20 blur-[100px] pointer-events-none z-1" />
+      {/* 4. SLIDER CHEVRON ARROWS */}
+      <button
+        id="hero-prev-arrow-btn"
+        onClick={handlePrev}
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 text-white/90 hover:text-white hover:scale-110 transition-all bg-transparent border-0 p-2 cursor-pointer focus:outline-none drop-shadow-md"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="h-8 w-8 sm:h-10 sm:w-10 stroke-[2]" />
+      </button>
 
-      {/* 2. MINIMALIST FOREGROUND HERO CONTENT */}
-      <div className="absolute inset-0 z-10 flex items-end sm:items-center px-4 sm:px-12 lg:px-20 max-w-7xl mx-auto pb-12 sm:pb-0">
-        <div className="max-w-2xl text-left">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeIdx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-2.5 sm:space-y-6"
-            >
-              {/* BRAND BADGE */}
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/30 px-3.5 py-1 text-[9px] sm:text-[10px] font-black font-mono tracking-[0.3em] text-white"
-              >
-                {badgeText}
-              </motion.div>
+      <button
+        id="hero-next-arrow-btn"
+        onClick={handleNext}
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 text-white/90 hover:text-white hover:scale-110 transition-all bg-transparent border-0 p-2 cursor-pointer focus:outline-none drop-shadow-md"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="h-8 w-8 sm:h-10 sm:w-10 stroke-[2]" />
+      </button>
 
-              {/* HEADING & SUBTITLE STACK */}
-              <div className="space-y-0.5 sm:space-y-2">
-                {subtitle && (
-                  <p className="text-white/85 text-[10px] sm:text-xs font-mono tracking-[0.2em] uppercase select-none drop-shadow-xs">
-                    {subtitle}
-                  </p>
-                )}
-                <h1 className="text-2xl xs:text-3xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-[1.1] text-white uppercase select-none drop-shadow-sm">
-                  {title}
-                </h1>
-              </div>
-
-              {/* DESCRIPTION */}
-              <p className="text-white/95 text-[11px] sm:text-base font-sans font-light tracking-wide leading-relaxed max-w-md drop-shadow-sm line-clamp-2 sm:line-clamp-none">
-                {description}
-              </p>
-
-              {/* ACTION BUTTONS */}
-              <div className="flex flex-row gap-2.5 sm:gap-4 pt-2 sm:pt-4">
-                <button
-                  id="hero-shop-collection-btn"
-                  onClick={() => setRoute(primaryButtonLink)}
-                  className="px-3 sm:px-8 py-2.5 sm:py-5 bg-white text-zinc-950 text-[10px] sm:text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-zinc-900 hover:text-white hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white"
-                >
-                  {primaryButtonText}
-                </button>
-
-                <button
-                  id="hero-shop-all-collections-btn"
-                  onClick={() => setRoute(secondaryButtonLink)}
-                  className="px-3 sm:px-8 py-2.5 sm:py-5 bg-transparent text-white text-[10px] sm:text-xs uppercase tracking-widest font-black transition-all duration-300 hover:bg-white hover:text-zinc-950 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer rounded-none border border-white backdrop-blur-xs"
-                >
-                  {secondaryButtonText}
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* 3. MINIMALIST CORNER SLIDER CONTROLS (ZARA STYLE) */}
-      <div className="absolute right-4 sm:right-8 bottom-4 sm:bottom-10 z-20 hidden sm:flex items-center gap-2">
-        <button
-          id="hero-prev-arrow-btn"
-          onClick={handlePrev}
-          className="w-10 h-10 border border-white/30 bg-black/30 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black text-white transition-all cursor-pointer rounded-none"
-          aria-label="Previous image"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          id="hero-next-arrow-btn"
-          onClick={handleNext}
-          className="w-10 h-10 border border-white/30 bg-black/30 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black text-white transition-all cursor-pointer rounded-none"
-          aria-label="Next image"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* 4. MODERN PROGRESS LINES (BOTTOM LEFT) */}
-      <div className="absolute bottom-4 sm:bottom-10 left-4 sm:left-12 z-20 flex items-center gap-1.5 sm:gap-2 bg-black/20 backdrop-blur-md p-1.5 px-2.5 sm:p-2 sm:px-3.5 border border-white/10 rounded-none">
-        {slides.map((slide, index) => {
+      {/* 5. PAGINATION DOTS */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+        {activeSlides.map((_, index) => {
           const isActive = index === activeIdx;
           return (
             <button
-              id={`hero-progress-dot-${index}`}
-              key={slide.id}
+              id={`hero-pagination-dot-${index}`}
+              key={index}
               onClick={() => {
                 if (!animating) {
                   setAnimating(true);
@@ -211,18 +270,11 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                   setTimeout(() => setAnimating(false), 500);
                 }
               }}
-              className="relative h-1 w-5 sm:w-14 bg-white/30 overflow-hidden cursor-pointer rounded-none focus:outline-none transition-all duration-300"
-              aria-label={`Show design ${index + 1}`}
-            >
-              {isActive && (
-                <motion.div
-                  className="absolute left-0 top-0 bottom-0 bg-white"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 5, ease: "linear" }} // 5 second auto-slide representation
-                />
-              )}
-            </button>
+              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer focus:outline-none ${
+                isActive ? "w-2.5 bg-[#111111]" : "w-2.5 bg-white border border-[#111111]/30 hover:bg-[#111111]/40"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
           );
         })}
       </div>

@@ -84,60 +84,50 @@ export default function Navbar({
   };
 
   const menuItems = [
-    { name: "Home", route: "home" },
-    { name: "Shop All Collections", route: "shop-all-collections" },
-    { name: "Shirts", route: "collections/shirts" },
-    { name: "Jeans", route: "collections/jeans" },
-    { name: "Pants", route: "collections/pants" },
-    { name: "New Arrivals", route: "new-arrivals" },
-    { name: "Trending", route: "trending" },
-    { name: "Blog", route: "blog" },
-    { name: "Contact", route: "contact" }
+    { name: "HOME", route: "home" },
+    { name: "SHOP", route: "collections/all" },
+    { name: "COLLECTIONS", route: "shop-all-collections" },
+    { name: "COMBOS", route: "collections/combos" },
+    { name: "ABOUT US", route: "about" },
+    { name: "CONTACT", route: "contact" }
   ];
 
   return (
     <header
       id="navbar-header"
-      className="w-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.05)] transition-all duration-300 h-16 sm:h-20 flex items-center"
+      className={`sticky top-0 z-50 w-full bg-white border-b border-[#ECECEC] transition-all duration-300 flex items-center ${
+        isScrolled ? "h-[64px] shadow-md" : "h-[72px] sm:h-[90px] shadow-xs"
+      }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full h-full">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 flex items-center justify-between w-full h-full">
         {/* LOGO */}
         <div className="flex items-center gap-2">
           <button
             id="nav-logo-btn"
             onClick={() => setRoute("home")}
-            className="group flex items-center gap-1 focus:outline-none"
+            className="group flex items-center focus:outline-none cursor-pointer"
           >
-            <span className="font-sans font-black tracking-tighter text-xl sm:text-2xl text-gray-950 transition-colors uppercase">
-              Clinza
+            <span className={`font-sans font-bold tracking-[0.22em] text-[#111111] transition-all duration-300 uppercase ${
+              isScrolled ? "text-2xl sm:text-3xl" : "text-3xl sm:text-[34px]"
+            }`}>
+              CLINZA
             </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] self-end mb-1.5 sm:mb-2"></span>
           </button>
         </div>
 
-        {/* CENTER MENU LINKS (Desktop) */}
-        <nav className="hidden lg:flex items-center space-x-10">
+        {/* CENTER NAVIGATION (Desktop) */}
+        <nav className="hidden lg:flex items-center space-x-8 lg:space-x-10">
           {menuItems.map((item) => {
             const isActive = currentRoute === item.route;
-            if (item.route === "shop-all-collections") {
-              return (
-                <button
-                  id={`nav-link-${item.route}`}
-                  key={item.route}
-                  onClick={() => setRoute(item.route)}
-                  className={`font-sans text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 border rounded-full focus:outline-none cursor-pointer flex items-center gap-1 bg-[#F27D26]/10 text-[#F27D26] border-[#F27D26] hover:bg-[#F27D26] hover:text-white hover:border-[#F27D26]`}
-                >
-                  {item.name}
-                </button>
-              );
-            }
             return (
               <button
-                id={`nav-link-${item.route}`}
+                id={`nav-link-${item.route.replace(/[^a-z0-9]/gi, "-")}`}
                 key={item.route}
                 onClick={() => setRoute(item.route)}
-                className={`font-sans text-[11px] font-semibold uppercase tracking-widest transition-all py-1.5 border-b focus:outline-none cursor-pointer ${
-                  isActive ? "text-black border-black font-bold" : "text-gray-400 hover:text-black border-transparent"
+                className={`font-sans text-[12px] font-medium uppercase tracking-[0.15em] transition-all py-2 border-b-2 focus:outline-none cursor-pointer ${
+                  isActive
+                    ? "text-[#111111] border-[#111111] font-bold"
+                    : "text-[#666666] hover:text-[#111111] border-transparent"
                 }`}
               >
                 {item.name}
@@ -146,28 +136,38 @@ export default function Navbar({
           })}
         </nav>
 
-        {/* RIGHT ACTION ICONS */}
+        {/* RIGHT ACTION ICONS: Search, Account, Wishlist, Cart */}
         <div className="flex items-center gap-1 sm:gap-2">
           {/* SEARCH BUTTON */}
           <button
             id="nav-search-button"
             onClick={() => setSearchOpen(!searchOpen)}
-            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center text-[#111111] hover:bg-[#FAFAF8] rounded-full transition-colors focus:outline-none cursor-pointer"
             aria-label="Toggle Search"
           >
-            <Search className="h-5 w-5 stroke-[2]" />
+            <Search className="h-5 w-5 stroke-[1.75]" />
+          </button>
+
+          {/* ACCOUNT BUTTON */}
+          <button
+            id="nav-account-button"
+            onClick={() => setRoute("login")}
+            className="h-10 w-10 flex items-center justify-center text-[#111111] hover:bg-[#FAFAF8] rounded-full transition-colors focus:outline-none cursor-pointer"
+            aria-label="Account"
+          >
+            <User className="h-5 w-5 stroke-[1.75]" />
           </button>
 
           {/* WISHLIST ICON */}
           <button
             id="nav-wishlist-button"
             onClick={() => setRoute("wishlist")}
-            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center text-[#111111] hover:bg-[#FAFAF8] rounded-full transition-colors relative focus:outline-none cursor-pointer"
             aria-label="Wishlist"
           >
-            <Heart className="h-5 w-5 stroke-[2]" />
+            <Heart className="h-5 w-5 stroke-[1.75]" />
             {wishlistCount > 0 && (
-              <span className="absolute top-1 right-1 sm:top-0.5 sm:right-0.5 bg-[#F27D26] text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
+              <span className="absolute top-1 right-1 bg-[#F27D26] text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white">
                 {wishlistCount}
               </span>
             )}
@@ -177,12 +177,12 @@ export default function Navbar({
           <button
             id="nav-cart-button"
             onClick={() => setRoute("cart")}
-            className="h-11 w-11 sm:h-10 sm:w-10 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-50 rounded-full transition-colors relative focus:outline-none cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center text-[#111111] hover:bg-[#FAFAF8] rounded-full transition-colors relative focus:outline-none cursor-pointer"
             aria-label="Shopping Bag"
           >
-            <ShoppingBag className="h-5 w-5 stroke-[2]" />
+            <ShoppingBag className="h-5 w-5 stroke-[1.75]" />
             {cartCount > 0 && (
-              <span className="absolute top-1 right-1 sm:top-0.5 sm:right-0.5 bg-gray-950 text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full scale-100 animate-fade-in ring-2 ring-white">
+              <span className="absolute top-1 right-1 bg-[#111111] text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white">
                 {cartCount}
               </span>
             )}
@@ -192,7 +192,7 @@ export default function Navbar({
           <button
             id="nav-mobile-toggle-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="h-11 w-11 flex items-center justify-center text-gray-850 hover:text-gray-950 hover:bg-gray-100 rounded-lg lg:hidden transition-colors focus:outline-none cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center text-[#111111] hover:bg-[#FAFAF8] rounded-lg lg:hidden transition-colors focus:outline-none cursor-pointer"
             aria-label="Toggle Mobile Menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

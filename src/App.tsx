@@ -33,10 +33,15 @@ import {
 } from "lucide-react";
 
 // Existing custom views
+import TopShippingBar from "./components/TopShippingBar";
 import Navbar from "./components/Navbar";
 import HeroSlider from "./components/HeroSlider";
 import AIAnalyzer from "./components/AIAnalyzer";
 import CollectionList from "./components/CollectionList";
+import BestSellersSection from "./components/BestSellersSection";
+import NewArrivalsBanner from "./components/NewArrivalsBanner";
+import LookbookSection from "./components/LookbookSection";
+import SummerEssentialsSection from "./components/SummerEssentialsSection";
 import ProductCard from "./components/ProductCard";
 import ProductDetail from "./components/ProductDetail";
 import CartPage from "./components/CartPage";
@@ -57,9 +62,10 @@ import RegisterPage from "./components/RegisterPage";
 import AccountPage from "./components/AccountPage";
 import ShopAllCollectionsPage from "./components/ShopAllCollectionsPage";
 
-import { Product, CartItem, Order } from "./types";
+import { Product, CartItem, Order, Category } from "./types";
 import {
   getProducts,
+  getCollections,
   getCart,
   saveCart,
   getWishlist,
@@ -73,6 +79,8 @@ import {
   saveThemeConfig,
   saveHomeConfig
 } from "./utils";
+
+import { CategoriesService } from "./services/supabaseService";
 
 import { 
   trackPageView, 
@@ -105,6 +113,9 @@ export default function App() {
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Categories from Supabase state
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Core global state matching prior specifications
   const [theme, setTheme] = useState(() => getThemeConfig(false));
@@ -141,6 +152,13 @@ function AppContent() {
     setCartState(getCart());
     setWishlistState(getWishlist());
     setTheme(getThemeConfig(false));
+
+    // Fetch categories from Supabase
+    CategoriesService.getAll().then(res => {
+      if (res && res.length > 0) {
+        setCategories(res);
+      }
+    });
 
     // Try and recover any active logged-in customer profile session from localStorage
     try {
@@ -306,8 +324,10 @@ function AppContent() {
       const slug = val.replace("collections/", "");
       if (slug === "all") {
         navigate("/collections");
-      } else {
+      } else if (["shirts", "jeans", "pants"].includes(slug.toLowerCase())) {
         navigate("/" + slug);
+      } else {
+        navigate("/collections/" + slug);
       }
     } else if (val.startsWith("product/")) {
       const slug = val.replace("product/", "");
@@ -344,17 +364,13 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
-    <div id="clinza-e-commerce-root" className="min-h-screen flex flex-col bg-white">
+    <div id="clinza-e-commerce-root" className="min-h-screen flex flex-col bg-[#FAFAF8]">
       <SchemaMarkup activeProduct={activeProduct} activeBlogSlug={activeBlogSlug} />
       
-      {/* ANNOUNCEMENT BAR & CUSTOM CUSTOMER NAVIGATION (HIDDEN ON ADMIN VIEWS) */}
+      {/* STICKY HEADER (HIDDEN ON ADMIN VIEWS) */}
       {!isAdminRoute && (
-        <div className="fixed top-0 left-0 right-0 z-50 w-full bg-white shadow-xs">
-          {/* Announcement promotion ribbon */}
-          <div className="bg-zinc-950 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-2 px-4 text-center border-b border-white/5 font-mono select-none">
-            ⚡ COMPLIMENTARY CASH ON DELIVERY (COD) + FREE EXPEDITED CARGO ALL INDIA ⚡
-          </div>
-
+        <div className="w-full relative z-50">
+          <TopShippingBar />
           <Navbar
             currentRoute={getCurrentActiveRouteString()}
             setRoute={handleOldRouteTrigger}
@@ -371,7 +387,7 @@ function AppContent() {
       )}
 
       {/* DYNAMIC PAGE ROUTE MOUNT */}
-      <main className={`flex-1 ${!isAdminRoute ? "pt-[96px] sm:pt-[112px]" : ""}`}>
+      <main className="flex-1">
         
         {/* SUCCESS MODAL REDIRECT */}
         {orderSuccessDetail ? (
@@ -509,7 +525,74 @@ function AppContent() {
                   scrollToAI={scrollToAISection} 
                 />
 
-                {/* 2. Current Offers Section (New Section) */}
+                {/* 2. Trust Bar / Features Section */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <FeaturesSection />
+                </motion.div>
+
+                {/* 3. Featured Collections (Luxury Editorial Section - Phase 3) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <CollectionList setRoute={handleOldRouteTrigger} />
+                </motion.div>
+
+                {/* 4. Best Sellers (Luxury Editorial Product Section - Phase 4) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <BestSellersSection
+                    onProductClick={(p) => navigate(`/product/${p.slug}`)}
+                    onAddToWishlist={toggleWishlist}
+                    onAddToCart={addToCart}
+                    wishlistIds={wishlist}
+                    onOpenQuickView={setQuickViewProduct}
+                    setRoute={handleOldRouteTrigger}
+                  />
+                </motion.div>
+
+                {/* 5. New Arrivals Editorial Promotional Banner (Phase 5) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <NewArrivalsBanner setRoute={handleOldRouteTrigger} />
+                </motion.div>
+
+                {/* 6. Lookbook Editorial Experience (Phase 6) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <LookbookSection setRoute={handleOldRouteTrigger} />
+                </motion.div>
+
+                {/* 7. Summer Essentials Editorial Campaign (Phase 7) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <SummerEssentialsSection setRoute={handleOldRouteTrigger} />
+                </motion.div>
+
+                {/* 4. Current Offers Section */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -557,7 +640,7 @@ function AppContent() {
                                 {/* Image Overlay */}
                                 <div className="relative h-44 sm:h-64 overflow-hidden bg-gray-50">
                                   <img
-                                    src={offer.image || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600"}
+                                    src={(offer.image && offer.image.trim()) || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600"}
                                     alt={offer.title}
                                     className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
                                     loading="lazy"
@@ -609,16 +692,6 @@ function AppContent() {
                       })()}
                     </div>
                   </section>
-                </motion.div>
-
-                {/* 3. Shop by Collection (Fade Up) */}
-                <motion.div
-                  initial={{ opacity: 0, y: 35 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <CollectionList setRoute={handleOldRouteTrigger} />
                 </motion.div>
 
                 {/* 4. Trending section (Fade Up) */}
@@ -711,102 +784,7 @@ function AppContent() {
                   </section>
                 </motion.div>
 
-                {/* 6. Shop by Category (New Section) */}
-                <motion.div
-                  initial={{ opacity: 0, y: 35 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <section id="shop-by-category-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-b border-gray-100">
-                    <div className="max-w-7xl mx-auto">
-                      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-zinc-200 pb-4">
-                        <div className="max-w-xl text-left">
-                          <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase mb-1.5 font-mono block">
-                            Sartorial Departments
-                          </span>
-                          <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase">
-                            Shop by Category
-                          </h2>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-                        {[
-                          {
-                            name: "Shirts",
-                            slug: "shirts",
-                            image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=400",
-                          },
-                          {
-                            name: "Jeans",
-                            slug: "jeans",
-                            image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=400",
-                          },
-                          {
-                            name: "Pants",
-                            slug: "pants",
-                            image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=400",
-                          },
-                          {
-                            name: "Oversized",
-                            slug: "shirts",
-                            image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400",
-                          },
-                          {
-                            name: "Co-ords",
-                            slug: "combos",
-                            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=400",
-                          },
-                          {
-                            name: "Accessories",
-                            slug: "accessories",
-                            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400",
-                          }
-                        ].map((cat, idx) => (
-                          <div
-                            id={`category-card-${cat.name.toLowerCase()}`}
-                            key={idx}
-                            onClick={() => {
-                              handleOldRouteTrigger(`collections/${cat.slug}`);
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="group relative h-48 rounded-none overflow-hidden cursor-pointer border border-gray-200 flex flex-col justify-end"
-                          >
-                            <div className="absolute inset-0 z-0">
-                              <img
-                                src={cat.image}
-                                alt={cat.name}
-                                className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
-                                loading="lazy"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent z-10" />
-                            </div>
-
-                            <div className="relative z-20 p-4 text-left flex items-center justify-between w-full">
-                              <h3 className="text-sm font-sans font-black tracking-widest text-white uppercase">
-                                {cat.name}
-                              </h3>
-                              <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
-                </motion.div>
-
-                {/* 7. Why Choose Clinza (Fade In) */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <FeaturesSection />
-                </motion.div>
-
-                {/* 8. Editorial / Blogs (Fade Up) */}
+                {/* 6. Editorial / Blogs (Fade Up) */}
                 <motion.div
                   initial={{ opacity: 0, y: 35 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -840,7 +818,7 @@ function AppContent() {
                             </div>
                             <div className="lg:col-span-7 rounded-2xl overflow-hidden aspect-[16/9] border border-white/10 shadow-xl bg-zinc-900">
                               <img
-                                src={cfg.editorialImg || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800"}
+                                src={(cfg.editorialImg && cfg.editorialImg.trim()) || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800"}
                                 alt="Japan indigo shuttles cover image"
                                 className="h-full w-full object-cover"
                                 loading="lazy"
@@ -1184,7 +1162,7 @@ function AppContent() {
               title="Click to view full specifications"
             >
               <img
-                src={quickViewProduct.images[0]}
+                src={(quickViewProduct.images && quickViewProduct.images[0]) || null}
                 alt={quickViewProduct.name}
                 className="h-full w-full object-cover group-hover/qvimg:scale-105 transition-transform duration-500"
               />
@@ -1273,16 +1251,40 @@ function CategoryPage({
   const navigate = useNavigate();
   const allProducts = getProducts();
   
-  const filtered = colSlug === "all"
+  const normalized = (colSlug || "").toLowerCase();
+  const filtered = normalized === "all"
     ? allProducts
-    : allProducts.filter(p =>
-        p.collection.toLowerCase() === colSlug.toLowerCase() ||
-        p.category.toLowerCase().includes(colSlug.toLowerCase())
+    : normalized === "premium-linen"
+    ? allProducts.filter(p => p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen"))
+    : normalized === "shirts"
+    ? allProducts.filter(p => p.collection?.toLowerCase() === "shirts")
+    : normalized === "jeans"
+    ? allProducts.filter(p => p.collection?.toLowerCase() === "jeans")
+    : normalized === "pants"
+    ? allProducts.filter(p => p.collection?.toLowerCase() === "pants")
+    : normalized === "trending"
+    ? allProducts.filter(p => p.isTrending)
+    : (normalized === "new-arrivals" || normalized === "new-arrivals-all")
+    ? allProducts.filter(p => p.isNewArrival)
+    : (normalized === "combo" || normalized === "combos" || normalized === "co-ord" || normalized === "linen-combo-set")
+    ? allProducts.filter(p => p.collection?.toLowerCase() === "combo" || p.collection?.toLowerCase() === "combos" || p.category.toLowerCase().includes("combo") || p.name.toLowerCase().includes("co-ord") || p.name.toLowerCase().includes("set"))
+    : (normalized === "shoes" || normalized === "footwear")
+    ? allProducts.filter(p => p.collection?.toLowerCase() === "shoes" || p.collection?.toLowerCase() === "footwear" || p.category.toLowerCase().includes("shoe") || p.category.toLowerCase().includes("loaf"))
+    : allProducts.filter(p => 
+        (p.collection && p.collection.toLowerCase() === normalized) ||
+        (p.category && p.category.toLowerCase().includes(normalized)) ||
+        (p.description && p.description.toLowerCase().includes(normalized))
       );
 
   React.useEffect(() => {
     trackCollectionView(colSlug, colSlug === "all" ? "Clinza Wardrobe Catalog" : `${colSlug.toUpperCase()} Collections`, filtered.length);
   }, [colSlug, filtered.length]);
+
+  const collectionsList = getCollections();
+  const activeCol = collectionsList.find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized);
+
+  const colBannerImage = (activeCol?.banner || activeCol?.thumbnail || "").trim() || null;
+  const colDescription = activeCol?.description || "Showing total of " + filtered.length + " curated luxury items. Complimentary Cash On Delivery available across India.";
 
   const capitalizedColTitle = colSlug === "all"
     ? "Clinza Wardrobe Catalog"
@@ -1291,12 +1293,33 @@ function CategoryPage({
   return (
     <section id="collection-grid-viewport" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-screen text-left animate-fade-in font-sans">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase mb-2">
-          {capitalizedColTitle}
-        </h1>
-        <p className="text-zinc-550 text-xs sm:text-sm mb-6">
-          Showing total of {filtered.length} curated luxury items. Complimentary Cash On Delivery available across India.
-        </p>
+        {colBannerImage ? (
+          <div className="w-full h-48 sm:h-64 relative mb-8 overflow-hidden border border-gray-200">
+            <img 
+              src={colBannerImage} 
+              alt={capitalizedColTitle} 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute bottom-6 left-6 right-6 text-white text-left">
+              <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight uppercase mb-1">
+                {capitalizedColTitle}
+              </h1>
+              <p className="text-zinc-200 text-xs sm:text-sm max-w-2xl font-light">
+                {colDescription}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-8 text-left border-b border-zinc-200 pb-4">
+            <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase mb-2">
+              {capitalizedColTitle}
+            </h1>
+            <p className="text-zinc-550 text-xs sm:text-sm">
+              {colDescription}
+            </p>
+          </div>
+        )}
 
         {filtered.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

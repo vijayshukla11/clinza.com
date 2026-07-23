@@ -5,140 +5,153 @@
 
 import React, { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
-import { getCollections, getProducts } from "../utils";
+import { CollectionsService, CollectionItem } from "../services/supabaseService";
 
 interface CollectionListProps {
   setRoute: (route: string) => void;
 }
 
 export default function CollectionList({ setRoute }: CollectionListProps) {
-  const [collections, setCollections] = useState(() => getCollections());
-  const [products, setProducts] = useState(() => getProducts());
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Automatically refresh when mounted/rendered
+  // Automatically load collections from Supabase on mount
   useEffect(() => {
-    const cmsCollections = getCollections();
-    console.log("=== COLLECTIONLIST MOUNT / REFRESH ===");
-    console.log("Loaded collections from CMS getCollections():", cmsCollections);
-    setCollections(cmsCollections);
-    setProducts(getProducts());
+    async function loadData() {
+      try {
+        setLoading(true);
+        const cols = await CollectionsService.getHomepageCollections();
+        setCollections(cols || []);
+      } catch (error) {
+        console.error("Error loading collection list from Supabase:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
-  // Display ONLY collections where: homepageFeatured == true or featured == true
-  const featuredCollections = collections.filter(
-    (col) => col.featured === true || (col as any).homepageFeatured === true
-  );
+  const defaultSixCollections: Partial<CollectionItem>[] = [
+    {
+      id: "col-linen-shirts",
+      name: "Linen Shirts",
+      slug: "linen-shirts",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800",
+    },
+    {
+      id: "col-cotton-shirts",
+      name: "Cotton Shirts",
+      slug: "cotton-shirts",
+      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=800",
+    },
+    {
+      id: "col-linen-pants",
+      name: "Linen Pants",
+      slug: "linen-pants",
+      image: "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&q=80&w=800",
+    },
+    {
+      id: "col-jeans",
+      name: "Jeans",
+      slug: "jeans",
+      image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=800",
+    },
+    {
+      id: "col-combos",
+      name: "Combos",
+      slug: "combos",
+      image: "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&q=80&w=800",
+    },
+    {
+      id: "col-new-arrivals",
+      name: "New Arrivals",
+      slug: "new-arrivals",
+      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800",
+    }
+  ];
 
-  // Sort collections by displayOrder (or weight if used)
-  const sortedCollections = [...featuredCollections].sort((a, b) => {
-    const orderA = a.displayOrder !== undefined ? a.displayOrder : ((a as any).weight !== undefined ? (a as any).weight : 999);
-    const orderB = b.displayOrder !== undefined ? b.displayOrder : ((b as any).weight !== undefined ? (b as any).weight : 999);
-    return orderA - orderB;
-  });
-
-  // Helper to calculate dynamic product count
-  const getProductCount = (slug: string, id: string) => {
-    const colSlug = (slug || "").toLowerCase();
-    const colId = (id || "").toLowerCase();
+  // Merge loaded collections or fallback to default 6
+  const displayCollections = React.useMemo(() => {
+    if (collections && collections.length >= 6) {
+      return collections.slice(0, 6).map(c => ({
+        id: c.id || c.slug,
+        name: c.name,
+        slug: c.slug || c.id,
+        image: c.thumbnail || c.banner || c.image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800"
+      }));
+    }
     
-    return products.filter((p) => {
-      const prodCol = (p.collection || "").toLowerCase();
-      if (colSlug === "premium-linen" || colId === "premium-linen") {
-        return p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen");
-      }
-      return prodCol === colSlug || prodCol === colId;
-    }).length;
-  };
+    // If fewer than 6 loaded, use available then fill with defaults
+    if (collections && collections.length > 0) {
+      const loaded = collections.map(c => ({
+        id: c.id || c.slug,
+        name: c.name,
+        slug: c.slug || c.id,
+        image: c.thumbnail || c.banner || c.image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800"
+      }));
+      const loadedSlugs = new Set(loaded.map(item => item.slug));
+      const remainingDefaults = defaultSixCollections.filter(item => !loadedSlugs.has(item.slug!));
+      return [...loaded, ...remainingDefaults].slice(0, 6) as { id: string; name: string; slug: string; image: string }[];
+    }
+
+    return defaultSixCollections as { id: string; name: string; slug: string; image: string }[];
+  }, [collections]);
 
   return (
-    <section id="clinza-collections-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-zinc-200 pb-4">
-          <div className="max-w-xl text-left">
-            <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase mb-1.5 font-mono block">
-              The Clinza Wardrobe
-            </span>
-            <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase">
-              Shop By Collection
-            </h2>
-          </div>
-          <button
-            id="collections-all-btn"
-            onClick={() => setRoute("collections/all")}
-            className="mt-3 sm:mt-0 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#F27D26] hover:text-black transition-colors cursor-pointer font-mono"
-          >
-            Explore Full Wardrobe <ArrowRight className="h-4 w-4" />
-          </button>
+    <section id="featured-collections-section" className="py-12 sm:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8]">
+      <div className="max-w-[1440px] mx-auto">
+        {/* LUXURY EDITORIAL SECTION HEADER */}
+        <div className="text-center mb-8 sm:mb-12">
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111] block mb-2">
+            FEATURED COLLECTIONS
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#111111] tracking-tight mb-3">
+            Timeless Pieces. Modern Vibes.
+          </h2>
+          <div className="w-12 h-[2px] bg-[#111111] mx-auto" />
         </div>
 
-        {/* BENTO GRID */}
-        {sortedCollections.length === 0 ? (
-          <div className="text-center py-12 text-zinc-500 font-sans text-sm">
-            No featured collections found. Configure them inside the Admin Panel under Curated Collections.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
-            {sortedCollections.map((item) => {
-              const image = item.thumbnail || item.banner || (item as any).image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600";
-              const count = getProductCount(item.slug, item.id);
-
-              return (
-                <div
-                  id={`collection-card-${item.slug}`}
-                  key={item.id || item.slug}
-                  className="group relative h-64 sm:h-84 rounded-none overflow-hidden hover:border-black transition-all duration-300 border border-gray-200 flex flex-col justify-end"
-                >
-                  {/* BACKDROP IMAGE */}
-                  <div className="absolute inset-0 z-0">
-                    <img
-                      src={image}
-                      alt={item.name}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
-                      loading="lazy"
-                    />
-                    {/* DARK SLATE GRADIENT GRIP */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/45 to-transparent z-10" />
-                  </div>
-
-                  {/* FLOATING PRODUCT COUNT ACCENT */}
-                  <div className="absolute top-4 right-4 z-20 bg-white/10 border border-white/20 backdrop-blur-md px-3 py-1 rounded-none">
-                    <p className="text-[10px] font-extrabold font-mono text-zinc-100 uppercase tracking-widest leading-none">
-                      {count} items
-                    </p>
-                  </div>
-
-                  {/* CARD DETAILS */}
-                  <div className="relative z-20 p-6 flex flex-col items-start text-left">
-                    <h3 className="text-xl font-sans font-black tracking-tight text-white uppercase mb-2">
-                      {item.name}
-                    </h3>
-                    {item.description && (
-                      <p className="text-gray-300 text-xs font-sans leading-relaxed mb-6 font-light line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-                    <button
-                      id={`collection-btn-${item.slug}`}
-                      onClick={() => {
-                        setRoute(`collections/${item.slug}`);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="group/btn flex items-center justify-center gap-1.5 bg-white text-gray-950 text-xs font-bold font-sans uppercase tracking-widest px-5 py-3 rounded-none hover:bg-[#F27D26] hover:text-black transition-all cursor-pointer border border-transparent hover:border-black"
-                    >
-                      View Collection
-                      <ArrowRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1.5 transition-transform" />
-                    </button>
-                  </div>
-
+        {/* 6 COLLECTION CARDS GRID (Desktop: 6, Tablet: 3x2, Mobile: 2x3) */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
+          {displayCollections.map((item) => {
+            return (
+              <div
+                id={`collection-card-${item.slug}`}
+                key={item.id}
+                onClick={() => {
+                  setRoute(`collections/${item.slug}`);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="group relative aspect-[4/5] w-full bg-[#EAE8E3] rounded-[12px] overflow-hidden cursor-pointer border border-[#E0DDD7] transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-xl flex flex-col justify-end"
+              >
+                {/* BACKGROUND IMAGE WITH ZOOM */}
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                    loading="lazy"
+                  />
+                  {/* BOTTOM OVERLAY GRADIENT FOR TEXT LEGIBILITY */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent z-10" />
                 </div>
-              );
-            })}
-          </div>
-        )}
 
+                {/* BOTTOM OVERLAY DETAILS */}
+                <div className="relative z-20 p-4 sm:p-4 text-left flex items-center justify-between w-full">
+                  <h3 className="text-sm sm:text-base font-bold tracking-tight text-white uppercase leading-snug drop-shadow-xs">
+                    {item.name}
+                  </h3>
+                  
+                  <div className="shrink-0 ml-2 w-7 h-7 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center text-white group-hover:bg-white group-hover:text-[#111111] transition-all duration-300">
+                    <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-0.5 transition-transform duration-300" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
 }
+

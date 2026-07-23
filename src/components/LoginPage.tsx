@@ -49,11 +49,6 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
     }
   };
 
-  const handleShortcutDev = () => {
-    setEmail("sastaelectronic6@gmail.com");
-    setPassword("clinza2026");
-  };
-
   return (
     <div id="login-page-container" className="bg-zinc-50 min-h-[85vh] py-24 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center font-sans text-left">
       <div className="max-w-md w-full bg-white border border-gray-150 rounded-3xl p-8 shadow-md space-y-6">
@@ -153,26 +148,15 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
           </button>
         </form>
 
-        {/* ADMIN CREDENTIAL SPEED ENTRY BYPASS */}
-        <div className="border-t border-gray-100 pt-5 space-y-3">
+        <div className="border-t border-gray-100 pt-5 text-center text-gray-450 text-[11px]">
+          New to CLINZA?{" "}
           <button 
             type="button" 
-            onClick={handleShortcutDev}
-            className="w-full bg-orange-600/5 hover:bg-orange-600/10 border border-dashed border-[#F27D26]/35 text-[#F27D26] text-[10px] font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+            onClick={() => setRoute("register")}
+            className="text-[#F27D26] font-bold hover:underline"
           >
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Autofill Administrator Key (BYPASS)
+            Register here
           </button>
-          
-          <div className="text-center text-gray-450 text-[11px]">
-            New to CLINZA?{" "}
-            <button 
-              type="button" 
-              onClick={() => setRoute("register")}
-              className="text-[#F27D26] font-bold hover:underline"
-            >
-              Register here
-            </button>
-          </div>
         </div>
 
       </div>

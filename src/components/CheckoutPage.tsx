@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, CheckCircle2, ShieldCheck, Mail, MapPin, Phone, User, Landmark, HelpCircle } from "lucide-react";
 import { Order, CartItem } from "../types";
-import { createOrder } from "../utils";
+import { createOrder, calculateCartTotals, getProducts } from "../utils";
 
 interface CheckoutPageProps {
   cart: CartItem[];
@@ -41,13 +41,21 @@ export default function CheckoutPage({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  // Dynamically calculate totals to guarantee 100% synchronization and correctness
+  const totals = calculateCartTotals(cart, checkoutSummary.appliedCoupon);
+  const subtotal = totals.subtotal;
+  const discountAmount = totals.discount;
+  const standardGST = totals.tax;
+  const shippingCharge = totals.shipping;
+  const grandTotal = totals.total;
+
   const indianStates = [
     "Andhra Pradesh", "Karnataka", "Kerala", "Tamil Nadu", "Telangana",
     "Maharashtra", "Gujarat", "Rajasthan", "Madhya Pradesh", "Goa",
     "Delhi", "Haryana", "Punjab", "Uttar Pradesh", "West Bengal"
   ];
 
-  const handleInputChange = (e: React.ChangeEventHTMLInputElement | React.ChangeEventHTMLSelectElement) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     // Clear error
@@ -85,11 +93,34 @@ export default function CheckoutPage({
     return Object.keys(errors).length === 0;
   };
 
-  const handlePlaceOrderSubmit = (e: React.FormEventHTML) => {
+  const handlePlaceOrderSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPlacingOrder) return; // Prevent duplicate orders from double-clicking
     if (!validateForm()) return;
 
     setIsPlacingOrder(true);
+
+    // Prevent checkout when inventory is insufficient
+    const currentProducts = getProducts();
+    const outOfStockItems: string[] = [];
+    for (const item of cart) {
+      const liveProduct = currentProducts.find(p => p.id === item.product.id) || item.product;
+      const availableQty = liveProduct.stockQuantity !== undefined
+        ? liveProduct.stockQuantity
+        : (liveProduct.stockStatus === "Out of Stock" ? 0 : 120);
+
+      if (availableQty <= 0 || liveProduct.stockStatus === "Out of Stock") {
+        outOfStockItems.push(`"${liveProduct.name}" is Out of Stock.`);
+      } else if (item.quantity > availableQty) {
+        outOfStockItems.push(`Only ${availableQty} units of "${liveProduct.name}" are available in stock (you requested ${item.quantity}).`);
+      }
+    }
+
+    if (outOfStockItems.length > 0) {
+      setFormErrors({ submit: `Inventory Insufficient: ${outOfStockItems.join(" ")}` });
+      setIsPlacingOrder(false);
+      return;
+    }
 
     // Simulate luxury packing delays
     setTimeout(() => {
@@ -116,7 +147,7 @@ export default function CheckoutPage({
             pincode: formData.pincode.trim()
           },
           items: orderItems,
-          totalAmount: checkoutSummary.total,
+          totalAmount: grandTotal,
           paymentMethod: "COD" as const
         };
 
@@ -352,25 +383,25 @@ export default function CheckoutPage({
               <div className="space-y-2.5 pb-4 border-t border-gray-150 pt-4 text-xs font-sans font-medium text-gray-650">
                 <div className="flex justify-between">
                   <span>Cart Subtotal</span>
-                  <span>₹{checkoutSummary.subtotal.toLocaleString("en-IN")}</span>
+                  <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
-                {checkoutSummary.discount > 0 && (
-                  <div className="flex justify-between text-green-600 font-bold">
-                    <span>Coupon Savings</span>
-                    <span>- ₹{checkoutSummary.discount.toLocaleString("en-IN")}</span>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>Discount Savings</span>
+                    <span>- ₹{discountAmount.toLocaleString("en-IN")}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>standard textile GST (5%)</span>
-                  <span>₹{checkoutSummary.tax.toLocaleString("en-IN")}</span>
+                  <span>Standard Integrated GST (0%)</span>
+                  <span>₹0</span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold">
                   <span>COD Delivery Shipping</span>
-                  <span>FREE</span>
+                  <span>₹{shippingCharge.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between items-baseline pt-2 border-t border-gray-100 text-gray-950">
                   <span className="font-bold uppercase text-[10px] tracking-wider">Total</span>
-                  <span className="text-xl font-black font-serif">₹{checkoutSummary.total.toLocaleString("en-IN")}</span>
+                  <span className="text-xl font-black font-serif">₹{grandTotal.toLocaleString("en-IN")}</span>
                 </div>
               </div>
 

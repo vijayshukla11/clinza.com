@@ -24,10 +24,17 @@ CREATE TABLE IF NOT EXISTS collections (
     banner TEXT,
     thumbnail TEXT,
     description TEXT,
+    short_description TEXT,
+    button_text TEXT DEFAULT 'View Collection',
     seo_title TEXT,
     seo_description TEXT,
+    meta_title TEXT,
+    meta_description TEXT,
+    alt_text TEXT,
     display_order INTEGER DEFAULT 0,
     featured BOOLEAN DEFAULT false,
+    show_on_homepage BOOLEAN DEFAULT true,
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -187,6 +194,43 @@ CREATE TABLE IF NOT EXISTS style_analysis (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
+-- 16a. Create reviews table
+CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    rating NUMERIC(3, 2) NOT NULL,
+    user_name TEXT NOT NULL,
+    comment TEXT,
+    location TEXT,
+    approved BOOLEAN DEFAULT false NOT NULL,
+    date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 16b. Create coupon_codes table
+CREATE TABLE IF NOT EXISTS coupon_codes (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    type TEXT NOT NULL,
+    value NUMERIC(12, 2) NOT NULL,
+    min_cart_value NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
+    expiry_date TEXT
+);
+
+-- 16c. Create order_returns table
+CREATE TABLE IF NOT EXISTS order_returns (
+    id TEXT PRIMARY KEY,
+    order_id TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    type TEXT NOT NULL,
+    items JSONB DEFAULT '[]'::jsonb NOT NULL,
+    reason TEXT NOT NULL,
+    description TEXT,
+    image_proof_url TEXT,
+    status TEXT DEFAULT 'Pending'::text NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
 -- ==========================================================
 -- INDEXES FOR MAXIMUM PERFORMANCE & QUICK RETRIEVALS
 -- ==========================================================
@@ -272,6 +316,9 @@ ALTER TABLE cart ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE style_analysis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupon_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_returns ENABLE ROW LEVEL SECURITY;
 
 -- 1. Categories Policies
 CREATE POLICY "Allow public read access to categories" ON categories 
@@ -372,3 +419,25 @@ CREATE POLICY "Allow visitors to save style recommendations" ON style_analysis
     FOR INSERT TO public WITH CHECK (true);
 CREATE POLICY "Allow staff to view style analysis leads" ON style_analysis 
     FOR SELECT TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Customer Support']));
+
+-- 20. Reviews Policies
+CREATE POLICY "Allow public read access to approved reviews" ON reviews 
+    FOR SELECT TO public USING (true);
+CREATE POLICY "Allow visitors to submit product reviews" ON reviews 
+    FOR INSERT TO public WITH CHECK (true);
+CREATE POLICY "Allow staff write access to reviews" ON reviews 
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Customer Support']));
+
+-- 21. Coupon Codes Policies
+CREATE POLICY "Allow public select coupons" ON coupon_codes 
+    FOR SELECT TO public USING (true);
+CREATE POLICY "Allow staff write access to coupons" ON coupon_codes 
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Marketing Manager']));
+
+-- 22. Order Returns Policies
+CREATE POLICY "Allow public insert order returns" ON order_returns 
+    FOR INSERT TO public WITH CHECK (true);
+CREATE POLICY "Allow public select own order returns" ON order_returns 
+    FOR SELECT TO public USING (true);
+CREATE POLICY "Allow staff write access to order returns" ON order_returns 
+    FOR ALL TO authenticated USING (check_admin_role(ARRAY['Super Admin', 'Admin', 'Order Manager']));
