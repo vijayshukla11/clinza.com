@@ -715,9 +715,28 @@ export async function saveCustomerToCloud(customer: any): Promise<void> {
       name: customer.name,
       email: customer.email,
       phone: customer.phone || "",
-      address_book: customer.addressBook || customer.address_book || customer.addresses || [],
+      status: customer.status || "Active",
+      tags: customer.tags || [],
+      created_at: customer.createdAt || new Date().toISOString(),
+      last_order_date: customer.lastOrderDate || null,
+      total_orders: customer.totalOrders ?? 0,
       total_spend: customer.totalSpend ?? customer.total_spend ?? 0,
-      wishlist: customer.wishlist || []
+      avg_order_value: customer.avgOrderValue ?? 0,
+      address_book: customer.addressBook || customer.address_book || [],
+      shipping_addresses: customer.shippingAddresses || [],
+      billing_addresses: customer.billingAddresses || [],
+      wishlist: customer.wishlist || [],
+      recently_viewed: customer.recentlyViewed || [],
+      timeline: customer.timeline || [],
+      notes: customer.notes || [],
+      reward_points: customer.rewardPoints ?? 0,
+      store_credit: customer.storeCredit ?? 0,
+      referral_code: customer.referralCode || "",
+      coupon_history: customer.couponHistory || [],
+      marketing_consent: customer.marketingConsent || { emailOptIn: true, smsOptIn: true, whatsappOptIn: true, newsletter: true },
+      is_blocked: !!customer.isBlocked,
+      block_reason: customer.blockReason || "",
+      support_requests: customer.supportRequests || []
     };
 
     const { error } = await supabase
@@ -752,10 +771,17 @@ export async function getCollectionsFromCloud(): Promise<CollectionMaster[]> {
       banner: row.banner || "",
       thumbnail: row.thumbnail || "",
       description: row.description || "",
+      shortDescription: row.short_description || row.shortDescription || row.description || "",
+      buttonText: row.button_text || row.buttonText || "View Collection",
+      altText: row.alt_text || row.altText || row.name || "",
       seoTitle: row.seo_title || row.seoTitle || "",
       seoDescription: row.seo_description || row.seoDescription || "",
+      metaTitle: row.meta_title || row.metaTitle || row.seo_title || "",
+      metaDescription: row.meta_description || row.metaDescription || row.seo_description || "",
       displayOrder: Number(row.display_order ?? row.displayOrder ?? 0),
-      featured: !!(row.featured)
+      featured: row.featured !== false,
+      showOnHomepage: row.show_on_homepage !== false,
+      isActive: row.is_active !== false
     }));
   } catch (err) {
     console.error("Collections cloud query failure:", err);
@@ -772,10 +798,17 @@ export async function saveCollectionToCloud(collection: CollectionMaster): Promi
       banner: collection.banner || "",
       thumbnail: collection.thumbnail || "",
       description: collection.description || "",
-      seo_title: collection.seoTitle || "",
-      seo_description: collection.seoDescription || "",
+      short_description: collection.shortDescription || collection.description || "",
+      button_text: collection.buttonText || "View Collection",
+      alt_text: collection.altText || collection.name || "",
+      seo_title: collection.seoTitle || collection.metaTitle || "",
+      seo_description: collection.seoDescription || collection.metaDescription || "",
+      meta_title: collection.metaTitle || collection.seoTitle || "",
+      meta_description: collection.metaDescription || collection.seoDescription || "",
       display_order: collection.displayOrder ?? 0,
-      featured: !!collection.featured
+      featured: collection.featured !== false,
+      show_on_homepage: collection.showOnHomepage !== false,
+      is_active: collection.isActive !== false
     };
 
     const { error } = await supabase
@@ -857,9 +890,28 @@ export async function syncCustomersFromCloud(): Promise<CustomerProfile[]> {
       name: row.name,
       email: row.email,
       phone: row.phone || "",
-      addressBook: Array.isArray(row.address_book) ? row.address_book : (row.addressBook || []),
+      status: row.status || (row.is_blocked ? "Blocked" : "Active"),
+      tags: Array.isArray(row.tags) ? row.tags : (row.tags ? [row.tags] : ["Retail"]),
+      createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+      lastOrderDate: row.last_order_date || row.lastOrderDate || undefined,
+      totalOrders: Number(row.total_orders ?? row.totalOrders ?? 0),
       totalSpend: Number(row.total_spend ?? row.totalSpend ?? 0),
-      wishlist: Array.isArray(row.wishlist) ? row.wishlist : []
+      avgOrderValue: Number(row.avg_order_value ?? row.avgOrderValue ?? 0),
+      addressBook: Array.isArray(row.address_book) ? row.address_book : (row.addressBook || []),
+      shippingAddresses: Array.isArray(row.shipping_addresses) ? row.shipping_addresses : (row.shippingAddresses || []),
+      billingAddresses: Array.isArray(row.billing_addresses) ? row.billing_addresses : (row.billingAddresses || []),
+      wishlist: Array.isArray(row.wishlist) ? row.wishlist : [],
+      recentlyViewed: Array.isArray(row.recently_viewed) ? row.recently_viewed : (row.recentlyViewed || []),
+      timeline: Array.isArray(row.timeline) ? row.timeline : [],
+      notes: Array.isArray(row.notes) ? row.notes : [],
+      rewardPoints: Number(row.reward_points ?? row.rewardPoints ?? 0),
+      storeCredit: Number(row.store_credit ?? row.storeCredit ?? 0),
+      referralCode: row.referral_code || row.referralCode || `CLI-${row.name ? row.name.slice(0, 3).toUpperCase() : 'REF'}-${Math.floor(1000 + Math.random() * 9000)}`,
+      couponHistory: Array.isArray(row.coupon_history) ? row.coupon_history : (row.couponHistory || []),
+      marketingConsent: row.marketing_consent || row.marketingConsent || { emailOptIn: true, smsOptIn: true, whatsappOptIn: true, newsletter: true },
+      isBlocked: !!(row.is_blocked || row.isBlocked || row.status === "Blocked"),
+      blockReason: row.block_reason || row.blockReason || "",
+      supportRequests: Array.isArray(row.support_requests) ? row.support_requests : (row.supportRequests || [])
     }));
   } catch (err) {
     console.error("Customers cloud query failure:", err);

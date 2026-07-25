@@ -326,7 +326,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
   editorialTitle: "Unpacking Textile Architecture",
   editorialSubtitle: "Clinza Publication Room",
   editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800",
+  editorialImg: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/clinza%20set.png",
   offers: [
     {
       id: "offer-1",
@@ -955,36 +955,26 @@ export function getCollections(): CollectionMaster[] {
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      // Check if stale or wrong collection configuration exists, or if images are missing/empty
-      const hasStaleData = parsed.some((c: any) => 
-        c.slug === "linen-collection" || 
-        c.slug === "aesthetic-coords" || 
-        c.slug === "footwear" || 
-        c.slug === "combos" ||
-        !c.banner ||
-        !c.thumbnail
-      ) || parsed.length !== 6;
-      
-      if (hasStaleData) {
-        console.warn("getCollections() detected stale or incomplete collections. Evicting cache to synchronize 6 master collections with rich images...");
-        localStorage.removeItem("clinza_collections_master");
-      } else {
-        console.log("getCollections() successfully read from localstorage key: clinza_collections_master", parsed);
-        return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Clean out legacy invalid duplicate items if present
+        const cleaned = parsed.filter((c: any) => c.id !== "linen-combo-set" && c.slug !== "linen-combo-set");
+        if (cleaned.length > 0) {
+          return cleaned;
+        }
       }
     } catch (e) {
       console.error("Failed to parse clinza_collections_master cache:", e);
     }
   }
 
-  // Pure single source of truth 6 Master Collections (Combo, Shirts, Pants, Jeans, Shoes, Linen Combo Set)
+  // Pure single source of truth Master Collections (Combos, Shirts, Pants, Jeans, Footwear)
   const initial: CollectionMaster[] = [
     { 
-      id: "combo", 
-      name: "Combo", 
-      slug: "combo", 
-      banner: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=300", 
+      id: "combos", 
+      name: "Combos", 
+      slug: "combos", 
+      banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", 
+      thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=300", 
       description: "Pre-coordinated matching clothing sets curated for effortless styling.", 
       displayOrder: 1, 
       featured: true, 
@@ -1028,28 +1018,16 @@ export function getCollections(): CollectionMaster[] {
       seoDescription: "Heavy raw indigo selvedge denim jeans." 
     },
     { 
-      id: "shoes", 
-      name: "Shoes", 
-      slug: "shoes", 
+      id: "footwear", 
+      name: "Footwear", 
+      slug: "footwear", 
       banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=1200", 
       thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=300", 
       description: "Luxury leather footwear handcrafted to perfect your silhouette.", 
       displayOrder: 5, 
       featured: true, 
-      seoTitle: "Luxury Shoes | Clinza Footwear", 
+      seoTitle: "Luxury Footwear | Clinza", 
       seoDescription: "Handcrafted suede and full grain leather loafers." 
-    },
-    { 
-      id: "linen-combo-set", 
-      name: "Linen Combo Set", 
-      slug: "linen-combo-set", 
-      banner: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=300", 
-      description: "Pure linen matching shirt and trouser sets curated for absolute luxury.", 
-      displayOrder: 6, 
-      featured: true, 
-      seoTitle: "Linen Combo Set | Clinza Curation", 
-      seoDescription: "Shop premium organic linen matching combo sets." 
     }
   ];
 

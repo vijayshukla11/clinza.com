@@ -61,6 +61,8 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AccountPage from "./components/AccountPage";
 import ShopAllCollectionsPage from "./components/ShopAllCollectionsPage";
+import CollectionsPage from "./components/CollectionsPage";
+import CollectionDetailPage from "./components/CollectionDetailPage";
 
 import { Product, CartItem, Order, Category } from "./types";
 import {
@@ -80,7 +82,7 @@ import {
   saveHomeConfig
 } from "./utils";
 
-import { CategoriesService } from "./services/supabaseService";
+import { CategoriesService, CollectionsService, CollectionItem } from "./services/supabaseService";
 
 import { 
   trackPageView, 
@@ -364,18 +366,25 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
-    <div id="clinza-e-commerce-root" className="min-h-screen flex flex-col bg-[#FAFAF8]">
+    <div id="clinza-e-commerce-root" className="min-h-screen flex flex-col bg-[#FAFAF8] w-full min-w-0 overflow-x-clip">
       <SchemaMarkup activeProduct={activeProduct} activeBlogSlug={activeBlogSlug} />
       
       {/* STICKY HEADER (HIDDEN ON ADMIN VIEWS) */}
       {!isAdminRoute && (
         <div className="w-full relative z-50">
-          <TopShippingBar />
           <Navbar
             currentRoute={getCurrentActiveRouteString()}
             setRoute={handleOldRouteTrigger}
+            cart={cart}
             cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+            updateCartQty={updateCartQty}
+            removeCartItem={removeCartItem}
+            wishlist={wishlist}
             wishlistCount={wishlist.length}
+            toggleWishlist={toggleWishlist}
+            addToCart={addToCart}
+            currentUser={currentUser}
+            onLogout={() => { setCurrentUser(null); localStorage.removeItem("clinza_customer_session"); }}
             onSearch={(query) => {
               setSearchQuery(query);
               handleOldRouteTrigger("collections/all");
@@ -387,7 +396,7 @@ function AppContent() {
       )}
 
       {/* DYNAMIC PAGE ROUTE MOUNT */}
-      <main className="flex-1">
+      <main className="flex-1 w-full min-w-0 overflow-x-clip">
         
         {/* SUCCESS MODAL REDIRECT */}
         {orderSuccessDetail ? (
@@ -516,16 +525,16 @@ function AppContent() {
           </section>
         ) : (
           <Routes>
-            {/* 1. HOME VIEW */}
+            {/* 1. HOME VIEW - Direct section flow with no empty spacer divs or extra margins between Hero and Collections */}
             <Route path="/" element={
               <div id="home-route-viewport" className="animate-fade-in">
-                {/* 1. Hero Slider */}
+                {/* 1. Hero Slider (No margin-bottom / padding-bottom) */}
                 <HeroSlider 
                   setRoute={handleOldRouteTrigger} 
                   scrollToAI={scrollToAISection} 
                 />
 
-                {/* 2. Trust Bar / Features Section */}
+                {/* 2. Trust Bar / Features Section (Compact py-3.5 sm:py-4 lg:py-4 vertical padding) */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -535,14 +544,14 @@ function AppContent() {
                   <FeaturesSection />
                 </motion.div>
 
-                {/* 3. Featured Collections (Luxury Editorial Section - Phase 3) */}
+                {/* 3. Featured Collections (Compact padding-top pt-6 sm:pt-7 md:pt-8 lg:pt-10; total spacing between Hero/Features & Collections is ~24-32px mobile / ~40-60px desktop) */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <CollectionList setRoute={handleOldRouteTrigger} />
+                  <CollectionList setRoute={handleOldRouteTrigger} currentRoute={location.pathname} />
                 </motion.div>
 
                 {/* 4. Best Sellers (Luxury Editorial Product Section - Phase 4) */}
@@ -599,7 +608,7 @@ function AppContent() {
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <section id="current-offers-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-b border-gray-100">
+                  <section id="current-offers-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-6 lg:px-8 bg-white text-left border-b border-gray-100">
                     <div className="max-w-7xl mx-auto">
                       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-zinc-200 pb-4">
                         <div className="max-w-xl text-left">
@@ -701,7 +710,7 @@ function AppContent() {
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <section id="trending-products-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-white text-left border-y border-gray-100">
+                  <section id="trending-products-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-6 lg:px-8 bg-white text-left border-y border-gray-100">
                     <div className="max-w-7xl mx-auto">
                       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-8">
                         <div>
@@ -746,7 +755,7 @@ function AppContent() {
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <section id="new-arrivals-products-section" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 text-left border-b border-gray-200">
+                  <section id="new-arrivals-products-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-6 lg:px-8 bg-zinc-50 text-left border-b border-gray-200">
                     <div className="max-w-7xl mx-auto">
                       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-8">
                         <div>
@@ -818,7 +827,7 @@ function AppContent() {
                             </div>
                             <div className="lg:col-span-7 rounded-2xl overflow-hidden aspect-[16/9] border border-white/10 shadow-xl bg-zinc-900">
                               <img
-                                src={(cfg.editorialImg && cfg.editorialImg.trim()) || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800"}
+                                src={(cfg.editorialImg && cfg.editorialImg.trim()) || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/clinza%20set.png"}
                                 alt="Japan indigo shuttles cover image"
                                 className="h-full w-full object-cover"
                                 loading="lazy"
@@ -914,8 +923,8 @@ function AppContent() {
             <Route path="/pants" element={<CategoryPage colSlug="pants" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
             <Route path="/new-arrivals" element={<CuratedPage type="new-arrivals" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
             <Route path="/trending" element={<CuratedPage type="trending" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
-            <Route path="/collections" element={<CategoryPage colSlug="all" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
-            <Route path="/shop" element={<CategoryPage colSlug="all" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
+            <Route path="/collections" element={<CollectionsPage setRoute={handleOldRouteTrigger} onAddToCart={addToCart} onAddToWishlist={toggleWishlist} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
+            <Route path="/shop" element={<CollectionsPage setRoute={handleOldRouteTrigger} onAddToCart={addToCart} onAddToWishlist={toggleWishlist} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
             <Route path="/collection/:slug" element={<DynamicCategoryPage wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
             <Route path="/collections/:slug" element={<DynamicCategoryPage wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
 
@@ -1250,7 +1259,33 @@ function CategoryPage({
 }: SubcomponentProps) {
   const navigate = useNavigate();
   const allProducts = getProducts();
-  
+  const [dbCollections, setDbCollections] = React.useState<CollectionItem[]>([]);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function fetchDbCols() {
+      try {
+        const cols = await CollectionsService.getAll();
+        if (isMounted && cols && cols.length > 0) {
+          setDbCollections(cols);
+        }
+      } catch (e) {
+        console.error("CategoryPage collections fetch error:", e);
+      }
+    }
+    fetchDbCols();
+
+    const handleUpdate = () => {
+      fetchDbCols();
+    };
+    window.addEventListener("clinza_collections_updated", handleUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("clinza_collections_updated", handleUpdate);
+    };
+  }, []);
+
   const normalized = (colSlug || "").toLowerCase();
   const filtered = normalized === "all"
     ? allProducts
@@ -1276,19 +1311,19 @@ function CategoryPage({
         (p.description && p.description.toLowerCase().includes(normalized))
       );
 
-  React.useEffect(() => {
-    trackCollectionView(colSlug, colSlug === "all" ? "Clinza Wardrobe Catalog" : `${colSlug.toUpperCase()} Collections`, filtered.length);
-  }, [colSlug, filtered.length]);
+  const activeCol = dbCollections.find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized)
+    || getCollections().find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized);
 
-  const collectionsList = getCollections();
-  const activeCol = collectionsList.find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized);
-
-  const colBannerImage = (activeCol?.banner || activeCol?.thumbnail || "").trim() || null;
-  const colDescription = activeCol?.description || "Showing total of " + filtered.length + " curated luxury items. Complimentary Cash On Delivery available across India.";
+  const colBannerImage = (activeCol?.banner || activeCol?.thumbnail || activeCol?.image || "").trim() || null;
+  const colDescription = activeCol?.description || activeCol?.shortDescription || "Showing total of " + filtered.length + " curated luxury items. Complimentary Cash On Delivery available across India.";
 
   const capitalizedColTitle = colSlug === "all"
     ? "Clinza Wardrobe Catalog"
-    : `${colSlug.toUpperCase()} Collections`;
+    : activeCol ? activeCol.name : (colSlug || "Collection").toUpperCase();
+
+  React.useEffect(() => {
+    trackCollectionView(colSlug, capitalizedColTitle, filtered.length);
+  }, [colSlug, capitalizedColTitle, filtered.length]);
 
   return (
     <section id="collection-grid-viewport" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-screen text-left animate-fade-in font-sans">
@@ -1354,14 +1389,25 @@ function DynamicCategoryPage({
   handleOldRouteTrigger
 }: Omit<SubcomponentProps, "colSlug">) {
   const { slug } = useParams();
+  if (!slug || slug === "all") {
+    return (
+      <CollectionsPage
+        setRoute={handleOldRouteTrigger}
+        onAddToCart={addToCart}
+        onAddToWishlist={toggleWishlist}
+        wishlistIds={wishlist}
+        onOpenQuickView={setQuickViewProduct}
+      />
+    );
+  }
   return (
-    <CategoryPage
-      colSlug={slug || "all"}
-      wishlist={wishlist}
-      toggleWishlist={toggleWishlist}
-      addToCart={addToCart}
-      setQuickViewProduct={setQuickViewProduct}
-      handleOldRouteTrigger={handleOldRouteTrigger}
+    <CollectionDetailPage
+      slug={slug}
+      setRoute={handleOldRouteTrigger}
+      onAddToCart={addToCart}
+      onAddToWishlist={toggleWishlist}
+      wishlistIds={wishlist}
+      onOpenQuickView={setQuickViewProduct}
     />
   );
 }

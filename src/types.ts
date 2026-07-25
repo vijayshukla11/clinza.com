@@ -111,6 +111,22 @@ export interface Order {
   trackingNumber?: string;
   courierPartner?: string;
   createdAt: string;
+  paymentStatus?: "Pending" | "Paid" | "Refunded";
+  notes?: { id: string; user: string; text: string; date: string }[];
+}
+
+export interface InventoryLogItem {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  user: string;
+  date: string;
+  previousStock: number;
+  newStock: number;
+  changeAmount: number;
+  reason: string;
+  warehouse?: string;
 }
 
 export interface BlogPost {
@@ -450,6 +466,16 @@ export interface PolicyPagesConfig {
   contactPage: string;
 }
 
+export interface PLPSettingsConfig {
+  defaultGridColumns?: 2 | 3 | 4;
+  productsPerPage?: number;
+  paginationType?: "load-more" | "pagination";
+  enableQuickView?: boolean;
+  showColorSwatches?: boolean;
+  showComparePrice?: boolean;
+  enableFilters?: boolean;
+}
+
 export interface ThemeConfig {
   colors: ColorSettings;
   typography: TypographySettings;
@@ -483,6 +509,7 @@ export interface ThemeConfig {
   newArrivalsBanner?: NewArrivalsBannerConfig;
   lookbookSection?: LookbookSectionConfig;
   summerEssentialsSection?: SummerEssentialsSectionConfig;
+  plpSettings?: PLPSettingsConfig;
 }
 
 export interface Address {

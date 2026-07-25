@@ -113,6 +113,7 @@ export default function ShopAllCollectionsPage({
   };
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchAllData() {
       setLoadingCollections(true);
       try {
@@ -121,17 +122,29 @@ export default function ShopAllCollectionsPage({
           BlogsService.getAll(),
           CollectionsService.getAll()
         ]);
-        setAllProducts(fetchedProds || []);
-        setFilteredProducts(fetchedProds || []);
-        setBlogs(fetchedBlogs || []);
-        setCollections(fetchedCols || []);
+        if (isMounted) {
+          setAllProducts(fetchedProds || []);
+          setFilteredProducts(fetchedProds || []);
+          setBlogs(fetchedBlogs || []);
+          setCollections(fetchedCols || []);
+        }
       } catch (error) {
         console.error("Error fetching landing data from Supabase:", error);
       } finally {
-        setLoadingCollections(false);
+        if (isMounted) setLoadingCollections(false);
       }
     }
     fetchAllData();
+
+    const handleUpdate = () => {
+      fetchAllData();
+    };
+    window.addEventListener("clinza_collections_updated", handleUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("clinza_collections_updated", handleUpdate);
+    };
   }, []);
 
   // Multi-criteria active cascading filtering engine
@@ -525,7 +538,7 @@ export default function ShopAllCollectionsPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 lg:gap-7 xl:gap-8">
             {loadingCollections ? (
               <div className="col-span-full py-20 text-center space-y-4">
                 <div className="h-8 w-8 border-2 border-[#F27D26] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -544,56 +557,45 @@ export default function ShopAllCollectionsPage({
                 </p>
               </div>
             ) : (
-              collections.map((col, index) => {
-                const title = col.name || col.title || "Premium Collection";
-                const imgUrl = col.image || col.banner || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800";
-                const desc = col.description || "Meticulously stitched premium garment coordinate designed for modern everyday confidence.";
-                const count = getProductCount(col.id || col.slug);
-                const itemCountText = count > 0 ? `${count} Garments` : (col.itemCount || "0 Garments");
-                const badgeText = getCollectionBadge(col, index);
+              collections.map((col) => {
+                const title = col.name;
+                const imgUrl = col.thumbnail || col.banner || col.image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800";
+                const subtitle = col.shortDescription && col.shortDescription.length <= 70 ? col.shortDescription : null;
 
                 return (
                   <div 
-                    key={col.id || index}
-                    className="group bg-white rounded-none overflow-hidden border border-zinc-200 hover:border-black transition-all duration-300 flex flex-col justify-between"
+                    key={col.id || col.slug}
+                    onClick={() => handleCollectionSelect(col.slug || col.id)}
+                    className="group relative aspect-[3/4] w-full bg-zinc-100 overflow-hidden cursor-pointer shadow-xs hover:shadow-xl transition-all duration-300 ease-out flex flex-col justify-end"
                   >
-                    {/* Collection image container with slight zoom */}
-                    <div className="relative aspect-[3/4] overflow-hidden bg-zinc-100">
+                    {/* BACKGROUND IMAGE WITH 1.03 ZOOM */}
+                    <div className="absolute inset-0 z-0 overflow-hidden">
                       <img 
                         src={imgUrl} 
-                        alt={title}
-                        className="w-full h-full object-cover group-hover:scale-102 transition-all duration-700 ease-out"
+                        alt={col.altText || title}
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
                         loading="lazy"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute top-4 left-4 bg-zinc-950 text-white font-mono text-[8px] font-black tracking-widest px-2.5 py-1 uppercase">
-                        {badgeText}
-                      </div>
+                      {/* OVERLAY GRADIENT */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 z-10" />
                     </div>
 
-                    {/* Info and action panel */}
-                    <div className="p-5 flex flex-col justify-between flex-1 border-t border-zinc-100">
-                      <div>
-                        <div className="flex justify-between items-baseline mb-2">
-                          <h3 className="text-sm font-sans font-bold text-gray-950 uppercase tracking-tight">
-                            {title}
-                          </h3>
-                          <span className="text-[9px] font-bold text-[#F27D26] font-mono uppercase bg-orange-550/5 px-2 py-0.5 border border-[#F27D26]/10">
-                            {itemCountText}
-                          </span>
-                        </div>
-                        <p className="text-gray-500 text-xs font-light leading-relaxed mb-4">
-                          {desc}
-                        </p>
+                    {/* BOTTOM OVERLAY DETAILS */}
+                    <div className="relative z-20 p-5 sm:p-6 text-left flex items-end justify-between w-full">
+                      <div className="space-y-0.5">
+                        <h3 className="text-[16px] sm:text-[18px] font-semibold text-white tracking-wide">
+                          {title}
+                        </h3>
+                        {subtitle && (
+                          <p className="text-zinc-300 text-[12px] font-normal line-clamp-1 opacity-90">
+                            {subtitle}
+                          </p>
+                        )}
                       </div>
-                      
-                      <button
-                        onClick={() => handleCollectionSelect(col.id || col.slug)}
-                        className="w-full bg-zinc-950 hover:bg-[#F27D26]/10 hover:text-[#F27D26] text-white hover:border-[#F27D26] font-sans text-[10px] font-bold uppercase tracking-widest py-3.5 transition-colors cursor-pointer flex items-center justify-center gap-1.5 rounded-none border border-zinc-950"
-                      >
-                        <span>Shop Collection</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
+                      <div className="shrink-0 ml-3 text-white transition-transform duration-300 ease-out group-hover:translate-x-1.5">
+                        <ArrowRight className="h-5 w-5 stroke-[1.75]" />
+                      </div>
                     </div>
                   </div>
                 );

@@ -73,7 +73,7 @@ export default function SummerEssentialsSection({ setRoute }: SummerEssentialsSe
   }
 
   return (
-    <section id="summer-essentials-section" className="py-20 lg:py-[120px] px-4 sm:px-8 lg:px-12 bg-[#F7F7F5] text-left overflow-hidden">
+    <section id="summer-essentials-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#F7F7F5] text-left overflow-hidden">
       <div className="max-w-[1440px] mx-auto space-y-12 lg:space-y-16">
         
         {/* MAIN EDITORIAL CAMPAIGN BANNER CARD */}

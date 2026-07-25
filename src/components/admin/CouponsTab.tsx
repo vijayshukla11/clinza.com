@@ -32,8 +32,8 @@ export default function CouponsTab() {
       setCoupons(JSON.parse(cached));
     } else {
       const initial: Coupon[] = [
-        { id: "cop-1", code: "CLINZA20", type: "percentage", value: 20, minCartValue: 1499, expiryDate: "2026-07-31" },
-        { id: "cop-2", code: "FREETRAVEL", type: "free_shipping", value: 0, minCartValue: 999, expiryDate: "2026-08-15" },
+        { id: "cop-1", code: "CLINZA20", type: "percentage", value: 20, minCartValue: 1099, expiryDate: "2026-07-31" },
+        { id: "cop-2", code: "FREETRAVEL", type: "free_shipping", value: 0, minCartValue: 999, expiryDate: "2027-08-15" },
         { id: "cop-3", code: "SARTORIAL500", type: "flat", value: 500, minCartValue: 4999, expiryDate: "2026-09-30" }
       ];
       setCoupons(initial);

@@ -35,7 +35,8 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section id="clinza-trust-bar" className="w-full bg-white border-y border-[#ECECEC] py-8 px-4 sm:px-8 lg:px-12">
+    /* Reduced vertical padding from py-3.5 sm:py-4 lg:py-4 (14px-16px) to py-2.5 sm:py-3 lg:py-3 (10px mobile / 12px desktop) for crisp ~24-32px mobile / ~40-50px desktop spacing between Hero Slider and Collections */
+    <section id="clinza-trust-bar" className="w-full bg-white border-y border-[#ECECEC] py-2.5 sm:py-3 lg:py-3 px-4 sm:px-8 lg:px-12">
       <div className="max-w-[1440px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
         {trustItems.map((item) => {
           const Icon = item.icon;

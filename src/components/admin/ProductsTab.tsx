@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, ChevronLeft, Eye, ImageIcon, HelpCircle, Check, Info, Search } from "lucide-react";
 import { Product, ProductCollection } from "../../types";
 import MediaUploader from "./MediaUploader";
-import { getCollections } from "../../utils";
+import { CollectionsService } from "../../services/supabaseService";
 
 interface ProductsTabProps {
   productList: Product[];
@@ -30,14 +30,33 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
   const [showCatDropdown, setShowCatDropdown] = useState(false);
 
   useEffect(() => {
-    const list = getCollections();
-    setCollectionsList(list);
-    // Categories follow collections 1:1
-    setCategoriesList(list.map(c => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug
-    })));
+    let isMounted = true;
+    async function loadCollections() {
+      try {
+        const list = await CollectionsService.getAll();
+        if (isMounted && list) {
+          setCollectionsList(list);
+          setCategoriesList(list.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug
+          })));
+        }
+      } catch (e) {
+        console.error("Error loading collections in ProductsTab:", e);
+      }
+    }
+    loadCollections();
+
+    const handleUpdate = () => {
+      loadCollections();
+    };
+    window.addEventListener("clinza_collections_updated", handleUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("clinza_collections_updated", handleUpdate);
+    };
   }, [editorMode]);
 
   // Multi-field Form state

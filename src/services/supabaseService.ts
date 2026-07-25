@@ -3,8 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { supabase } from "../supabase";
+import { 
+  supabase, 
+  syncCustomersFromCloud, 
+  saveCustomerToCloud, 
+  deleteCustomerFromCloud 
+} from "../supabase";
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_BLOGS, INITIAL_REVIEWS } from "../data";
+import { getCollections, saveCollections } from "../utils";
 import { 
   Product, 
   BlogPost, 
@@ -290,21 +296,21 @@ export const CategoriesService = {
 // Default seed collections used strictly on first database initialization
 const DEFAULT_COLLECTIONS_SEED = [
   {
-    id: "linen-combo",
-    name: "Linen Combo",
+    id: "combos",
+    name: "Combos",
     slug: "combos",
     short_description: "Tailored co-ord sets crafted from pure European flax and breathable cotton blends.",
     description: "Pre-coordinated matching clothing sets curated for effortless styling.",
-    button_text: "Explore Linen Combo",
-    banner: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=800",
-    thumbnail: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=800",
+    button_text: "Explore Combos",
+    banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=800",
+    thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=800",
     display_order: 1,
     show_on_homepage: true,
     is_active: true,
     featured: true,
-    meta_title: "Linen Combo Sets - Clinza Wardrobe",
+    meta_title: "Combos - Clinza Wardrobe",
     meta_description: "Shop premium linen co-ord combo sets engineered for modern elegance.",
-    alt_text: "Clinza Linen Combo Set"
+    alt_text: "Clinza Combos"
   },
   {
     id: "shirts",
@@ -356,6 +362,23 @@ const DEFAULT_COLLECTIONS_SEED = [
     meta_title: "Selvedge Denim & Jeans - Clinza Wardrobe",
     meta_description: "Shop raw redline selvedge denim and premium jeans with modern straight cuts.",
     alt_text: "Clinza Selvedge Denim Jeans"
+  },
+  {
+    id: "footwear",
+    name: "Footwear",
+    slug: "footwear",
+    short_description: "Handcrafted suede and full-grain leather footwear for modern tailoring.",
+    description: "Handcrafted suede and full grain leather loafers.",
+    button_text: "Explore Footwear",
+    banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=800",
+    thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=800",
+    display_order: 5,
+    show_on_homepage: true,
+    is_active: true,
+    featured: true,
+    meta_title: "Luxury Footwear - Clinza Wardrobe",
+    meta_description: "Shop handcrafted suede and full grain leather loafers.",
+    alt_text: "Clinza Luxury Footwear"
   }
 ];
 
@@ -367,30 +390,19 @@ export const CollectionsService = {
         .select("*")
         .order("display_order", { ascending: true });
 
-      // One-time database seed if the table is completely empty during first run
-      if ((!data || data.length === 0) && !error) {
-        try {
-          const { data: insertedData, error: insertError } = await supabase
-            .from("collections")
-            .insert(DEFAULT_COLLECTIONS_SEED)
-            .select();
-          if (!insertError && insertedData) {
-            data = insertedData;
-          }
-        } catch (seedErr) {
-          console.warn("Failed to seed default collections into database:", seedErr);
-        }
+      if (error) {
+        console.warn("Supabase collections query error/offline, falling back to local storage:", error.message || error);
       }
 
       if (data && data.length > 0) {
-        return data.map(row => ({
+        const mapped: CollectionItem[] = data.map(row => ({
           id: row.id,
           name: row.name,
           slug: row.slug,
           description: row.description || "",
           shortDescription: row.short_description || row.description || "",
           buttonText: row.button_text || "View Collection",
-          image: row.banner || row.thumbnail || "",
+          image: row.thumbnail || row.banner || "",
           thumbnail: row.thumbnail || "",
           banner: row.banner || "",
           seoTitle: row.seo_title || row.meta_title || "",
@@ -398,50 +410,124 @@ export const CollectionsService = {
           metaTitle: row.meta_title || row.seo_title || "",
           metaDescription: row.meta_description || row.seo_description || "",
           altText: row.alt_text || row.name || "",
-          displayOrder: row.display_order !== undefined && row.display_order !== null ? row.display_order : 0,
-          featured: !!row.featured,
+          displayOrder: row.display_order !== undefined && row.display_order !== null ? Number(row.display_order) : 0,
+          featured: row.featured !== false,
           showOnHomepage: row.show_on_homepage !== false,
           isActive: row.is_active !== false
         }));
-      }
 
-      // Return default seed objects if DB was empty and insertion failed/unreachable
-      return DEFAULT_COLLECTIONS_SEED.map(col => ({
-        id: col.id,
-        name: col.name,
-        slug: col.slug,
-        description: col.description,
-        shortDescription: col.short_description,
-        buttonText: col.button_text,
-        image: col.banner,
-        thumbnail: col.thumbnail,
-        banner: col.banner,
-        seoTitle: col.meta_title,
-        seoDescription: col.meta_description,
-        metaTitle: col.meta_title,
-        metaDescription: col.meta_description,
-        altText: col.alt_text,
-        displayOrder: col.display_order,
-        featured: col.featured,
-        showOnHomepage: col.show_on_homepage,
-        isActive: col.is_active
-      }));
+        // Deduplicate collections while maintaining custom items
+        const seenKeys = new Set<string>();
+        const uniqueCollections: CollectionItem[] = [];
+        for (const item of mapped) {
+          const key = (item.id || item.slug || "").toLowerCase().trim();
+          if (key && !seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueCollections.push(item);
+          }
+        }
+
+        // Sync local storage with latest cloud data
+        try {
+          saveCollections(uniqueCollections.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            banner: c.banner || "",
+            thumbnail: c.thumbnail || "",
+            description: c.description,
+            shortDescription: c.shortDescription,
+            buttonText: c.buttonText,
+            altText: c.altText,
+            seoTitle: c.seoTitle,
+            seoDescription: c.seoDescription,
+            displayOrder: c.displayOrder || 0,
+            featured: c.featured !== false,
+            showOnHomepage: c.showOnHomepage !== false,
+            isActive: c.isActive !== false
+          })));
+        } catch (syncErr) {
+          console.warn("Failed syncing fetched DB collections to local cache:", syncErr);
+        }
+
+        return uniqueCollections;
+      }
     } catch (e) {
-      console.error("Supabase collections getAll error:", e);
-      return [];
+      console.error("Supabase collections getAll exception, using local fallback:", e);
     }
+
+    // Fallback to local storage (clinza_collections_master) when Supabase returns no data or fails
+    try {
+      const localList = getCollections();
+      if (localList && localList.length > 0) {
+        return localList.map(col => ({
+          id: col.id,
+          name: col.name,
+          slug: col.slug,
+          description: col.description || "",
+          shortDescription: col.shortDescription || col.description || "",
+          buttonText: col.buttonText || "View Collection",
+          image: col.thumbnail || col.banner || "",
+          thumbnail: col.thumbnail || "",
+          banner: col.banner || "",
+          seoTitle: col.seoTitle || col.metaTitle || "",
+          seoDescription: col.seoDescription || col.metaDescription || "",
+          metaTitle: col.metaTitle || col.seoTitle || "",
+          metaDescription: col.metaDescription || col.seoDescription || "",
+          altText: col.altText || col.name || "",
+          displayOrder: col.displayOrder !== undefined && col.displayOrder !== null ? Number(col.displayOrder) : 0,
+          featured: col.featured !== false,
+          showOnHomepage: col.showOnHomepage !== false,
+          isActive: col.isActive !== false
+        }));
+      }
+    } catch (localErr) {
+      console.error("Failed reading local storage fallback collections:", localErr);
+    }
+
+    // Return default seed objects if DB was empty and insertion failed/unreachable
+    return DEFAULT_COLLECTIONS_SEED.map(col => ({
+      id: col.id,
+      name: col.name,
+      slug: col.slug,
+      description: col.description,
+      shortDescription: col.short_description,
+      buttonText: col.button_text,
+      image: col.banner,
+      thumbnail: col.thumbnail,
+      banner: col.banner,
+      seoTitle: col.meta_title,
+      seoDescription: col.meta_description,
+      metaTitle: col.meta_title,
+      metaDescription: col.meta_description,
+      altText: col.alt_text,
+      displayOrder: col.display_order,
+      featured: col.featured,
+      showOnHomepage: col.show_on_homepage,
+      isActive: col.is_active
+    }));
   },
 
   async getHomepageCollections(): Promise<CollectionItem[]> {
     try {
       const all = await this.getAll();
-      // Homepage displays first 4 collections where is_active = true AND show_on_homepage = true ordered by display_order
       return all
         .filter(c => c.isActive !== false && c.showOnHomepage !== false)
-        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-        .slice(0, 4);
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     } catch (e) {
       console.error("Supabase collections getHomepageCollections error:", e);
+      return [];
+    }
+  },
+
+  async getFeaturedCollections(): Promise<CollectionItem[]> {
+    try {
+      const all = await this.getAll();
+      return all
+        .filter(c => c.isActive !== false && c.featured !== false)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    } catch (e) {
+      console.error("Supabase collections getFeaturedCollections error:", e);
       return [];
     }
   },
@@ -453,127 +539,315 @@ export const CollectionsService = {
         .select("*")
         .or(`id.eq.${id},slug.eq.${id}`)
         .maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
-      return {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        description: data.description || "",
-        shortDescription: data.short_description || "",
-        buttonText: data.button_text || "View Collection",
-        image: data.banner || data.thumbnail || "",
-        thumbnail: data.thumbnail || "",
-        banner: data.banner || "",
-        seoTitle: data.seo_title || data.meta_title || "",
-        seoDescription: data.seo_description || data.meta_description || "",
-        metaTitle: data.meta_title || data.seo_title || "",
-        metaDescription: data.meta_description || data.seo_description || "",
-        altText: data.alt_text || data.name || "",
-        displayOrder: data.display_order !== undefined && data.display_order !== null ? data.display_order : 0,
-        featured: !!data.featured,
-        showOnHomepage: data.show_on_homepage !== false,
-        isActive: data.is_active !== false
-      };
+      if (!error && data) {
+        return {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description || "",
+          shortDescription: data.short_description || "",
+          buttonText: data.button_text || "View Collection",
+          image: data.thumbnail || data.banner || "",
+          thumbnail: data.thumbnail || "",
+          banner: data.banner || "",
+          seoTitle: data.seo_title || data.meta_title || "",
+          seoDescription: data.seo_description || data.meta_description || "",
+          metaTitle: data.meta_title || data.seo_title || "",
+          metaDescription: data.meta_description || data.seo_description || "",
+          altText: data.alt_text || data.name || "",
+          displayOrder: data.display_order !== undefined && data.display_order !== null ? Number(data.display_order) : 0,
+          featured: !!data.featured,
+          showOnHomepage: data.show_on_homepage !== false,
+          isActive: data.is_active !== false
+        };
+      }
     } catch (e) {
-      console.error("Supabase collections getById error:", e);
-      return null;
+      console.warn("Supabase collections getById exception:", e);
     }
+    // Local fallback search
+    try {
+      const localList = getCollections();
+      const match = localList.find(c => c.id === id || c.slug === id);
+      if (match) {
+        return {
+          id: match.id,
+          name: match.name,
+          slug: match.slug,
+          description: match.description || "",
+          shortDescription: match.shortDescription || match.description || "",
+          buttonText: match.buttonText || "View Collection",
+          image: match.banner || match.thumbnail || "",
+          thumbnail: match.thumbnail || "",
+          banner: match.banner || "",
+          seoTitle: match.seoTitle || "",
+          seoDescription: match.seoDescription || "",
+          metaTitle: match.seoTitle || "",
+          metaDescription: match.seoDescription || "",
+          altText: match.altText || match.name || "",
+          displayOrder: match.displayOrder || 0,
+          featured: match.featured !== false,
+          showOnHomepage: match.showOnHomepage !== false,
+          isActive: match.isActive !== false
+        };
+      }
+    } catch (err) {
+      console.error("Local fallback search in getById error:", err);
+    }
+    return null;
   },
 
   async create(collection: CollectionItem): Promise<CollectionItem> {
+    const colId = collection.id || `col-${Date.now()}`;
     const row = {
-      id: collection.id || `col-${Date.now()}`,
+      id: colId,
       name: collection.name,
       slug: collection.slug,
       description: collection.description || "",
       short_description: collection.shortDescription || collection.description || "",
       button_text: collection.buttonText || "View Collection",
-      banner: collection.banner || collection.image,
-      thumbnail: collection.thumbnail || collection.image,
+      banner: collection.banner || "",
+      thumbnail: collection.thumbnail || "",
       seo_title: collection.seoTitle || collection.metaTitle || "",
       seo_description: collection.seoDescription || collection.metaDescription || "",
       meta_title: collection.metaTitle || collection.seoTitle || "",
       meta_description: collection.metaDescription || collection.seoDescription || "",
       alt_text: collection.altText || collection.name || "",
-      display_order: collection.displayOrder !== undefined ? collection.displayOrder : 0,
+      display_order: collection.displayOrder !== undefined ? Number(collection.displayOrder) : 0,
       featured: collection.featured !== false,
       show_on_homepage: collection.showOnHomepage !== false,
       is_active: collection.isActive !== false
     };
-    const { data, error } = await supabase.from("collections").insert(row).select().single();
-    if (error) throw error;
-    return {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description || "",
-      shortDescription: data.short_description || "",
-      buttonText: data.button_text || "View Collection",
-      image: data.banner || data.thumbnail || "",
-      thumbnail: data.thumbnail || "",
-      banner: data.banner || "",
-      seoTitle: data.seo_title || data.meta_title || "",
-      seoDescription: data.seo_description || data.meta_description || "",
-      metaTitle: data.meta_title || data.seo_title || "",
-      metaDescription: data.meta_description || data.seo_description || "",
-      altText: data.alt_text || data.name || "",
-      displayOrder: data.display_order || 0,
-      featured: !!data.featured,
-      showOnHomepage: data.show_on_homepage !== false,
-      isActive: data.is_active !== false
+
+    console.log("CollectionsService.create payload being sent:", {
+      collectionId: colId,
+      slug: collection.slug,
+      imageUrl: collection.banner || collection.thumbnail || collection.image,
+      payload: row
+    });
+
+    let createdItem: CollectionItem = {
+      ...collection,
+      id: colId,
+      image: collection.thumbnail || collection.banner || collection.image || ""
     };
+
+    try {
+      const { data, error } = await supabase.from("collections").upsert(row, { onConflict: "id" }).select().maybeSingle();
+      if (error) {
+        console.error("Supabase collections create error object:", error);
+      } else if (data) {
+        console.log("Supabase collections create response data:", data);
+        createdItem = {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description || "",
+          shortDescription: data.short_description || "",
+          buttonText: data.button_text || "View Collection",
+          image: data.thumbnail || data.banner || "",
+          thumbnail: data.thumbnail || "",
+          banner: data.banner || "",
+          seoTitle: data.seo_title || data.meta_title || "",
+          seoDescription: data.seo_description || data.meta_description || "",
+          metaTitle: data.meta_title || data.seo_title || "",
+          metaDescription: data.meta_description || data.seo_description || "",
+          altText: data.alt_text || data.name || "",
+          displayOrder: data.display_order !== undefined ? Number(data.display_order) : 0,
+          featured: !!data.featured,
+          showOnHomepage: data.show_on_homepage !== false,
+          isActive: data.is_active !== false
+        };
+      }
+    } catch (err) {
+      console.error("Supabase collections create exception:", err);
+    }
+
+    // Always keep local storage synchronized
+    try {
+      const localList = getCollections();
+      const existingIdx = localList.findIndex(c => c.id === colId || c.slug === createdItem.slug);
+      const masterObj: CollectionMaster = {
+        id: createdItem.id,
+        name: createdItem.name,
+        slug: createdItem.slug,
+        banner: createdItem.banner || "",
+        thumbnail: createdItem.thumbnail || "",
+        description: createdItem.description,
+        shortDescription: createdItem.shortDescription,
+        buttonText: createdItem.buttonText,
+        altText: createdItem.altText,
+        seoTitle: createdItem.seoTitle,
+        seoDescription: createdItem.seoDescription,
+        displayOrder: createdItem.displayOrder || 0,
+        featured: createdItem.featured !== false,
+        showOnHomepage: createdItem.showOnHomepage !== false,
+        isActive: createdItem.isActive !== false
+      };
+      if (existingIdx >= 0) {
+        localList[existingIdx] = masterObj;
+      } else {
+        localList.push(masterObj);
+      }
+      saveCollections(localList);
+    } catch (localErr) {
+      console.error("Error syncing create to local storage:", localErr);
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("clinza_collections_updated"));
+    }
+
+    return createdItem;
   },
 
   async update(id: string, collection: Partial<CollectionItem>): Promise<CollectionItem | null> {
-    const current = await this.getById(id);
-    if (!current) throw new Error(`Collection with ID ${id} not found.`);
-    const merged = { ...current, ...collection } as CollectionItem;
+    let current = await this.getById(id);
+    if (!current && collection.slug) {
+      current = await this.getById(collection.slug);
+    }
+
+    const targetId = current?.id || collection.id || id;
+
+    // Respect explicit empty string values if user deleted or replaced an image
+    const thumbnail = collection.thumbnail !== undefined ? collection.thumbnail : (current?.thumbnail || "");
+    const banner = collection.banner !== undefined ? collection.banner : (current?.banner || "");
+
+    const merged = { 
+      ...current, 
+      ...collection, 
+      id: targetId,
+      thumbnail,
+      banner,
+      image: thumbnail || banner || ""
+    } as CollectionItem;
+
     const row = {
+      id: targetId,
       name: merged.name,
       slug: merged.slug,
       description: merged.description || "",
       short_description: merged.shortDescription || merged.description || "",
       button_text: merged.buttonText || "View Collection",
-      banner: merged.banner || merged.image,
-      thumbnail: merged.thumbnail || merged.image,
+      banner: merged.banner || "",
+      thumbnail: merged.thumbnail || "",
       seo_title: merged.seoTitle || merged.metaTitle || "",
       seo_description: merged.seoDescription || merged.metaDescription || "",
       meta_title: merged.metaTitle || merged.seoTitle || "",
       meta_description: merged.metaDescription || merged.seoDescription || "",
       alt_text: merged.altText || merged.name || "",
-      display_order: merged.displayOrder !== undefined ? merged.displayOrder : 0,
+      display_order: merged.displayOrder !== undefined ? Number(merged.displayOrder) : 0,
       featured: merged.featured !== false,
       show_on_homepage: merged.showOnHomepage !== false,
       is_active: merged.isActive !== false
     };
-    const { data, error } = await supabase.from("collections").update(row).eq("id", id).select().single();
-    if (error) throw error;
-    return {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description || "",
-      shortDescription: data.short_description || "",
-      buttonText: data.button_text || "View Collection",
-      image: data.banner || data.thumbnail || "",
-      thumbnail: data.thumbnail || "",
-      banner: data.banner || "",
-      seoTitle: data.seo_title || data.meta_title || "",
-      seoDescription: data.seo_description || data.meta_description || "",
-      metaTitle: data.meta_title || data.seo_title || "",
-      metaDescription: data.meta_description || data.seo_description || "",
-      altText: data.alt_text || data.name || "",
-      displayOrder: data.display_order || 0,
-      featured: !!data.featured,
-      showOnHomepage: data.show_on_homepage !== false,
-      isActive: data.is_active !== false
-    };
+
+    console.log("CollectionsService.update payload being sent:", {
+      collectionId: targetId,
+      slug: merged.slug,
+      imageUrl: merged.banner || merged.thumbnail || merged.image,
+      payload: row
+    });
+
+    let updatedItem: CollectionItem = merged;
+
+    try {
+      console.log("========== UPDATE START ==========");
+console.log("Target ID:", targetId);
+console.log("Merged Object:", merged);
+console.log("Payload Being Sent:", row);
+      const { data, error } = await supabase.from("collections").upsert(row, { onConflict: "id" }).select().maybeSingle();
+     if (error) {
+  console.error("Supabase collections update error object:", error);
+  throw error;
+}
+
+if (!data) {
+  throw new Error("Supabase update returned no data.");
+}
+
+console.log("Supabase collections update response data:", data);
+
+updatedItem = {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description || "",
+          shortDescription: data.short_description || "",
+          buttonText: data.button_text || "View Collection",
+          image: data.thumbnail || data.banner || "",
+          thumbnail: data.thumbnail || "",
+          banner: data.banner || "",
+          seoTitle: data.seo_title || data.meta_title || "",
+          seoDescription: data.seo_description || data.meta_description || "",
+          metaTitle: data.meta_title || data.seo_title || "",
+          metaDescription: data.meta_description || data.seo_description || "",
+          altText: data.alt_text || data.name || "",
+          displayOrder: data.display_order !== undefined ? Number(data.display_order) : 0,
+          featured: !!data.featured,
+          showOnHomepage: data.show_on_homepage !== false,
+          isActive: data.is_active !== false
+        };
+      }
+     catch (err) {
+      console.error("Supabase collections update exception:", err);
+    }
+
+    // Always keep local storage master list synchronized
+    try {
+      const localList = getCollections();
+      const existingIdx = localList.findIndex(c => c.id === targetId || c.slug === merged.slug || c.id === id);
+      const masterObj: CollectionMaster = {
+        id: updatedItem.id,
+        name: updatedItem.name,
+        slug: updatedItem.slug,
+        banner: updatedItem.banner || "",
+        thumbnail: updatedItem.thumbnail || "",
+        description: updatedItem.description,
+        shortDescription: updatedItem.shortDescription,
+        buttonText: updatedItem.buttonText,
+        altText: updatedItem.altText,
+        seoTitle: updatedItem.seoTitle,
+        seoDescription: updatedItem.seoDescription,
+        displayOrder: updatedItem.displayOrder || 0,
+        featured: updatedItem.featured !== false,
+        showOnHomepage: updatedItem.showOnHomepage !== false,
+        isActive: updatedItem.isActive !== false
+      };
+      if (existingIdx >= 0) {
+        localList[existingIdx] = masterObj;
+      } else {
+        localList.push(masterObj);
+      }
+      saveCollections(localList);
+    } catch (localErr) {
+      console.error("Error syncing update to local storage:", localErr);
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("clinza_collections_updated"));
+    }
+
+    return updatedItem;
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from("collections").delete().eq("id", id);
-    if (error) throw error;
+    try {
+      const { error } = await supabase.from("collections").delete().or(`id.eq.${id},slug.eq.${id}`);
+      if (error) console.error("Supabase collections delete error object:", error);
+    } catch (err) {
+      console.error("Supabase collections delete exception:", err);
+    }
+    try {
+      const localList = getCollections().filter(c => c.id !== id && c.slug !== id);
+      saveCollections(localList);
+    } catch (localErr) {
+      console.error("Error syncing delete to local storage:", localErr);
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("clinza_collections_updated"));
+    }
+
     return true;
   }
 };
@@ -636,49 +910,178 @@ export const OrderItemsService = {
 };
 
 // -------------------------------------------------------------
+// 5. INVENTORY & STOCK LOGS SERVICE
+// -------------------------------------------------------------
+export const InventoryService = {
+  async getLogs(): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from("inventory_logs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        const local = localStorage.getItem("clinza_inventory_logs");
+        return local ? JSON.parse(local) : [];
+      }
+      return (data || []).map(row => ({
+        id: row.id,
+        productId: row.product_id,
+        productName: row.product_name,
+        sku: row.sku,
+        user: row.user_email || row.user_name || "Admin",
+        date: row.created_at || new Date().toISOString(),
+        previousStock: Number(row.previous_stock || 0),
+        newStock: Number(row.new_stock || 0),
+        changeAmount: Number(row.change_amount || 0),
+        reason: row.reason || "Manual Adjustment",
+        warehouse: row.warehouse || "Main Hub - Bay A1"
+      }));
+    } catch {
+      const local = localStorage.getItem("clinza_inventory_logs");
+      return local ? JSON.parse(local) : [];
+    }
+  },
+
+  async logStockChange(log: {
+    productId: string;
+    productName: string;
+    sku: string;
+    user: string;
+    previousStock: number;
+    newStock: number;
+    changeAmount: number;
+    reason: string;
+    warehouse?: string;
+  }): Promise<void> {
+    const newLog = {
+      id: "invlog-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
+      ...log,
+      warehouse: log.warehouse || "Main Hub - Bay A1",
+      date: new Date().toISOString()
+    };
+
+    // Save locally
+    const current = JSON.parse(localStorage.getItem("clinza_inventory_logs") || "[]");
+    current.unshift(newLog);
+    localStorage.setItem("clinza_inventory_logs", JSON.stringify(current));
+
+    // Async sync to cloud table
+    try {
+      await supabase.from("inventory_logs").insert({
+        id: newLog.id,
+        product_id: newLog.productId,
+        product_name: newLog.productName,
+        sku: newLog.sku,
+        user_email: newLog.user,
+        previous_stock: newLog.previousStock,
+        new_stock: newLog.newStock,
+        change_amount: newLog.changeAmount,
+        reason: newLog.reason,
+        warehouse: newLog.warehouse,
+        created_at: newLog.date
+      });
+    } catch (err) {
+      console.warn("Cloud inventory log write fallback active:", err);
+    }
+  },
+
+  async updateStock(
+    productId: string,
+    newQuantity: number,
+    reason: string,
+    userEmail: string = "sastaelectronic6@gmail.com",
+    warehouse: string = "Main Hub - Bay A1"
+  ): Promise<Product | null> {
+    const products = await ProductsService.getAll();
+    const product = products.find(p => p.id === productId);
+    if (!product) return null;
+
+    const previousStock = (product as any).stockQuantity !== undefined
+      ? (product as any).stockQuantity
+      : (product.stockStatus === "Out of Stock" ? 0 : 100);
+
+    const changeAmount = newQuantity - previousStock;
+    const stockStatus = newQuantity <= 0 ? "Out of Stock" as const : (newQuantity < 10 ? "Low Stock" as const : "In Stock" as const);
+
+    const updatedProduct: Product = {
+      ...product,
+      stockQuantity: newQuantity,
+      stockStatus
+    };
+
+    await ProductsService.update(productId, updatedProduct);
+
+    // Create log entry
+    await this.logStockChange({
+      productId,
+      productName: product.name,
+      sku: product.sku || `SKU-${productId.slice(0, 6)}`,
+      user: userEmail,
+      previousStock,
+      newStock: newQuantity,
+      changeAmount,
+      reason,
+      warehouse
+    });
+
+    return updatedProduct;
+  }
+};
+
+// -------------------------------------------------------------
 // 6. CUSTOMERS SERVICE
 // -------------------------------------------------------------
 export const CustomersService = {
   async getAll(): Promise<CustomerProfile[]> {
     try {
-      const { data, error } = await supabase.from("customers").select("*").order("name");
-      if (error) throw error;
-      return data || [];
+      const cloudData = await syncCustomersFromCloud();
+      if (cloudData && cloudData.length > 0) {
+        localStorage.setItem("clinza_customers", JSON.stringify(cloudData));
+        return cloudData;
+      }
+      const local = localStorage.getItem("clinza_customers");
+      return local ? JSON.parse(local) : [];
     } catch (e) {
       console.error("Supabase customers getAll error:", e);
-      return [];
+      const local = localStorage.getItem("clinza_customers");
+      return local ? JSON.parse(local) : [];
     }
   },
 
   async getById(id: string): Promise<CustomerProfile | null> {
-    try {
-      const { data, error } = await supabase.from("customers").select("*").or(`id.eq.${id},email.eq.${id}`).maybeSingle();
-      if (error) throw error;
-      return data || null;
-    } catch (e) {
-      console.error("Supabase customers getById error:", e);
-      return null;
-    }
+    const customers = await this.getAll();
+    const found = customers.find(c => c.id === id || c.email.toLowerCase() === id.toLowerCase());
+    return found || null;
   },
 
   async create(customer: CustomerProfile): Promise<CustomerProfile> {
-    const { data, error } = await supabase.from("customers").insert(customer).select().single();
-    if (error) throw error;
-    return data;
+    await saveCustomerToCloud(customer);
+    const current = await this.getAll();
+    const updated = [customer, ...current.filter(c => c.id !== customer.id)];
+    localStorage.setItem("clinza_customers", JSON.stringify(updated));
+    return customer;
   },
 
   async update(id: string, customer: Partial<CustomerProfile>): Promise<CustomerProfile | null> {
-    const current = await this.getById(id);
-    if (!current) throw new Error(`Customer profile not found for ${id}`);
-    const merged = { ...current, ...customer };
-    const { data, error } = await supabase.from("customers").update(merged).eq("id", id).select().single();
-    if (error) throw error;
-    return data;
+    const currentList = await this.getAll();
+    const existing = currentList.find(c => c.id === id || c.email.toLowerCase() === id.toLowerCase());
+    if (!existing) {
+      console.warn(`Customer profile not found for ${id}`);
+      return null;
+    }
+    const merged: CustomerProfile = { ...existing, ...customer };
+    await saveCustomerToCloud(merged);
+
+    const updatedList = currentList.map(c => c.id === existing.id ? merged : c);
+    localStorage.setItem("clinza_customers", JSON.stringify(updatedList));
+    return merged;
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from("customers").delete().eq("id", id);
-    if (error) throw error;
+    await deleteCustomerFromCloud(id);
+    const currentList = await this.getAll();
+    const updatedList = currentList.filter(c => c.id !== id);
+    localStorage.setItem("clinza_customers", JSON.stringify(updatedList));
     return true;
   }
 };
@@ -1474,12 +1877,16 @@ function mapDbOrder(row: any): Order {
   return {
     id: row.id,
     customer: row.customer,
-    items: row.items,
-    totalAmount: Number(row.total_amount ?? row.totalAmount),
-    status: row.status,
+    items: Array.isArray(row.items) ? row.items : [],
+    totalAmount: Number(row.total_amount ?? row.totalAmount ?? 0),
+    status: row.status || "Pending",
     paymentMethod: row.payment_method ?? row.paymentMethod ?? "COD",
-    trackingHistory: row.tracking_history ?? row.trackingHistory ?? [],
-    createdAt: row.created_at ?? row.createdAt
+    paymentStatus: row.payment_status ?? row.paymentStatus ?? (row.status === "Delivered" ? "Paid" : "Pending"),
+    trackingHistory: Array.isArray(row.tracking_history) ? row.tracking_history : (Array.isArray(row.trackingHistory) ? row.trackingHistory : []),
+    trackingNumber: row.tracking_number ?? row.trackingNumber,
+    courierPartner: row.courier_partner ?? row.courierPartner,
+    createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
+    notes: Array.isArray(row.notes) ? row.notes : []
   };
 }
 
@@ -1491,8 +1898,12 @@ function mapOrderToDb(order: Order) {
     total_amount: order.totalAmount,
     status: order.status,
     payment_method: order.paymentMethod,
+    payment_status: order.paymentStatus || (order.status === "Delivered" ? "Paid" : "Pending"),
     tracking_history: order.trackingHistory,
-    created_at: order.createdAt
+    tracking_number: order.trackingNumber,
+    courier_partner: order.courierPartner,
+    created_at: order.createdAt,
+    notes: order.notes || []
   };
 }
 

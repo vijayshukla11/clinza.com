@@ -70,8 +70,8 @@ export default function CartPage({
 
   if (cart.length === 0) {
     return (
-      <section id="empty-cart-view" className="py-24 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-[70vh] flex flex-col items-center justify-center">
-        <div className="max-w-md text-center p-8 bg-white rounded-2xl border border-gray-150 shadow-sm flex flex-col items-center">
+      <section id="empty-cart-view" className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-[70vh] flex flex-col items-center justify-center overflow-x-hidden box-border">
+        <div className="max-w-md w-full text-center p-6 sm:p-8 bg-white rounded-2xl border border-gray-150 shadow-sm flex flex-col items-center mx-auto min-w-0">
           <div className="h-14 w-14 rounded-full bg-orange-600/5 text-orange-600 flex items-center justify-center mb-6">
             <ShoppingBag className="h-6 w-6 stroke-[2]" />
           </div>
@@ -94,21 +94,21 @@ export default function CartPage({
   }
 
   return (
-    <section id="clinza-cart-page" className="py-24 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-screen text-left">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase mb-8">
-          Your Shopping Bag ({cart.length} items)
+    <section id="clinza-cart-page" className="w-full py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-screen text-left overflow-x-hidden box-border">
+      <div className="max-w-7xl mx-auto w-full min-w-0">
+        <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase mb-8 break-words">
+          Your Shopping Bag ({cart.length} {cart.length === 1 ? "item" : "items"})
         </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
           
           {/* LEFT: LIST OF CART ITEMS (8 Columns) */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 space-y-4 w-full min-w-0">
             {cart.map((item, idx) => (
               <div
                 id={`cart-item-${idx}`}
                 key={`${item.product.id}-${idx}`}
-                className="bg-white border border-gray-150 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row gap-5 items-stretch relative shadow-xs"
+                className="bg-white border border-gray-150 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row gap-5 items-stretch relative shadow-xs w-full min-w-0 overflow-hidden"
               >
                 {/* Product Image */}
                 <img
@@ -118,23 +118,23 @@ export default function CartPage({
                 />
 
                 {/* Info and Actions */}
-                <div className="flex-1 flex flex-col justify-between py-1">
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-1 w-full">
                   <div>
                     <div className="flex justify-between items-start gap-4 mb-1">
                       <h3
                         id={`cart-item-name-${idx}`}
                         onClick={() => setRoute(`product/${item.product.slug}`)}
-                        className="text-gray-950 hover:text-orange-600 text-xs sm:text-sm font-bold tracking-tight text-left cursor-pointer transition-colors leading-tight"
+                        className="text-gray-950 hover:text-orange-600 text-xs sm:text-sm font-bold tracking-tight text-left cursor-pointer transition-colors leading-tight line-clamp-2"
                       >
                         {item.product.name}
                       </h3>
                       {/* Price subtotal */}
-                      <span className="text-sm font-black text-gray-950 font-serif">
+                      <span className="text-sm font-black text-gray-950 font-serif shrink-0">
                         ₹{(item.product.price * item.quantity).toLocaleString("en-IN")}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-[10px] sm:text-xs font-bold text-gray-550 mb-3 uppercase tracking-wider font-mono">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs font-bold text-gray-550 mb-3 uppercase tracking-wider font-mono">
                       <span>Color: <strong className="text-gray-800">{item.selectedColor}</strong></span>
                       <span>Size: <strong className="text-gray-800">{item.selectedSize}</strong></span>
                       <span>Unit Price: ₹{item.product.price.toLocaleString("en-IN")}</span>
@@ -142,8 +142,8 @@ export default function CartPage({
                   </div>
 
                   {/* Qty edit & deletion */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50 h-9 w-24">
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 sm:border-0 sm:pt-0">
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50 h-9 w-24 shrink-0">
                       <button
                         id={`qty-dec-${idx}`}
                         onClick={() => onUpdateQty(idx, Math.max(1, item.quantity - 1))}
@@ -166,7 +166,7 @@ export default function CartPage({
                     <button
                       id={`cart-remove-${idx}`}
                       onClick={() => onRemoveItem(idx)}
-                      className="text-red-500 hover:text-red-750 p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer"
+                      className="text-red-500 hover:text-red-750 p-2 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer shrink-0"
                     >
                       <Trash2 className="h-4 w-4" /> Remove
                     </button>
@@ -187,28 +187,28 @@ export default function CartPage({
           </div>
 
           {/* RIGHT: ORDER SUMMARY PANEL & COUPONS (4 Columns) */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-6 w-full min-w-0">
             
             {/* COUPON INPUT */}
-            <div className="bg-white border border-gray-150 p-6 rounded-2xl shadow-xs">
+            <div className="bg-white border border-gray-150 p-5 sm:p-6 rounded-2xl shadow-xs w-full min-w-0">
               <h3 className="text-xs font-extrabold tracking-widest text-gray-400 uppercase mb-4 flex items-center gap-1.5">
                 <Tag className="h-4.5 w-4.5 text-orange-600" /> Apply Corporate Coupon
               </h3>
               
               {!appliedCoupon ? (
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full">
                   <input
                     id="cart-coupon-input"
                     type="text"
                     placeholder="CLINZA10, LUXURY20"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    className="flex-1 border bg-gray-50 border-gray-250 py-2 px-3.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-orange-500 uppercase text-gray-800 placeholder-gray-450"
+                    className="flex-1 min-w-0 border bg-gray-50 border-gray-250 py-2 px-3.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-orange-500 uppercase text-gray-800 placeholder-gray-450"
                   />
                   <button
                     id="cart-coupon-apply"
                     onClick={handleApplyCoupon}
-                    className="bg-gray-950 hover:bg-orange-600 text-white font-sans text-xs font-bold uppercase tracking-wider px-4.5 py-2.5 rounded-lg transition-colors cursor-pointer"
+                    className="bg-gray-950 hover:bg-orange-600 text-white font-sans text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0"
                   >
                     Apply
                   </button>
@@ -254,7 +254,7 @@ export default function CartPage({
             </div>
 
             {/* ORDER SUMMARY MATH */}
-            <div className="bg-white border border-gray-150 p-6 rounded-2xl shadow-xs">
+            <div className="bg-white border border-gray-150 p-5 sm:p-6 rounded-2xl shadow-xs w-full min-w-0">
               <h3 className="text-xs font-extrabold tracking-widest text-gray-400 uppercase mb-4 select-none">
                 Order Summary
               </h3>
@@ -267,21 +267,21 @@ export default function CartPage({
               )}
 
               <div className="space-y-3 pb-4 border-b border-gray-150 text-xs text-gray-650 font-sans font-medium">
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2">
                   <span>Bag Subtotal</span>
                   <span>₹{subtotal.toLocaleString("en-IN")}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
+                  <div className="flex justify-between gap-2 text-emerald-600 font-bold">
                     <span>Discount Credit ({discountPercent}%)</span>
                     <span>- ₹{discountAmount.toLocaleString("en-IN")}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2">
                   <span>Standard Integrated GST (0%)</span>
                   <span>₹0</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2">
                   <span>Standard Cash delivery Shipping</span>
                   <span>₹{shippingCharge.toLocaleString("en-IN")}</span>
                 </div>

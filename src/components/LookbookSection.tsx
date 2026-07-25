@@ -66,7 +66,7 @@ export default function LookbookSection({ setRoute }: LookbookSectionProps) {
   }
 
   return (
-    <section id="lookbook-editorial-section" className="py-20 lg:py-[120px] px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left overflow-hidden">
+    <section id="lookbook-editorial-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left overflow-hidden">
       <div className="max-w-[1440px] mx-auto">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           

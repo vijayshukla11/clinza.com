@@ -37,7 +37,7 @@ import {
 import { ThemeConfig, ThemeSlide, Product, BlogPost, Order } from "../../types";
 import { getThemeConfig, saveThemeConfig, publishThemeConfig, rollbackThemeConfig, DEFAULT_THEME_CONFIG, DEFAULT_HOME_CONFIG } from "../../utils";
 import { syncThemeConfigFromCloud, saveThemeConfigToCloud } from "../../supabase";
-import { HomepageSettingsService } from "../../services/supabaseService";
+import { HomepageSettingsService, CollectionsService, CollectionItem } from "../../services/supabaseService";
 import MediaUploader from "./MediaUploader";
 
 interface ThemeEditorTabProps {
@@ -154,6 +154,31 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedSlideIdx, setSelectedSlideIdx] = useState<number>(0);
+  const [previewCollections, setPreviewCollections] = useState<CollectionItem[]>([]);
+
+  // Load preview collections dynamically from CollectionsService
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCols() {
+      try {
+        const cols = await CollectionsService.getAll();
+        if (isMounted && cols) {
+          setPreviewCollections(cols.filter(c => c.isActive !== false));
+        }
+      } catch (e) {
+        console.error("Error loading preview collections in ThemeEditorTab:", e);
+      }
+    }
+    loadCols();
+
+    const handleUpdate = () => { loadCols(); };
+    window.addEventListener("clinza_collections_updated", handleUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("clinza_collections_updated", handleUpdate);
+    };
+  }, []);
 
   // Load theme settings from Supabase when the page opens
   useEffect(() => {
@@ -2199,23 +2224,26 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
-                      {[
-                        { name: "Linen Shirts", count: "12 Styles", img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200" },
-                        { name: "Raw Selvedge Jeans", count: "8 Styles", img: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200" },
-                        { name: "Sartorial Pants", count: "14 Styles", img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200" },
-                        { name: "Resort Co-ords", count: "6 Styles", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=200" }
-                      ].map((col, idx) => (
-                        <div key={idx} className={`overflow-hidden shrink-0 flex flex-col hover:scale-102 transition duration-300 ${currentCardStyleClass}`} style={{
-                          backgroundColor: draftConfig.colors.background || "#ffffff",
-                          borderColor: draftConfig.colors.borderColor || "#e4e4e7"
-                        }}>
-                          <img src={col.img} alt="" className="h-24 w-full object-cover bg-zinc-100" />
-                          <div className="p-2.5 text-left">
-                            <h5 className="font-bold text-[10px] truncate" style={{ color: draftConfig.colors.text || "#09090b" }}>{col.name}</h5>
-                            <span className="text-[8px] text-zinc-400 font-mono uppercase">{col.count}</span>
+                      {(previewCollections.length > 0 ? previewCollections.slice(0, 4) : [
+                        { name: "Shirts", banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
+                        { name: "Jeans", banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
+                        { name: "Pants", banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
+                        { name: "Combos", banner: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=200", thumbnail: "" }
+                      ]).map((col: any, idx: number) => {
+                        const imgUrl = col.thumbnail || col.banner || col.image || col.img || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200";
+                        return (
+                          <div key={idx} className={`overflow-hidden shrink-0 flex flex-col hover:scale-102 transition duration-300 ${currentCardStyleClass}`} style={{
+                            backgroundColor: draftConfig.colors.background || "#ffffff",
+                            borderColor: draftConfig.colors.borderColor || "#e4e4e7"
+                          }}>
+                            <img src={imgUrl} alt={col.name} className="h-24 w-full object-cover bg-zinc-100" />
+                            <div className="p-2.5 text-left">
+                              <h5 className="font-bold text-[10px] truncate" style={{ color: draftConfig.colors.text || "#09090b" }}>{col.name}</h5>
+                              <span className="text-[8px] text-zinc-400 font-mono uppercase">Collection</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
                 )}

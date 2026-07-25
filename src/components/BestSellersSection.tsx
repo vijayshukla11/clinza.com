@@ -61,7 +61,7 @@ export default function BestSellersSection({
   };
 
   return (
-    <section id="best-sellers-section" className="py-14 sm:py-20 px-4 sm:px-8 lg:px-12 bg-white text-left overflow-hidden">
+    <section id="best-sellers-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-white text-left overflow-hidden">
       <div className="max-w-[1440px] mx-auto">
         {/* SECTION HEADER */}
         <div className="text-center mb-10 sm:mb-14">

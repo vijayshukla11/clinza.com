@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Layers, ShieldCheck, Shirt, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HomepageSettingsService } from "../services/supabaseService";
 
 interface FeatureItem {
@@ -33,31 +33,10 @@ const DEFAULT_BANNER_DATA: NewArrivalsBannerData = {
   heading: "Fresh Styles.",
   headingHighlight: "New Vibes.",
   description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
-  ctaText: "SHOP NEW ARRIVALS",
+  ctaText: "Shop New Arrivals",
   ctaLink: "collections/new-arrivals",
-  image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
-  features: [
-    {
-      icon: "Sparkles",
-      title: "Premium Fabrics",
-      description: "High-grade Italian & Japanese linen-cotton weaves."
-    },
-    {
-      icon: "Shirt",
-      title: "Modern Fit",
-      description: "Precision tailoring designed for effortless drapes."
-    },
-    {
-      icon: "Layers",
-      title: "Versatile Styles",
-      description: "Day-to-night minimalist essentials for any occasion."
-    },
-    {
-      icon: "ShieldCheck",
-      title: "Quality Assured",
-      description: "Double-stitched seams & handcrafted finishes."
-    }
-  ]
+  image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
+  features: []
 };
 
 export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) {
@@ -86,104 +65,65 @@ export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) 
     };
   }, []);
 
-  // Helper to render outline icons dynamically
-  const renderIcon = (iconName: string) => {
-    switch (iconName) {
-      case "Shirt":
-        return <Shirt className="h-5 w-5 text-[#111111]" />;
-      case "Layers":
-        return <Layers className="h-5 w-5 text-[#111111]" />;
-      case "ShieldCheck":
-        return <ShieldCheck className="h-5 w-5 text-[#111111]" />;
-      case "Sparkles":
-      default:
-        return <Sparkles className="h-5 w-5 text-[#111111]" />;
-    }
-  };
-
   return (
-    <section id="new-arrivals-banner-section" className="py-12 sm:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left">
+    <section id="new-arrivals-banner-section" className="py-10 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left">
       <div className="max-w-[1440px] mx-auto">
-        {/* MAIN CONTAINER */}
-        <div className="group relative w-full rounded-[16px] overflow-hidden bg-white border border-[#EAE8E3] shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[420px] flex flex-col lg:flex-row items-stretch">
-          
-          {/* LEFT COLUMN: EDITORIAL CONTENT (~35%) */}
-          <div className="w-full lg:w-[35%] p-6 sm:p-10 lg:p-12 flex flex-col justify-between items-start z-10 bg-white">
-            <div>
-              {/* SMALL LABEL */}
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111] block mb-3 font-mono">
+        {/* SINGLE FULL-WIDTH CAMPAIGN BANNER */}
+        <div className="relative w-full rounded-[20px] overflow-hidden bg-zinc-900 shadow-sm min-h-[420px] h-[440px] sm:h-[500px] md:h-[600px] lg:h-[660px] flex items-center">
+          {/* BACKGROUND IMAGE */}
+          <img
+            src={bannerData.image}
+            alt={bannerData.heading || "New Arrivals Campaign"}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+
+          {/* SUBTLE DARK GRADIENT OVERLAY FOR READABILITY */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-0 bg-black/10 pointer-events-none z-10" />
+
+          {/* EDITORIAL CONTENT */}
+          <div className="relative z-20 w-full max-w-[640px] p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col items-start text-white">
+            {/* CAMPAIGN LABEL */}
+            {bannerData.label && (
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-zinc-300 block mb-3 font-mono">
                 {bannerData.label}
               </span>
+            )}
 
-              {/* LARGE HEADING */}
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#111111] tracking-tight leading-tight mb-4">
-                {bannerData.heading}
-                {bannerData.headingHighlight && (
-                  <>
-                    <br />
-                    <span className="text-gray-500 font-light">{bannerData.headingHighlight}</span>
-                  </>
-                )}
-              </h2>
+            {/* LARGE HEADING */}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] text-white uppercase mb-4">
+              {bannerData.heading || "Fresh Styles."}
+              {bannerData.headingHighlight && (
+                <>
+                  <br />
+                  <span className="text-zinc-300 font-light text-[0.88em]">
+                    {bannerData.headingHighlight}
+                  </span>
+                </>
+              )}
+            </h2>
 
-              {/* SHORT EDITORIAL COPY */}
-              <p className="text-xs sm:text-sm text-gray-600 font-light leading-relaxed max-w-sm mb-6">
+            {/* SHORT SUBTITLE (MAX 2 LINES) */}
+            {bannerData.description && (
+              <p className="text-xs sm:text-sm md:text-base text-zinc-200 font-light leading-relaxed line-clamp-2 max-w-md mb-8">
                 {bannerData.description}
               </p>
-            </div>
+            )}
 
-            {/* PRIMARY CTA BUTTON */}
-            <div className="w-full sm:w-auto mt-4">
-              <button
-                id="shop-new-arrivals-cta"
-                onClick={() => {
-                  setRoute(bannerData.ctaLink || "collections/new-arrivals");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 h-[56px] bg-[#111111] hover:bg-black text-white font-bold text-xs uppercase tracking-[0.18em] rounded-[12px] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-              >
-                <span>{bannerData.ctaText}</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
+            {/* CTA BUTTON */}
+            <button
+              id="shop-new-arrivals-cta"
+              onClick={() => {
+                setRoute(bannerData.ctaLink || "collections/new-arrivals");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="h-[48px] px-[32px] bg-white text-black hover:bg-black hover:text-white border border-white rounded-full text-[13px] sm:text-[14px] font-semibold tracking-[0.08em] uppercase transition-all duration-[250ms] ease-out shadow-md hover:shadow-xl cursor-pointer inline-flex items-center justify-center gap-2 group"
+            >
+              <span>{bannerData.ctaText || "Shop New Arrivals"}</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </button>
           </div>
-
-          {/* CENTER COLUMN: LIFESTYLE MODEL IMAGE */}
-          <div className="relative w-full lg:w-[38%] min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] bg-[#F5F5F3] overflow-hidden">
-            <img
-              src={bannerData.image}
-              alt="Clinza New Arrivals Banner"
-              loading="lazy"
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
-            {/* Subtle Gradient Overlays for smooth edge blending on smaller screens */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent lg:hidden pointer-events-none" />
-          </div>
-
-          {/* RIGHT COLUMN: 4 PREMIUM FEATURES (~27%) */}
-          <div className="w-full lg:w-[27%] p-6 sm:p-8 lg:p-10 bg-[#FAFAF8] border-t lg:border-t-0 lg:border-l border-[#EAE8E3] flex flex-col justify-center">
-            <div className="space-y-6">
-              {bannerData.features.map((feature, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-4 pb-5 border-b border-[#EAE8E3] last:border-b-0 last:pb-0 transition-all duration-200 hover:translate-x-1"
-                >
-                  <div className="shrink-0 p-2.5 rounded-[10px] bg-white border border-[#E0DDD7] shadow-2xs">
-                    {renderIcon(feature.icon)}
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-[#111111] tracking-tight mb-0.5">
-                      {feature.title}
-                    </h4>
-                    <p className="text-[11px] sm:text-xs text-gray-500 font-light leading-snug">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
       </div>
     </section>

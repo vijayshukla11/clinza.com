@@ -55,8 +55,8 @@ export default function CollectionsTab() {
         id: col.id || "",
         name: col.name || "",
         slug: col.slug || "",
-        banner: col.banner || col.thumbnail || "",
-        thumbnail: col.thumbnail || col.banner || "",
+        banner: col.banner || "",
+        thumbnail: col.thumbnail || "",
         description: col.description || "",
         shortDescription: col.shortDescription || col.description || "",
         buttonText: col.buttonText || "View Collection",
@@ -76,8 +76,8 @@ export default function CollectionsTab() {
         id: `col-${Date.now()}`,
         name: "",
         slug: "",
-        banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200",
-        thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=300",
+        banner: "",
+        thumbnail: "",
         description: "",
         shortDescription: "",
         buttonText: "View Collection",
@@ -118,20 +118,31 @@ export default function CollectionsTab() {
       return;
     }
 
+    console.log("[CollectionsTab] handleSubmit initiating save...", {
+      editingMode: !!editingCollection,
+      collectionId: form.id,
+      slug: form.slug,
+      imageUrl: form.banner || form.thumbnail,
+      payload: form
+    });
+
     try {
       setLoading(true);
       if (editingCollection) {
-        await CollectionsService.update(form.id, form as any);
+        const res = await CollectionsService.update(form.id, form as any);
+        console.log("[CollectionsTab] Update result:", res);
       } else {
-        await CollectionsService.create(form as any);
+        const res = await CollectionsService.create(form as any);
+        console.log("[CollectionsTab] Create result:", res);
       }
       alert(`Collection "${form.name}" saved successfully!`);
       refreshCollections();
       setEditorMode("list");
       setEditingCollection(null);
-    } catch (err) {
-      console.error("Failed to save collection:", err);
-      alert("Failed to save collection.");
+    } catch (err: any) {
+      console.error("[CollectionsTab] Detailed save collection error:", err);
+      const errMsg = err?.message || err?.details || (typeof err === "object" ? JSON.stringify(err) : String(err));
+      alert(`Failed to save collection: ${errMsg}`);
     } finally {
       setLoading(false);
     }
@@ -189,7 +200,14 @@ export default function CollectionsTab() {
                       <img src={col.thumbnail || col.banner} alt={col.altText || col.name} className="w-10 h-10 object-cover rounded border" />
                     </td>
                     <td className="py-3.5 px-4">
-                      <h4 className="font-bold text-zinc-950 font-sans text-sm">{col.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-zinc-950 font-sans text-sm">{col.name}</h4>
+                        {col.featured && (
+                          <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[8px] font-black uppercase px-1.5 py-0.5 rounded">
+                            Featured
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-zinc-400 font-mono">/collections/{col.slug}</p>
                     </td>
                     <td className="py-3.5 px-4 font-mono font-bold text-zinc-650">
@@ -316,37 +334,126 @@ export default function CollectionsTab() {
             />
           </div>
 
-          {/* MEDIA UPLOADERS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Collection Thumbnail / Card Image</label>
-              <input
-                type="text"
-                value={form.thumbnail}
-                onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-                className="w-full border rounded-lg p-2.5 font-mono focus:outline-none focus:border-orange-500 bg-white mb-2"
-                placeholder="Image URL (700x900 recommended)"
-              />
-              <MediaUploader
-                bucketName="collections"
-                onUploadSuccess={(url) => setForm((prev) => ({ ...prev, thumbnail: url }))}
-                label="Upload Thumbnail (700x900)"
-              />
+          {/* COMPLETE MEDIA MANAGEMENT (Preview, Upload, Replace, Delete) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-sans">
+            {/* 1. THUMBNAIL / CARD IMAGE MANAGEMENT */}
+            <div className="bg-zinc-50/80 p-4 border border-zinc-200 rounded-xl space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-700">
+                  Collection Thumbnail / Card Image
+                </label>
+                {form.thumbnail && (
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, thumbnail: "" }))}
+                    className="text-[10px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded border border-red-200 transition-colors"
+                    title="Delete Image"
+                  >
+                    <Trash2 className="w-3 h-3" /> Delete Image
+                  </button>
+                )}
+              </div>
+
+              {/* LIVE IMAGE PREVIEW */}
+              {form.thumbnail ? (
+                <div className="relative group aspect-[4/3] w-full max-w-[220px] bg-white rounded-lg overflow-hidden border border-zinc-200 shadow-xs mx-auto md:mx-0">
+                  <img
+                    src={form.thumbnail}
+                    alt="Card Thumbnail Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <a
+                      href={form.thumbnail}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 bg-white text-zinc-900 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow hover:bg-zinc-100"
+                    >
+                      <Eye className="w-3 h-3" /> Preview
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed border-zinc-300 rounded-lg bg-zinc-100/60 text-center text-zinc-400 text-[11px] font-mono">
+                  No thumbnail image set
+                </div>
+              )}
+
+              {/* URL INPUT AND UPLOADER / REPLACE */}
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={form.thumbnail}
+                  onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                  className="w-full border rounded-lg p-2 font-mono text-[11px] focus:outline-none focus:border-orange-500 bg-white"
+                  placeholder="Image URL (700x900 recommended)"
+                />
+                <MediaUploader
+                  bucketName="collections"
+                  onUploadSuccess={(url) => setForm((prev) => ({ ...prev, thumbnail: url }))}
+                  label={form.thumbnail ? "Replace Thumbnail Image" : "Upload Thumbnail (700x900)"}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Hero Banner Image URL</label>
-              <input
-                type="text"
-                value={form.banner}
-                onChange={(e) => setForm({ ...form, banner: e.target.value })}
-                className="w-full border rounded-lg p-2.5 font-mono focus:outline-none focus:border-orange-500 bg-white mb-2"
-                placeholder="Hero banner image URL"
-              />
-              <MediaUploader
-                bucketName="collections"
-                onUploadSuccess={(url) => setForm((prev) => ({ ...prev, banner: url }))}
-                label="Upload Banner Image"
-              />
+
+            {/* 2. HERO BANNER IMAGE MANAGEMENT */}
+            <div className="bg-zinc-50/80 p-4 border border-zinc-200 rounded-xl space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-700">
+                  Hero Banner Image
+                </label>
+                {form.banner && (
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, banner: "" }))}
+                    className="text-[10px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded border border-red-200 transition-colors"
+                    title="Delete Image"
+                  >
+                    <Trash2 className="w-3 h-3" /> Delete Image
+                  </button>
+                )}
+              </div>
+
+              {/* LIVE IMAGE PREVIEW */}
+              {form.banner ? (
+                <div className="relative group aspect-[16/7] w-full max-w-[280px] bg-white rounded-lg overflow-hidden border border-zinc-200 shadow-xs mx-auto md:mx-0">
+                  <img
+                    src={form.banner}
+                    alt="Hero Banner Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <a
+                      href={form.banner}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 bg-white text-zinc-900 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow hover:bg-zinc-100"
+                    >
+                      <Eye className="w-3 h-3" /> Preview
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed border-zinc-300 rounded-lg bg-zinc-100/60 text-center text-zinc-400 text-[11px] font-mono">
+                  No hero banner image set
+                </div>
+              )}
+
+              {/* URL INPUT AND UPLOADER / REPLACE */}
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={form.banner}
+                  onChange={(e) => setForm({ ...form, banner: e.target.value })}
+                  className="w-full border rounded-lg p-2 font-mono text-[11px] focus:outline-none focus:border-orange-500 bg-white"
+                  placeholder="Hero banner image URL"
+                />
+                <MediaUploader
+                  bucketName="collections"
+                  onUploadSuccess={(url) => setForm((prev) => ({ ...prev, banner: url }))}
+                  label={form.banner ? "Replace Hero Banner Image" : "Upload Banner Image"}
+                />
+              </div>
             </div>
           </div>
 
@@ -363,7 +470,7 @@ export default function CollectionsTab() {
           </div>
 
           {/* ORDER & TOGGLES */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans items-center bg-zinc-50 p-4 rounded-xl border">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-sans items-center bg-zinc-50 p-4 rounded-xl border">
             <div>
               <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Display Order</label>
               <input
@@ -384,6 +491,20 @@ export default function CollectionsTab() {
                   <div className="flex items-center gap-1.5 font-bold text-green-600"><ToggleRight className="h-7 w-7" /> Show on Homepage</div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-zinc-400 font-semibold"><ToggleLeft className="h-7 w-7" /> Hide from Homepage</div>
+                )}
+              </button>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-zinc-500 mb-1">Featured Collection</label>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, featured: !form.featured })}
+                className="cursor-pointer flex items-center gap-2 pt-1.5"
+              >
+                {form.featured ? (
+                  <div className="flex items-center gap-1.5 font-bold text-amber-600"><ToggleRight className="h-7 w-7" /> Featured</div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-zinc-400 font-semibold"><ToggleLeft className="h-7 w-7" /> Standard</div>
                 )}
               </button>
             </div>

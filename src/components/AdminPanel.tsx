@@ -28,7 +28,8 @@ import {
   Palette,
   MessageSquare,
   Mail,
-  History
+  History,
+  Boxes
 } from "lucide-react";
 
 import { Product, BlogPost, Order, HomepageConfig } from "../types";
@@ -52,6 +53,7 @@ import { AdminUsersService, AdminAuditLogService } from "../services/supabaseSer
 // Import modular tab panels
 import AnalyticsTab from "./admin/AnalyticsTab";
 import ProductsTab from "./admin/ProductsTab";
+import InventoryTab from "./admin/InventoryTab";
 import CategoriesTab from "./admin/CategoriesTab";
 import CollectionsTab from "./admin/CollectionsTab";
 import OrdersTab from "./admin/OrdersTab";
@@ -488,45 +490,60 @@ export default function AdminPanel() {
 
           {/* Nav Links */}
           <nav className="space-y-1 text-xs">
-            {[
-              { id: "overview", label: "Dashboard overview", icon: TrendingUp },
-              { id: "products", label: "Our Products Catalog", icon: Package },
-              { id: "categories", label: "Taxonomic Categories", icon: Grid },
-              { id: "collections", label: "Curated Collections", icon: FolderOpen },
-              { id: "orders", label: "Apparel Orders Board", icon: ListOrdered },
-              { id: "returns-manager", label: "Returns & Exchanges", icon: RefreshCw },
-              { id: "customers", label: "Customer CRM", icon: Users },
-              { id: "contact-leads", label: "Contact Form Leads", icon: MessageSquare },
-              { id: "newsletters", label: "Newsletter Subscribers", icon: Mail },
-              { id: "blogs", label: "Editorial Blog CMS", icon: FileText },
-              { id: "reviews", label: "Review Testimonials", icon: Star },
-              { id: "coupons", label: "Promotions & Coupons", icon: Tag },
-              { id: "media-vault", label: "Banners Media Vault", icon: FolderLock },
-              { id: "home-cms", label: "Homepage Blocks CMS", icon: Smartphone },
-              { id: "theme-customizer", label: "Shopify Theme Editor", icon: Palette },
-              { id: "google-seo", label: "Integrations & GA4", icon: Wrench },
-              ...(staffRole === "Super Admin" || staffRole === "Admin" ? [{ id: "audit-logs", label: "Security Audit Logs", icon: History }] : [])
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setSlideEditIdx(null);
-                  }}
-                  className={`w-full py-2.5 px-3.5 rounded-lg flex items-center gap-3 transition-all cursor-pointer font-sans font-bold text-left ${
-                    isSelected 
-                      ? "bg-orange-600 text-white font-black shadow-md shadow-orange-600/10" 
-                      : "text-zinc-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <Icon className="h-4.5 w-4.5 shrink-0" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+            {(() => {
+              const pendingCount = orderList.filter(o => o.status === "Pending" || o.status === "Confirmed" || o.status === "Packed").length;
+              const lowStockCount = productList.filter(p => p.stockStatus === "Low Stock" || p.stockStatus === "Out of Stock" || ((p as any).stockQuantity !== undefined && (p as any).stockQuantity <= 10)).length;
+
+              const tabs = [
+                { id: "overview", label: "Dashboard overview", icon: TrendingUp },
+                { id: "products", label: "Our Products Catalog", icon: Package },
+                { id: "inventory", label: "Inventory & Stock Control", icon: Boxes, badge: lowStockCount > 0 ? lowStockCount : undefined, badgeColor: "bg-red-600" },
+                { id: "categories", label: "Taxonomic Categories", icon: Grid },
+                { id: "collections", label: "Curated Collections", icon: FolderOpen },
+                { id: "orders", label: "Apparel Orders Board", icon: ListOrdered, badge: pendingCount > 0 ? pendingCount : undefined, badgeColor: "bg-orange-600" },
+                { id: "returns-manager", label: "Returns & Exchanges", icon: RefreshCw },
+                { id: "customers", label: "Customer CRM", icon: Users },
+                { id: "contact-leads", label: "Contact Form Leads", icon: MessageSquare },
+                { id: "newsletters", label: "Newsletter Subscribers", icon: Mail },
+                { id: "blogs", label: "Editorial Blog CMS", icon: FileText },
+                { id: "reviews", label: "Review Testimonials", icon: Star },
+                { id: "coupons", label: "Promotions & Coupons", icon: Tag },
+                { id: "media-vault", label: "Banners Media Vault", icon: FolderLock },
+                { id: "home-cms", label: "Homepage Blocks CMS", icon: Smartphone },
+                { id: "theme-customizer", label: "Shopify Theme Editor", icon: Palette },
+                { id: "google-seo", label: "Integrations & GA4", icon: Wrench },
+                ...(staffRole === "Super Admin" || staffRole === "Admin" ? [{ id: "audit-logs", label: "Security Audit Logs", icon: History }] : [])
+              ];
+
+              return tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setSlideEditIdx(null);
+                    }}
+                    className={`w-full py-2.5 px-3.5 rounded-lg flex items-center justify-between gap-3 transition-all cursor-pointer font-sans font-bold text-left ${
+                      isSelected 
+                        ? "bg-orange-600 text-white font-black shadow-md shadow-orange-600/10" 
+                        : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 truncate">
+                      <Icon className="h-4.5 w-4.5 shrink-0" />
+                      <span className="truncate">{tab.label}</span>
+                    </div>
+                    {tab.badge !== undefined && (
+                      <span className={`text-[9px] font-mono font-bold text-white px-1.5 py-0.5 rounded-full shrink-0 ${tab.badgeColor || "bg-orange-600"}`}>
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              });
+            })()}
           </nav>
         </div>
 
@@ -591,6 +608,14 @@ export default function AdminPanel() {
             />
           )}
 
+          {activeTab === "inventory" && (
+            <InventoryTab
+              productList={productList}
+              orderList={orderList}
+              onRefresh={handleDBCloudSync}
+            />
+          )}
+
           {activeTab === "categories" && <CategoriesTab />}
 
           {activeTab === "collections" && <CollectionsTab />}
@@ -598,6 +623,7 @@ export default function AdminPanel() {
           {activeTab === "orders" && (
             <OrdersTab
               orderList={orderList}
+              productList={productList}
               onUpdateStatus={handleUpdateOrderStatus}
             />
           )}
