@@ -449,7 +449,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     reviews: [],
     description: "Featuring a rare broken twill weave configuration (weaving left and right twills alternately) to prevent leg twist. Soft, exceptionally balanced feel out of the box with high horizontal dye variations.",
     specifications: [
-      { label: "Weave Breed", value: "Authentic Symmetrical Broken Twill" }
+      { label: "Weave Type", value: "Authentic Broken Twill Denim" }
     ],
     aPlusContent: {
       title: "Twist-Prevention Broken Weave",
@@ -590,7 +590,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     brand: "CLINZA Tailoring",
     rating: 4.8,
     reviews: [],
-    description: "Deep, pristine black matte finish, these cuffed trousers provide the ultimate baseline for monochromatic tailoring. Symmetrical forward creases have been heat-set permanently.",
+    description: "Deep, pristine black matte finish, these cuffed trousers provide the ultimate baseline for monochromatic tailoring. Sharp forward creases have been heat-set permanently.",
     specifications: [
       { label: "Crease treatment", value: "Permanent sharp silicone-infused heat set" }
     ],
@@ -1250,7 +1250,7 @@ export const INITIAL_REVIEWS = [
     rating: 5,
     userName: "Samarth Nair",
     avatarUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100",
-    comment: "I used the AI Style Analyzer on Clinza and it recommended Sand Double Pleat pants with Classic White Linen shirt. I bought the combo and the fit is absolutely breathtaking! Best shopping experience ever.",
+    comment: "I purchased the Sand Double Pleat pants with Classic White Linen shirt combo and the fit is absolutely breathtaking! Best shopping experience ever.",
     location: "Bangalore",
     verified: true
   },

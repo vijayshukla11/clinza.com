@@ -35,9 +35,15 @@ const DEFAULT_BANNER_DATA: NewArrivalsBannerData = {
   description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
   ctaText: "Shop New Arrivals",
   ctaLink: "collections/new-arrivals",
-  image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
+  image: "",
   features: []
 };
+
+// Helper to strip any trailing arrows or extra symbols from button text
+function formatCtaText(text: string): string {
+  if (!text) return "Shop New Arrivals";
+  return text.replace(/[→\->\s]+$/, "").trim();
+}
 
 export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) {
   const [bannerData, setBannerData] = useState<NewArrivalsBannerData>(DEFAULT_BANNER_DATA);
@@ -65,48 +71,52 @@ export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) 
     };
   }, []);
 
-  return (
-    <section id="new-arrivals-banner-section" className="py-10 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left">
-      <div className="max-w-[1440px] mx-auto">
-        {/* SINGLE FULL-WIDTH CAMPAIGN BANNER */}
-        <div className="relative w-full rounded-[20px] overflow-hidden bg-zinc-900 shadow-sm min-h-[420px] h-[440px] sm:h-[500px] md:h-[600px] lg:h-[660px] flex items-center">
-          {/* BACKGROUND IMAGE */}
-          <img
-            src={bannerData.image}
-            alt={bannerData.heading || "New Arrivals Campaign"}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
+  const cleanCta = formatCtaText(bannerData.ctaText);
 
-          {/* SUBTLE DARK GRADIENT OVERLAY FOR READABILITY */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent pointer-events-none z-10" />
+  return (
+    <section id="new-arrivals-banner-section" className="py-8 sm:py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left">
+      <div className="max-w-[1440px] mx-auto">
+        {/* SINGLE FULL-WIDTH CAMPAIGN POSTER BANNER */}
+        <div className="relative w-full rounded-[20px] sm:rounded-[24px] overflow-hidden bg-zinc-900 shadow-sm min-h-[420px] h-[460px] sm:h-[520px] md:h-[600px] lg:h-[660px] flex items-end sm:items-center">
+          {/* BACKGROUND IMAGE */}
+          {bannerData.image && (
+            <img
+              src={bannerData.image}
+              alt={bannerData.heading || "New Arrivals Campaign"}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+          )}
+
+          {/* DUAL GRADIENT OVERLAY FOR CRISP LEGIBILITY ON MOBILE AND DESKTOP */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/55 sm:to-transparent pointer-events-none z-10" />
           <div className="absolute inset-0 bg-black/10 pointer-events-none z-10" />
 
-          {/* EDITORIAL CONTENT */}
-          <div className="relative z-20 w-full max-w-[640px] p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col items-start text-white">
+          {/* EDITORIAL POSTER CONTENT */}
+          <div className="relative z-20 w-full max-w-[640px] p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col items-start text-left text-white">
             {/* CAMPAIGN LABEL */}
             {bannerData.label && (
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-zinc-300 block mb-3 font-mono">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-zinc-300 block mb-2 sm:mb-3 font-mono">
                 {bannerData.label}
               </span>
             )}
 
             {/* LARGE HEADING */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] text-white uppercase mb-4">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] text-white uppercase mb-3 sm:mb-4">
               {bannerData.heading || "Fresh Styles."}
               {bannerData.headingHighlight && (
                 <>
                   <br />
-                  <span className="text-zinc-300 font-light text-[0.88em]">
+                  <span className="text-zinc-300 font-serif italic normal-case font-normal text-[0.88em]">
                     {bannerData.headingHighlight}
                   </span>
                 </>
               )}
             </h2>
 
-            {/* SHORT SUBTITLE (MAX 2 LINES) */}
+            {/* SHORT SUBTITLE / DESCRIPTION */}
             {bannerData.description && (
-              <p className="text-xs sm:text-sm md:text-base text-zinc-200 font-light leading-relaxed line-clamp-2 max-w-md mb-8">
+              <p className="text-xs sm:text-sm md:text-base text-zinc-200 font-light leading-relaxed line-clamp-3 sm:line-clamp-2 max-w-md mb-6 sm:mb-8">
                 {bannerData.description}
               </p>
             )}
@@ -118,9 +128,9 @@ export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) 
                 setRoute(bannerData.ctaLink || "collections/new-arrivals");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="h-[48px] px-[32px] bg-white text-black hover:bg-black hover:text-white border border-white rounded-full text-[13px] sm:text-[14px] font-semibold tracking-[0.08em] uppercase transition-all duration-[250ms] ease-out shadow-md hover:shadow-xl cursor-pointer inline-flex items-center justify-center gap-2 group"
+              className="h-[48px] sm:h-[54px] px-6 sm:px-8 btn-premium-maroon rounded-full text-[12px] sm:text-[14px] font-bold tracking-[0.08em] uppercase transition-all duration-[250ms] ease-out shadow-lg cursor-pointer inline-flex items-center justify-center gap-2.5 group"
             >
-              <span>{bannerData.ctaText || "Shop New Arrivals"}</span>
+              <span>{cleanCta}</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           </div>
@@ -129,3 +139,4 @@ export default function NewArrivalsBanner({ setRoute }: NewArrivalsBannerProps) 
     </section>
   );
 }
+

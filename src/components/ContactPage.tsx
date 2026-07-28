@@ -185,24 +185,26 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Name */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase text-zinc-400 font-mono">Your Name *</label>
+                    <label className="block text-[10px] sm:text-[11px] font-bold uppercase text-zinc-500 font-mono">Your Name *</label>
                     <input
                       type="text"
+                      autoComplete="name"
                       placeholder="e.g. Samuel J."
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-2.5 px-3 rounded-xl text-xs font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
+                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 min-h-[44px] py-2.5 px-3.5 rounded-xl text-sm font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
                     />
                   </div>
                   {/* Email */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase text-zinc-400 font-mono">Your Email Address *</label>
+                    <label className="block text-[10px] sm:text-[11px] font-bold uppercase text-zinc-500 font-mono">Your Email Address *</label>
                     <input
                       type="email"
+                      autoComplete="email"
                       placeholder="e.g. sam@gmail.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-2.5 px-3 rounded-xl text-xs font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
+                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 min-h-[44px] py-2.5 px-3.5 rounded-xl text-sm font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
                     />
                   </div>
                 </div>
@@ -210,22 +212,23 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Phone */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase text-zinc-400 font-mono">Contact Number (Optional)</label>
+                    <label className="block text-[10px] sm:text-[11px] font-bold uppercase text-zinc-500 font-mono">Contact Number (Optional)</label>
                     <input
                       type="tel"
+                      autoComplete="tel"
                       placeholder="e.g. +91 98765 43210"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-2.5 px-3 rounded-xl text-xs font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
+                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 min-h-[44px] py-2.5 px-3.5 rounded-xl text-sm font-sans focus:outline-none focus:bg-white transition-all text-zinc-900"
                     />
                   </div>
                   {/* Subject */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase text-zinc-400 font-mono">Inquiry Topic</label>
+                    <label className="block text-[10px] sm:text-[11px] font-bold uppercase text-zinc-500 font-mono">Inquiry Topic</label>
                     <select
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-2.5 px-3 rounded-xl text-xs font-sans focus:outline-none focus:bg-white transition-all text-zinc-800 font-semibold"
+                      className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 min-h-[44px] py-2.5 px-3.5 rounded-xl text-sm font-sans focus:outline-none focus:bg-white transition-all text-zinc-800 font-semibold"
                     >
                       <option value="Wardrobe Inquiry">Wardrobe Inquiry</option>
                       <option value="Sizing Swap Swap">Sizing Swap Request</option>
@@ -237,13 +240,13 @@ export default function ContactPage() {
 
                 {/* Message */}
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-zinc-400 font-mono">Stylist Message *</label>
+                  <label className="block text-[10px] sm:text-[11px] font-bold uppercase text-zinc-500 font-mono">Stylist Message *</label>
                   <textarea
                     rows={4}
                     placeholder="Describe your design specifications or logistics questions in detail here..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-2.5 px-3 rounded-xl text-xs font-sans focus:outline-none focus:bg-white transition-all text-zinc-900 leading-relaxed font-medium"
+                    className="w-full bg-zinc-50 border border-zinc-200 focus:border-orange-500 py-3 px-3.5 rounded-xl text-sm font-sans focus:outline-none focus:bg-white transition-all text-zinc-900 leading-relaxed font-medium"
                   />
                 </div>
 

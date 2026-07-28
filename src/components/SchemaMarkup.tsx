@@ -32,7 +32,7 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
       ],
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91-XXXXXXXXXX",
+        "telephone": "+91-7208572688",
         "contactType": "customer service"
       }
     };

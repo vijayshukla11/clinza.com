@@ -24,16 +24,21 @@ interface LookbookSectionProps {
 }
 
 const DEFAULT_LOOKBOOK_DATA: LookbookData = {
-  label: "LOOKBOOK",
-  heading: "Designed for",
-  headingLine2: "Modern Living.",
-  description: "Discover effortless dressing with breathable fabrics, refined tailoring and timeless silhouettes designed for everyday confidence.",
-  buttonText: "EXPLORE LOOKBOOK",
+  label: "CLINZA COLLECTION",
+  heading: "Designed for Modern Living.",
+  headingLine2: "Crafted for Every Occasion.",
+  description: "Elevate your everyday wardrobe with premium fabrics, refined craftsmanship, and timeless silhouettes for every moment.",
+  buttonText: "VIEW COLLECTION",
   buttonLink: "collections/all",
-  mainImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1400",
-  secondaryImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=900",
+  mainImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  secondaryImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
   isPublished: true
 };
+
+function formatButtonText(text: string): string {
+  if (!text) return "VIEW COLLECTION";
+  return text.replace(/[→\->\s]+$/, "").trim();
+}
 
 export default function LookbookSection({ setRoute }: LookbookSectionProps) {
   const [data, setData] = useState<LookbookData>(DEFAULT_LOOKBOOK_DATA);
@@ -65,76 +70,87 @@ export default function LookbookSection({ setRoute }: LookbookSectionProps) {
     return null;
   }
 
-  return (
-    <section id="lookbook-editorial-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left overflow-hidden">
-      <div className="max-w-[1440px] mx-auto">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          
-          {/* LEFT COLUMN: EDITORIAL TEXT (40%) */}
-          <div className="w-full lg:w-[40%] flex flex-col justify-center items-start pr-0 lg:pr-6">
-            {/* SMALL LABEL */}
-            <span className="text-[11px] font-bold uppercase tracking-[6px] text-[#888888] block mb-4 font-mono">
-              {data.label}
-            </span>
+  const cleanCta = formatButtonText(data.buttonText);
 
-            {/* MAIN HEADING */}
-            <h2 className="text-3xl sm:text-4xl lg:text-[42px] leading-[1.15] font-bold text-[#111111] tracking-tight mb-6">
-              {data.heading}
+  return (
+    <section id="lookbook-editorial-section" className="py-8 sm:py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8] text-left">
+      <div className="max-w-[1440px] mx-auto">
+        {/* SINGLE FULL-WIDTH CAMPAIGN POSTER BANNER */}
+        <div className="relative w-full rounded-[20px] sm:rounded-[24px] overflow-hidden bg-zinc-900 shadow-sm min-h-[420px] h-[460px] sm:h-[520px] md:h-[600px] lg:h-[660px] flex items-end sm:items-center">
+          
+          {/* BACKGROUND IMAGE */}
+          {data.mainImage && (
+            <img
+              src={data.mainImage}
+              alt={data.heading || "Clinza Collection Campaign"}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+          )}
+
+          {/* DUAL GRADIENT OVERLAY FOR CRISP LEGIBILITY ON MOBILE AND DESKTOP */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/55 sm:to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-0 bg-black/10 pointer-events-none z-10" />
+
+          {/* EDITORIAL POSTER CONTENT */}
+          <div className="relative z-20 w-full max-w-[640px] p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col items-start text-left text-white">
+            {/* LABEL */}
+            {data.label && (
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-zinc-300 block mb-2 sm:mb-3 font-mono">
+                {data.label}
+              </span>
+            )}
+
+            {/* LARGE HEADING */}
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] text-white uppercase mb-3 sm:mb-4">
+              {data.heading || "Designed for Modern Living."}
               {data.headingLine2 && (
                 <>
                   <br />
-                  <span className="font-serif italic font-normal text-gray-800">{data.headingLine2}</span>
+                  <span className="text-zinc-300 font-serif italic normal-case font-normal text-[0.88em]">
+                    {data.headingLine2}
+                  </span>
                 </>
               )}
             </h2>
 
-            {/* PARAGRAPH */}
-            <p className="text-sm sm:text-base text-gray-600 font-light leading-relaxed max-w-[420px] mb-8">
-              {data.description}
-            </p>
+            {/* SUBTITLE / DESCRIPTION */}
+            {data.description && (
+              <p className="text-xs sm:text-sm md:text-base text-zinc-200 font-light leading-relaxed line-clamp-3 sm:line-clamp-2 max-w-md mb-6 sm:mb-8">
+                {data.description}
+              </p>
+            )}
 
-            {/* BUTTON */}
+            {/* PREMIUM MAROON CTA BUTTON */}
             <button
               id="explore-lookbook-btn"
               onClick={() => {
                 setRoute(data.buttonLink || "collections/all");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 h-[56px] bg-[#111111] hover:bg-black text-white font-bold text-xs uppercase tracking-[0.18em] rounded-[10px] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              className="h-[48px] sm:h-[54px] px-6 sm:px-8 btn-premium-maroon rounded-full text-[12px] sm:text-[14px] font-bold tracking-[0.08em] uppercase transition-all duration-[250ms] ease-out shadow-lg cursor-pointer inline-flex items-center justify-center gap-2.5 group"
             >
-              <span>{data.buttonText}</span>
-              <ArrowRight className="h-4 w-4" />
+              <span>{cleanCta}</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           </div>
 
-          {/* RIGHT COLUMN: EDITORIAL LIFESTYLE PHOTOGRAPHY (60%) */}
-          <div className="w-full lg:w-[60%] relative">
-            {/* MAIN IMAGE */}
-            <div className="relative w-full aspect-[4/3] sm:aspect-[14/11] lg:aspect-[14/10] rounded-[16px] overflow-hidden bg-[#F2F0EC] shadow-sm group/img">
+          {/* SECONDARY FLOATING INSET BADGE (DESKTOP / TABLET ONLY) */}
+          {data.secondaryImage && (
+            <div className="hidden lg:block absolute bottom-8 right-8 w-[200px] xl:w-[240px] aspect-[3/4] rounded-[16px] overflow-hidden border-2 border-white/20 shadow-2xl z-20 group/sec pointer-events-none">
               <img
-                src={data.mainImage}
-                alt={data.heading || "Clinza Lookbook Editorial"}
+                src={data.secondaryImage}
+                alt="Lookbook Detail"
                 loading="lazy"
-                className="w-full h-full object-cover object-center group-hover/img:scale-[1.03] transition-transform duration-700 ease-out"
+                className="w-full h-full object-cover object-center group-hover/sec:scale-[1.05] transition-transform duration-500 ease-out"
               />
-              <div className="absolute inset-0 bg-black/5 pointer-events-none" />
+              <div className="absolute inset-0 bg-black/10" />
             </div>
-
-            {/* SECONDARY FLOATING OVERLAPPING IMAGE (DESKTOP ONLY) */}
-            {data.secondaryImage && (
-              <div className="hidden sm:block absolute -bottom-8 -left-8 w-[40%] sm:w-[35%] aspect-[3/4] rounded-[12px] overflow-hidden border-4 border-white shadow-2xl z-20 group/sec hidden md:block">
-                <img
-                  src={data.secondaryImage}
-                  alt="Clinza Lookbook Detail"
-                  loading="lazy"
-                  className="w-full h-full object-cover object-center group-hover/sec:scale-[1.05] transition-transform duration-500 ease-out"
-                />
-              </div>
-            )}
-          </div>
+          )}
 
         </div>
       </div>
     </section>
   );
 }
+

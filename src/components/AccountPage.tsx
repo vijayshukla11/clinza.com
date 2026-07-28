@@ -849,7 +849,7 @@ export default function AccountPage({ user, onLogout, setRoute }: AccountPagePro
                       <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Contact Number</label>
                       <input 
                         type="tel"
-                        placeholder="+91 XXXXX XXXXX"
+                        placeholder="+91 98765 43210"
                         value={addrPhone}
                         onChange={(e) => setAddrPhone(e.target.value)}
                         className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900 font-mono"
@@ -1099,7 +1099,7 @@ export default function AccountPage({ user, onLogout, setRoute }: AccountPagePro
                     <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Contact Helpline Phone</label>
                     <input 
                       type="tel"
-                      placeholder="+91 XXXXX XXXXX"
+                      placeholder="+91 98765 43210"
                       value={profilePhone}
                       onChange={(e) => setProfilePhone(e.target.value)}
                       className="w-full bg-zinc-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-950 font-mono"

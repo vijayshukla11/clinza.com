@@ -100,27 +100,27 @@ export default function BlogSystem({
           </div>
 
           {/* CONTENT ACCENTS WITH SPLIT PARAGRAPHS */}
-          <div className="prose prose-orange max-w-none text-gray-800 text-sm sm:text-base font-sans leading-relaxed font-light space-y-6">
-            <p className="first-letter:text-5xl first-letter:font-serif first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-orange-650 first-letter:font-black">
+          <div className="prose prose-orange max-w-none text-gray-800 text-sm sm:text-base font-sans leading-relaxed sm:leading-loose font-normal space-y-5 sm:space-y-6">
+            <p className="first-letter:text-4xl sm:first-letter:text-5xl first-letter:font-serif first-letter:float-left first-letter:mr-2.5 sm:first-letter:mr-3 first-letter:mt-0.5 sm:first-letter:mt-1 first-letter:text-orange-650 first-letter:font-black">
               The sartorial dialogue surrounding high-end fabrics has shifted profoundly over the past decade. It is no longer just about visual geometry or tailoring contours; it is fundamentally about the tactile resonance of fibers against skin. Pure European flax linen stands at the very focal point of this modern philosophical pivot.
             </p>
-            <p>
+            <p className="leading-relaxed sm:leading-loose">
               When we unpack the structural physics of long-staple flax threads, we discover a natural carbohydrate cell wall structure that absorbs moisture at rates 3x faster than traditional short-staple carded cottons. This high moisture absorption rate reduces surface humidity, fostering an eye-safe, temperature-regulated microclimate next to your body.
             </p>
             
-            <div className="bg-zinc-50 border border-gray-200 p-6 rounded-2xl my-8 text-left">
-              <h4 className="text-xs font-black tracking-wider text-orange-655 uppercase font-mono mb-2 flex items-center gap-1.5">
-                <Award className="h-4.5 w-4.5 text-orange-600" /> SARTORIAL INSIGHT BY {activeBlog.author.name.toUpperCase()}
+            <div className="bg-zinc-50 border border-gray-200 p-4 sm:p-6 rounded-2xl my-6 sm:my-8 text-left">
+              <h4 className="text-[11px] sm:text-xs font-black tracking-wider text-orange-655 uppercase font-mono mb-2 flex items-center gap-1.5">
+                <Award className="h-4.5 w-4.5 text-orange-600 shrink-0" /> SARTORIAL INSIGHT BY {activeBlog.author.name.toUpperCase()}
               </h4>
-              <p className="text-xs text-gray-650 leading-relaxed font-sans italic">
+              <p className="text-xs sm:text-sm text-gray-650 leading-relaxed font-sans italic">
                 "Fashion is transient, but the engineering coefficients of thread strength and fiber breathability remain permanently unchanging. True luxury begins in the soil with raw fibers."
               </p>
             </div>
 
-            <p>
+            <p className="leading-relaxed sm:leading-loose">
               In our manufacturing pipelines across Mumbai and Italian weaving labs, we enforce a strict zero-friction wash technique. We allow the authentic slubs and natural crinkled waves to remain intact, celebrating structural honesty rather than forcing artificial high-sheen synthetic flat finishes.
             </p>
-            <p>
+            <p className="leading-relaxed sm:leading-loose">
               Whether you pair our double pleated linen trousers with resort-collared shirts for sunset cocktail sessions, or choose robust 13.5 oz selvedge raw indigo denim for urban commutes, CLINZA assures and represents absolute architectural authenticity at every pivot.
             </p>
           </div>
@@ -151,7 +151,7 @@ export default function BlogSystem({
               onClick={() => setActiveBlogSlug(null)}
               className="text-xs font-black uppercase tracking-wider text-orange-655 hover:underline font-mono"
             >
-              See other publications
+              See other articles
             </button>
           </div>
 
@@ -167,10 +167,10 @@ export default function BlogSystem({
         {/* HEADER */}
         <div className="text-center max-w-xl mx-auto mb-10 border-b border-zinc-200 pb-4">
           <span className="text-[10px] font-mono tracking-[0.2em] text-[#F27D26] uppercase font-bold mb-1.5 block">
-            Editorial insights
+            Style & Culture Guides
           </span>
           <h1 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-gray-950 uppercase">
-            Clinza Publications
+            CLINZA Journal
           </h1>
           <p className="text-gray-550 text-xs sm:text-sm font-sans font-light mt-2 animate-fade-in">
             Deep-dives into textiles, sustainable flax harvesting, selvedge architecture, boot welt styling, and classic modern wardrobe pairings.

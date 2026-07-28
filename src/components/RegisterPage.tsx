@@ -149,7 +149,7 @@ export default function RegisterPage({ onRegisterSuccess, setRoute }: RegisterPa
               <input 
                 id="reg-phone-input"
                 type="tel" 
-                placeholder="+91 XXXXX XXXXX"
+                placeholder="+91 98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full bg-zinc-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-sans focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900"

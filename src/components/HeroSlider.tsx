@@ -10,10 +10,10 @@ import { HomepageSlidesService } from "../services/supabaseService";
 
 interface HeroSliderProps {
   setRoute: (route: string) => void;
-  scrollToAI: () => void;
+  scrollToAI?: () => void;
 }
 
-export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
+export default function HeroSlider({ setRoute }: HeroSliderProps) {
   const [slides, setSlides] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -78,29 +78,41 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
 
   if (loading) {
     return (
-      <section className="relative h-[480px] sm:h-[520px] md:h-[580px] lg:h-[620px] w-full bg-zinc-50 flex flex-col items-center justify-center text-zinc-400 font-mono text-xs gap-3">
-        <Loader className="h-6 w-6 animate-spin text-black" />
-        <span className="tracking-[0.2em] uppercase font-bold text-zinc-500">Loading Editorial Showcase...</span>
+      <section 
+        id="hero-skeleton-loader" 
+        className="relative w-full h-[46vh] sm:h-[52vh] md:h-[60vh] lg:h-[68vh] xl:h-[72vh] min-h-[300px] sm:min-h-[360px] max-h-[720px] bg-zinc-100 overflow-hidden mb-0 pb-0"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-200/60 via-zinc-100 to-zinc-200/60 animate-pulse" />
+        <div className="absolute bottom-[24px] left-[16px] sm:bottom-[44px] sm:left-[44px] lg:bottom-[48px] lg:left-[48px] z-10 space-y-2 sm:space-y-3">
+          <div className="h-3 w-28 bg-zinc-300/70 rounded-full animate-pulse" />
+          <div className="h-7 sm:h-8 w-48 sm:w-80 bg-zinc-300/80 rounded-md animate-pulse" />
+          <div className="h-[44px] w-[160px] sm:w-[180px] bg-zinc-300/90 rounded-full mt-2 animate-pulse" />
+        </div>
+        <div className="absolute bottom-[10px] sm:bottom-[18px] left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+          <div className="h-[3px] w-8 bg-zinc-300 rounded-full animate-pulse" />
+          <div className="h-[3px] w-3 bg-zinc-300/50 rounded-full animate-pulse" />
+          <div className="h-[3px] w-3 bg-zinc-300/50 rounded-full animate-pulse" />
+        </div>
       </section>
     );
   }
 
   if (slides.length === 0) {
     return (
-      <section className="relative h-[480px] sm:h-[520px] md:h-[580px] lg:h-[620px] w-full bg-zinc-900 flex flex-col items-center justify-center text-center px-6">
-        <div className="max-w-md space-y-6">
-          <span className="text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase font-mono block">
+      <section className="relative w-full h-[320px] sm:h-[420px] bg-zinc-900 flex flex-col items-center justify-center text-center px-4 sm:px-6 text-white my-0">
+        <div className="max-w-md space-y-3 sm:space-y-4">
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-[#F27D26] uppercase block">
             CLINZA ATELIER
           </span>
-          <h1 className="text-3xl sm:text-5xl font-sans font-bold tracking-tight text-white uppercase leading-none">
+          <h2 className="text-xl sm:text-3xl font-sans font-bold uppercase tracking-tight text-white">
             Editorial Showcase
-          </h1>
-          <p className="text-zinc-400 text-sm font-sans font-light leading-relaxed">
-            Our homepage hero carousel is ready for curation. Add high-fidelity slides inside the Admin Panel.
+          </h2>
+          <p className="text-zinc-400 text-xs font-sans leading-relaxed">
+            Our seasonal campaign carousel is currently being updated.
           </p>
           <button
             onClick={() => setRoute("shop-all-collections")}
-            className="inline-block px-8 py-3.5 bg-white text-black text-xs font-bold uppercase tracking-[0.18em] rounded-[6px] hover:bg-zinc-200 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-zinc-200 transition-colors cursor-pointer"
           >
             Explore Wardrobe
           </button>
@@ -109,48 +121,22 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
     );
   }
 
-  const defaultSlides = [
-    {
-      id: "hero-slide-1",
-      badge: "NEW COLLECTION",
-      title: "PREMIUM LINEN SHIRTS",
-      description: "Crafted for effortless everyday luxury.",
-      image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=2000",
-      button1Text: "SHOP COLLECTION",
-      button1Link: "collections/all",
-      button2Text: "DISCOVER MORE",
-      button2Link: "collections/combos"
-    },
-    {
-      id: "hero-slide-2",
-      badge: "RESORT '26",
-      title: "EUROPEAN FLAX LINEN",
-      description: "Tactile breathability in sophisticated neutral tones.",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=2000",
-      button1Text: "SHOP LINEN",
-      button1Link: "collections/shirts",
-      button2Text: "VIEW COMBOS",
-      button2Link: "collections/combos"
-    }
-  ];
-
-  const activeSlides = slides.length > 0 ? slides : defaultSlides;
+  const activeSlides = slides;
   const currentSlide = activeSlides[activeIdx % activeSlides.length] as any;
 
-  // Extract dynamic values with fallback
-  const title = currentSlide.title || "PREMIUM LINEN SHIRTS";
-  const description = currentSlide.description || "Crafted for effortless everyday luxury.";
-  const image = currentSlide.image || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=2000";
-  const badgeText = currentSlide.badge || "NEW COLLECTION";
-  const primaryButtonText = currentSlide.button1Text || "SHOP COLLECTION";
-  const primaryButtonLink = currentSlide.button1Link || "collections/all";
-  const secondaryButtonText = currentSlide.button2Text || "DISCOVER MORE";
-  const secondaryButtonLink = currentSlide.button2Link || "collections/combos";
+  // Extract dynamic values
+  const title = currentSlide.title || "CLINZA COLLECTION";
+  const desktopImage = currentSlide.desktopImage || currentSlide.image || "";
+  const rawMobileImage = currentSlide.mobileImage;
+  const hasMobileImage = Boolean(rawMobileImage && typeof rawMobileImage === "string" && rawMobileImage.trim() !== "" && rawMobileImage !== desktopImage);
+  const mobileImage = hasMobileImage ? rawMobileImage : desktopImage;
+  const primaryButtonText = currentSlide.button1Text || "Explore Collection";
+  const primaryButtonLink = currentSlide.button1Link || currentSlide.route || "collections/all";
 
   return (
     <section 
       id="hero-minimal-editorial-slider" 
-      className="relative w-full h-[58vh] sm:h-[60vh] md:h-[62vh] lg:h-[68vh] xl:h-[72vh] min-h-[380px] max-h-[720px] bg-[#F9F9F8] overflow-hidden select-none mb-0 pb-0"
+      className="relative w-full h-[44vh] sm:h-[52vh] md:h-[60vh] lg:h-[68vh] xl:h-[72vh] min-h-[280px] sm:min-h-[360px] max-h-[720px] bg-[#F9F9F8] overflow-hidden select-none mb-0 pb-0"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseEnter={() => setIsHovered(true)}
@@ -166,52 +152,41 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
           transition={{ duration: 0.6, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full"
         >
-          <img
-            src={image}
-            alt={currentSlide?.altText || title || "Campaign Poster"}
-            className="w-full h-full object-cover object-center"
-            loading="eager"
-          />
+          {desktopImage || mobileImage ? (
+            <picture className="w-full h-full block">
+              {hasMobileImage && (
+                <source media="(max-width: 639px)" srcSet={mobileImage} />
+              )}
+              <img
+                src={desktopImage || mobileImage}
+                alt={currentSlide?.altText || title || "Campaign Poster"}
+                className={`w-full h-full object-center ${
+                  hasMobileImage ? 'object-cover' : 'object-cover max-sm:object-contain bg-[#F4F3EF]'
+                }`}
+                loading="eager"
+              />
+            </picture>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950" />
+          )}
         </motion.div>
       </AnimatePresence>
 
-      {/* 2. MINIMAL HIGH-CONTRAST CTA BUTTON */}
-      <div className="absolute bottom-8 left-6 sm:bottom-10 sm:left-10 lg:bottom-12 lg:left-14 z-20">
+      {/* 2. BOTTOM-LEFT CTA BUTTON */}
+      <div className="absolute bottom-[20px] left-[16px] sm:bottom-[36px] sm:left-[36px] lg:bottom-[40px] lg:left-[40px] z-20">
         <button
           id="hero-explore-collection-btn"
           onClick={() => setRoute(primaryButtonLink)}
-          className="h-[46px] px-[30px] bg-black text-white hover:bg-white hover:text-black border border-black rounded-full text-[13px] sm:text-[14px] font-semibold tracking-[0.08em] uppercase transition-all duration-[250ms] ease-out shadow-sm hover:shadow-md cursor-pointer inline-flex items-center justify-center"
+          className="group h-[40px] sm:h-[42px] px-[18px] sm:px-[24px] bg-gradient-to-r from-[#5B1824] via-[#4A121D] to-[#3B0E17] text-white border border-white/40 hover:border-white rounded-full text-[11px] sm:text-[12px] font-bold tracking-[0.1em] uppercase transition-all duration-300 ease-out shadow-md hover:shadow-xl hover:shadow-[#5B1824]/40 hover:scale-[1.03] active:scale-95 cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          {primaryButtonText || "Explore Collection"}
+          <span>{primaryButtonText || "Explore Collection"}</span>
+          <ArrowRight className="h-3.5 w-3.5 text-amber-300 group-hover:translate-x-1 transition-transform duration-200" />
         </button>
       </div>
 
-      {/* 3. SLIDER CONTROLS (44px CIRCLES MOVED INWARD) */}
+      {/* 3. CENTERED PAGINATION DOTS AT BOTTOM */}
       {activeSlides.length > 1 && (
-        <div className="absolute bottom-8 right-8 sm:bottom-10 sm:right-12 lg:bottom-12 lg:right-16 z-20 flex items-center gap-2.5">
-          <button
-            id="hero-prev-arrow-btn"
-            onClick={handlePrev}
-            className="w-[44px] h-[44px] rounded-full border border-black/15 bg-white/90 hover:bg-black hover:text-white backdrop-blur-xs flex items-center justify-center text-black transition-all duration-[250ms] ease-out shadow-xs cursor-pointer focus:outline-none"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="h-4 w-4 stroke-[2]" />
-          </button>
-
-          <button
-            id="hero-next-arrow-btn"
-            onClick={handleNext}
-            className="w-[44px] h-[44px] rounded-full border border-black/15 bg-white/90 hover:bg-black hover:text-white backdrop-blur-xs flex items-center justify-center text-black transition-all duration-[250ms] ease-out shadow-xs cursor-pointer focus:outline-none"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="h-4 w-4 stroke-[2]" />
-          </button>
-        </div>
-      )}
-
-      {/* 4. MINIMAL LINE SLIDE INDICATORS */}
-      {activeSlides.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+        <div className="absolute bottom-[8px] sm:bottom-[16px] left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-1.5">
           {activeSlides.map((_, index) => {
             const isActive = index === activeIdx;
             return (
@@ -225,13 +200,38 @@ export default function HeroSlider({ setRoute, scrollToAI }: HeroSliderProps) {
                     setTimeout(() => setAnimating(false), 600);
                   }
                 }}
-                className={`h-[2px] transition-all duration-300 cursor-pointer focus:outline-none rounded-full ${
-                  isActive ? "w-6 bg-black" : "w-2 bg-black/20 hover:bg-black/40"
-                }`}
+                className="p-1 focus:outline-none cursor-pointer"
                 aria-label={`Go to slide ${index + 1}`}
-              />
+              >
+                <span className={`block h-[3px] transition-all duration-300 rounded-full ${
+                  isActive ? "w-7 sm:w-8 bg-[#5B1824] shadow-xs" : "w-2.5 sm:w-3 bg-black/30 hover:bg-[#5B1824]/60"
+                }`} />
+              </button>
             );
           })}
+        </div>
+      )}
+
+      {/* 4. CORNER SLIDER NAVIGATION ARROWS (MINIMAL MAROON & WHITE) */}
+      {activeSlides.length > 1 && (
+        <div className="flex absolute bottom-[20px] right-[16px] sm:bottom-[36px] sm:right-[36px] lg:bottom-[40px] lg:right-[40px] z-20 items-center gap-2">
+          <button
+            id="hero-prev-arrow-btn"
+            onClick={handlePrev}
+            className="w-[36px] h-[36px] sm:w-[40px] sm:h-[40px] rounded-full border border-white/80 bg-white/90 backdrop-blur-md text-[#5B1824] hover:bg-[#5B1824] hover:text-white hover:border-[#5B1824] hover:scale-110 active:scale-90 transition-all duration-300 ease-out shadow-sm hover:shadow-md flex items-center justify-center cursor-pointer focus:outline-none"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+          </button>
+
+          <button
+            id="hero-next-arrow-btn"
+            onClick={handleNext}
+            className="w-[36px] h-[36px] sm:w-[40px] sm:h-[40px] rounded-full border border-amber-300/40 bg-[#5B1824] text-white hover:bg-[#43101A] hover:border-white hover:scale-110 active:scale-90 transition-all duration-300 ease-out shadow-md hover:shadow-lg hover:shadow-[#5B1824]/50 flex items-center justify-center cursor-pointer focus:outline-none"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+          </button>
         </div>
       )}
     </section>

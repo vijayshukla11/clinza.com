@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Heart, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Star, MoveRight } from "lucide-react";
 import { ProductsService } from "../services/supabaseService";
 import { Product } from "../types";
 
@@ -61,20 +61,49 @@ export default function BestSellersSection({
   };
 
   return (
-    <section id="best-sellers-section" className="py-12 md:py-14 lg:py-16 px-4 sm:px-8 lg:px-12 bg-white text-left overflow-hidden">
+    <section id="best-sellers-section" className="pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-10 lg:pb-14 px-4 sm:px-8 lg:px-12 bg-white text-left overflow-hidden border-b border-gray-100">
       <div className="max-w-[1440px] mx-auto">
         {/* SECTION HEADER */}
-        <div className="text-center mb-10 sm:mb-14">
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111] block mb-2 font-mono">
+        <div className="text-center mb-5 sm:mb-7">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-amber-800 block mb-1 font-mono">
             BEST SELLERS
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#111111] tracking-tight mb-2">
-            Loved by Thousands.
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-zinc-900 tracking-tight">
+            Loved by Thousands
           </h2>
-          <p className="text-sm sm:text-base text-gray-500 font-light tracking-wide mb-4">
+          <p className="text-xs sm:text-sm text-zinc-500 font-sans tracking-wide mt-1">
             Timeless pieces. Trusted by you.
           </p>
-          <div className="w-12 h-[2px] bg-[#111111] mx-auto" />
+          
+          {/* SCROLL INDICATOR ICON & BADGE WITH NAVIGATION CONTROLS */}
+          <div className="flex items-center justify-center gap-2 mt-3.5">
+            <button
+              id="scroll-icon-prev-btn"
+              onClick={scrollLeft}
+              className="p-1.5 rounded-full bg-stone-100 hover:bg-[#5B1824] hover:text-white transition-colors cursor-pointer border border-stone-200 shadow-2xs"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <span className="inline-flex items-center gap-2 bg-gradient-to-r from-stone-50 via-stone-100 to-stone-50 border border-stone-200/90 px-3.5 py-1 rounded-full shadow-2xs text-[11px] font-mono font-bold text-[#5B1824] uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <span>Scroll / Swipe</span>
+              <MoveRight className="h-4 w-4 animate-bounce text-[#5B1824]" />
+            </span>
+
+            <button
+              id="scroll-icon-next-btn"
+              onClick={scrollRight}
+              className="p-1.5 rounded-full bg-stone-100 hover:bg-[#5B1824] hover:text-white transition-colors cursor-pointer border border-stone-200 shadow-2xs"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* CAROUSEL WRAPPER WITH CONTROLS */}
@@ -133,7 +162,7 @@ export default function BestSellersSection({
                     {/* IMAGE CONTAINER */}
                     <div className="relative aspect-[4/5] w-full rounded-[10px] overflow-hidden bg-[#F5F5F3]">
                       <img
-                        src={product.images[0] || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800"}
+                        src={product.images[0] || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"}
                         alt={product.name}
                         loading="lazy"
                         className="w-full h-full object-cover object-center group-hover:scale-[1.05] transition-transform duration-500 ease-out"

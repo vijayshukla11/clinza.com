@@ -29,7 +29,10 @@ import {
   MessageSquare,
   Mail,
   History,
-  Boxes
+  Boxes,
+  Bot,
+  Trophy,
+  Flame
 } from "lucide-react";
 
 import { Product, BlogPost, Order, HomepageConfig } from "../types";
@@ -68,6 +71,8 @@ import ContactLeadsTab from "./admin/ContactLeadsTab";
 import NewsletterTab from "./admin/NewsletterTab";
 import ReturnsTab from "./admin/ReturnsTab";
 import AuditLogsTab from "./admin/AuditLogsTab";
+import AutomationCenterTab from "./admin/AutomationCenterTab";
+import ProductRankingTab from "./admin/ProductRankingTab";
 
 type AdminRole = "Super Admin" | "Admin" | "Inventory Manager" | "Order Manager" | "Marketing Manager" | "Customer Support";
 
@@ -109,12 +114,13 @@ export default function AdminPanel() {
        window.location.hostname.includes("run.app") ||
        !!(import.meta as any).env?.DEV);
 
-    if (isDev && email.toLowerCase() === "sastaelectronic6@gmail.com") {
+    const cleanEmail = email.toLowerCase().trim();
+    if (isDev && (cleanEmail === "sastaelectronic6@gmail.com" || cleanEmail === "admin@clinza.in")) {
       setIsAdminAuth(true);
       setStaffRole("Super Admin");
       setGoogleUser({
-        email: "sastaelectronic6@gmail.com",
-        displayName: userObj.user_metadata?.name || userObj.user_metadata?.displayName || "Clinza Super Admin"
+        email: cleanEmail,
+        displayName: userObj?.user_metadata?.name || userObj?.user_metadata?.displayName || "Clinza Super Admin"
       });
       setAuthError("");
       return true;
@@ -148,20 +154,44 @@ export default function AdminPanel() {
     const pathname = window.location.pathname;
     if (pathname.includes("/admin/products")) {
       setActiveTab("products");
-    } else if (pathname.includes("/admin/orders")) {
-      setActiveTab("orders");
-    } else if (pathname.includes("/admin/blog")) {
-      setActiveTab("blogs");
-    } else if (pathname.includes("/admin/theme-editor")) {
-      setActiveTab("theme-customizer");
+    } else if (pathname.includes("/admin/inventory")) {
+      setActiveTab("inventory");
+    } else if (pathname.includes("/admin/categories")) {
+      setActiveTab("categories");
     } else if (pathname.includes("/admin/collections")) {
       setActiveTab("collections");
+    } else if (pathname.includes("/admin/orders")) {
+      setActiveTab("orders");
+    } else if (pathname.includes("/admin/returns") || pathname.includes("/admin/returns-manager")) {
+      setActiveTab("returns-manager");
+    } else if (pathname.includes("/admin/customers")) {
+      setActiveTab("customers");
     } else if (pathname.includes("/admin/contact-leads")) {
       setActiveTab("contact-leads");
     } else if (pathname.includes("/admin/newsletters")) {
       setActiveTab("newsletters");
-    } else if (pathname.includes("/admin/customers")) {
-      setActiveTab("customers");
+    } else if (pathname.includes("/admin/blog") || pathname.includes("/admin/blogs")) {
+      setActiveTab("blogs");
+    } else if (pathname.includes("/admin/reviews")) {
+      setActiveTab("reviews");
+    } else if (pathname.includes("/admin/coupons")) {
+      setActiveTab("coupons");
+    } else if (pathname.includes("/admin/media")) {
+      setActiveTab("media-vault");
+    } else if (pathname.includes("/admin/home-cms")) {
+      setActiveTab("home-cms");
+    } else if (pathname.includes("/admin/theme-editor") || pathname.includes("/admin/theme-customizer")) {
+      setActiveTab("theme-customizer");
+    } else if (pathname.includes("/admin/integrations") || pathname.includes("/admin/google-seo")) {
+      setActiveTab("google-seo");
+    } else if (pathname.includes("/admin/audit-logs")) {
+      setActiveTab("audit-logs");
+    } else if (pathname.includes("/admin/automation") || pathname.includes("/admin/automation-center")) {
+      setActiveTab("automation-center");
+    } else if (pathname.includes("/admin/rankings") || pathname.includes("/admin/product-rankings")) {
+      setActiveTab("product-rankings");
+    } else if (pathname.includes("/admin/overview")) {
+      setActiveTab("overview");
     }
 
     // Check current session first with secure server-validated getUser()
@@ -497,6 +527,7 @@ export default function AdminPanel() {
               const tabs = [
                 { id: "overview", label: "Dashboard overview", icon: TrendingUp },
                 { id: "products", label: "Our Products Catalog", icon: Package },
+                { id: "product-rankings", label: "Product Rankings Sequence", icon: Trophy },
                 { id: "inventory", label: "Inventory & Stock Control", icon: Boxes, badge: lowStockCount > 0 ? lowStockCount : undefined, badgeColor: "bg-red-600" },
                 { id: "categories", label: "Taxonomic Categories", icon: Grid },
                 { id: "collections", label: "Curated Collections", icon: FolderOpen },
@@ -508,6 +539,7 @@ export default function AdminPanel() {
                 { id: "blogs", label: "Editorial Blog CMS", icon: FileText },
                 { id: "reviews", label: "Review Testimonials", icon: Star },
                 { id: "coupons", label: "Promotions & Coupons", icon: Tag },
+                { id: "automation-center", label: "Automation Center", icon: Bot },
                 { id: "media-vault", label: "Banners Media Vault", icon: FolderLock },
                 { id: "home-cms", label: "Homepage Blocks CMS", icon: Smartphone },
                 { id: "theme-customizer", label: "Shopify Theme Editor", icon: Palette },
@@ -524,6 +556,9 @@ export default function AdminPanel() {
                     onClick={() => {
                       setActiveTab(tab.id);
                       setSlideEditIdx(null);
+                      if (window.history && window.history.pushState) {
+                        window.history.pushState({}, "", `/admin/${tab.id}`);
+                      }
                     }}
                     className={`w-full py-2.5 px-3.5 rounded-lg flex items-center justify-between gap-3 transition-all cursor-pointer font-sans font-bold text-left ${
                       isSelected 
@@ -630,7 +665,12 @@ export default function AdminPanel() {
 
           {activeTab === "returns-manager" && <ReturnsTab />}
 
-          {activeTab === "customers" && <CustomersTab />}
+          {activeTab === "customers" && (
+            <CustomersTab
+              orderList={orderList}
+              productList={productList}
+            />
+          )}
 
           {activeTab === "contact-leads" && <ContactLeadsTab />}
 
@@ -647,6 +687,15 @@ export default function AdminPanel() {
           {activeTab === "reviews" && <ReviewsTab />}
 
           {activeTab === "coupons" && <CouponsTab />}
+
+          {activeTab === "automation-center" && <AutomationCenterTab />}
+
+          {activeTab === "product-rankings" && (
+            <ProductRankingTab
+              products={productList}
+              onProductsUpdate={handleDBCloudSync}
+            />
+          )}
 
           {activeTab === "media-vault" && <MediaLibraryTab />}
 
@@ -844,7 +893,7 @@ export default function AdminPanel() {
                         s.title = s.title || "Premium Everyday Fashion";
                         s.subtitle = s.subtitle || "The Premium Summer Collection";
                         s.description = s.description || "Timeless fits. Premium fabrics. Designed for modern India.";
-                        s.image = s.image || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600";
+                        s.image = s.image || "";
                         s.primaryButtonText = s.primaryButtonText ?? s.button1Text ?? "Shop Collection";
                         s.primaryButtonLink = s.primaryButtonLink ?? s.button1Link ?? s.route ?? "collections/all";
                         s.secondaryButtonText = s.secondaryButtonText ?? s.button2Text ?? "Shop All Collections";
@@ -884,7 +933,7 @@ export default function AdminPanel() {
                       const currentOffers = copy.offers || [];
                       const newOffer = {
                         id: `offer-${Date.now()}`,
-                        image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600",
+                        image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
                         title: "New Premium Offer",
                         subtitle: "Meticulously crafted premium wardrobe apparel.",
                         discount: "FLAT 10% OFF",

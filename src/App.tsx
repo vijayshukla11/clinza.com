@@ -36,7 +36,6 @@ import {
 import TopShippingBar from "./components/TopShippingBar";
 import Navbar from "./components/Navbar";
 import HeroSlider from "./components/HeroSlider";
-import AIAnalyzer from "./components/AIAnalyzer";
 import CollectionList from "./components/CollectionList";
 import BestSellersSection from "./components/BestSellersSection";
 import NewArrivalsBanner from "./components/NewArrivalsBanner";
@@ -53,6 +52,7 @@ import FeaturesSection from "./components/FeaturesSection";
 import WhatsAppButton from "./components/WhatsAppButton";
 import PolicyPageView from "./components/PolicyPageView";
 import ContactPage from "./components/ContactPage";
+import NotFoundPage from "./components/NotFoundPage";
 import SchemaMarkup from "./components/SchemaMarkup";
 
 // New high-fidelity Shopify-style views
@@ -63,6 +63,8 @@ import AccountPage from "./components/AccountPage";
 import ShopAllCollectionsPage from "./components/ShopAllCollectionsPage";
 import CollectionsPage from "./components/CollectionsPage";
 import CollectionDetailPage from "./components/CollectionDetailPage";
+import TopRankedProductsPage from "./components/TopRankedProductsPage";
+import TrendingLeaderboardSection from "./components/TrendingLeaderboardSection";
 
 import { Product, CartItem, Order, Category } from "./types";
 import {
@@ -82,7 +84,7 @@ import {
   saveHomeConfig
 } from "./utils";
 
-import { CategoriesService, CollectionsService, CollectionItem } from "./services/supabaseService";
+import { CategoriesService, CollectionsService, CollectionItem, ProductsService } from "./services/supabaseService";
 
 import { 
   trackPageView, 
@@ -145,8 +147,6 @@ function AppContent() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubbed, setNewsletterSubbed] = useState(false);
   const [newsletterErr, setNewsletterErr] = useState<string | null>(null);
-
-  const aiSectionRef = useRef<HTMLDivElement>(null);
 
   // Auto-initialize local storage databases
   useEffect(() => {
@@ -235,7 +235,8 @@ function AppContent() {
     }, size, color);
     trackMetaAddToCart(product);
     
-    alert(`Success! Packed ${quantity} × ${product.name} (${color}, size ${size}) in your shopping bag.`);
+    // Smoothly pop open Mini Cart Drawer
+    window.dispatchEvent(new CustomEvent("open_cart_drawer"));
   };
 
   const updateCartQty = (itemIndex: number, quantity: number) => {
@@ -278,52 +279,48 @@ function AppContent() {
     }
   };
 
-  const scrollToAISection = () => {
-    navigate("/");
-    setTimeout(() => {
-      aiSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
-  };
-
   // Adapter function mapping old string-based route triggers to standard React Router navigate updates
   const handleOldRouteTrigger = (val: string) => {
     setSearchOpen(false);
     setActiveBlogSlug(null);
 
-    if (val === "home") {
+    if (!val) return;
+    const cleanVal = val.startsWith("/") ? val.substring(1) : val;
+
+    if (cleanVal === "home" || cleanVal === "") {
       navigate("/");
-    } else if (val === "new-arrivals") {
+    } else if (cleanVal === "new-arrivals") {
       navigate("/new-arrivals");
-    } else if (val === "trending") {
+    } else if (cleanVal === "trending") {
       navigate("/trending");
-    } else if (val === "cart") {
+    } else if (cleanVal === "cart") {
       navigate("/cart");
-    } else if (val === "checkout") {
+    } else if (cleanVal === "checkout") {
       navigate("/checkout");
-    } else if (val === "wishlist") {
+    } else if (cleanVal === "wishlist") {
       navigate("/wishlist");
-    } else if (val === "track-order") {
+    } else if (cleanVal === "track-order") {
       navigate("/track-order");
-    } else if (val === "shop-all-collections") {
+    } else if (cleanVal === "shop-all-collections") {
       navigate("/shop-all-collections");
-    } else if (val === "contact") {
+    } else if (cleanVal === "contact") {
       navigate("/contact");
-    } else if (val === "about") {
+    } else if (cleanVal === "about") {
       navigate("/about");
-    } else if (val === "login") {
+    } else if (cleanVal === "login") {
       navigate("/login");
-    } else if (val === "register") {
+    } else if (cleanVal === "register") {
       navigate("/register");
-    } else if (val === "account") {
+    } else if (cleanVal === "account") {
       navigate("/account");
-    } else if (val === "admin") {
+    } else if (cleanVal === "admin") {
       navigate("/admin");
-    } else if (val === "admin/login") {
+    } else if (cleanVal === "admin/login") {
       navigate("/admin/login");
-    } else if (val === "blog") {
+    } else if (cleanVal === "blog") {
       navigate("/blog");
-    } else if (val.startsWith("collections/")) {
-      const slug = val.replace("collections/", "");
+    } else if (cleanVal.startsWith("collections/")) {
+      const slug = cleanVal.replace("collections/", "");
       if (slug === "all") {
         navigate("/collections");
       } else if (["shirts", "jeans", "pants"].includes(slug.toLowerCase())) {
@@ -331,14 +328,14 @@ function AppContent() {
       } else {
         navigate("/collections/" + slug);
       }
-    } else if (val.startsWith("product/")) {
-      const slug = val.replace("product/", "");
+    } else if (cleanVal.startsWith("product/") || cleanVal.startsWith("products/")) {
+      const slug = cleanVal.replace(/^products?\//, "");
       navigate(`/product/${slug}`);
-    } else if (val.startsWith("policy/")) {
-      const policySlug = val.replace("policy/", "");
+    } else if (cleanVal.startsWith("policy/")) {
+      const policySlug = cleanVal.replace("policy/", "");
       navigate(`/${policySlug}`);
     } else {
-      navigate("/" + val);
+      navigate("/" + cleanVal);
     }
   };
 
@@ -531,7 +528,6 @@ function AppContent() {
                 {/* 1. Hero Slider (No margin-bottom / padding-bottom) */}
                 <HeroSlider 
                   setRoute={handleOldRouteTrigger} 
-                  scrollToAI={scrollToAISection} 
                 />
 
                 {/* 2. Trust Bar / Features Section (Compact py-3.5 sm:py-4 lg:py-4 vertical padding) */}
@@ -562,6 +558,23 @@ function AppContent() {
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <BestSellersSection
+                    onProductClick={(p) => navigate(`/product/${p.slug}`)}
+                    onAddToWishlist={toggleWishlist}
+                    onAddToCart={addToCart}
+                    wishlistIds={wishlist}
+                    onOpenQuickView={setQuickViewProduct}
+                    setRoute={handleOldRouteTrigger}
+                  />
+                </motion.div>
+
+                {/* 4B. High Demand Leaderboard Section (#1 to #8 Sequence) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <TrendingLeaderboardSection
                     onProductClick={(p) => navigate(`/product/${p.slug}`)}
                     onAddToWishlist={toggleWishlist}
                     onAddToCart={addToCart}
@@ -649,7 +662,7 @@ function AppContent() {
                                 {/* Image Overlay */}
                                 <div className="relative h-44 sm:h-64 overflow-hidden bg-gray-50">
                                   <img
-                                    src={(offer.image && offer.image.trim()) || "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600"}
+                                    src={(offer.image && offer.image.trim()) || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"}
                                     alt={offer.title}
                                     className="h-full w-full object-cover object-center group-hover:scale-105 transition-all duration-700"
                                     loading="lazy"
@@ -793,9 +806,9 @@ function AppContent() {
                   </section>
                 </motion.div>
 
-                {/* 6. Editorial / Blogs (Fade Up) */}
+                {/* 6. Style Journal Highlight (Fade Up) */}
                 <motion.div
-                  initial={{ opacity: 0, y: 35 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -808,26 +821,26 @@ function AppContent() {
                           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                             <div className="lg:col-span-5 space-y-5">
                               <span className="text-[10px] font-black tracking-wider text-orange-400 font-mono uppercase bg-orange-600/10 px-3.5 py-1 rounded-full">
-                                {cfg.editorialSubtitle || "Clinza Publication Room"}
+                                {cfg.editorialSubtitle || "CLINZA JOURNAL"}
                               </span>
                               <h2 className="text-3xl sm:text-4xl font-sans font-black tracking-tight text-white uppercase leading-none">
-                                {cfg.editorialTitle || "Unpacking Textile Architecture"}
+                                {cfg.editorialTitle || "Style & Craftsmanship"}
                               </h2>
                               <p className="text-gray-400 text-xs sm:text-sm font-sans leading-relaxed">
-                                {cfg.editorialDesc || "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff."}
+                                {cfg.editorialDesc || "Discover our guides on European flax linen, fine cotton weaves, and timeless luxury wardrobe essentials."}
                               </p>
                               <button
                                 id="home-blog-btn"
                                 onClick={() => handleOldRouteTrigger("blog")}
                                 className="group bg-white text-gray-950 hover:bg-[#F27D26] hover:text-white font-sans text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                               >
-                                See Editorial Publications
+                                Read Journal
                                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                               </button>
                             </div>
                             <div className="lg:col-span-7 rounded-2xl overflow-hidden aspect-[16/9] border border-white/10 shadow-xl bg-zinc-900">
                               <img
-                                src={(cfg.editorialImg && cfg.editorialImg.trim()) || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/clinza%20set.png"}
+                                src={(cfg.editorialImg && cfg.editorialImg.trim()) || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"}
                                 alt="Japan indigo shuttles cover image"
                                 className="h-full w-full object-cover"
                                 loading="lazy"
@@ -841,18 +854,7 @@ function AppContent() {
                   </section>
                 </motion.div>
 
-                {/* 9. AI Style Analyzer */}
-                <div ref={aiSectionRef}>
-                  <AIAnalyzer
-                    setRoute={handleOldRouteTrigger}
-                    onProductClick={(p) => navigate(`/product/${p.slug}`)}
-                    onAddToWishlist={toggleWishlist}
-                    onAddToCart={addToCart}
-                    wishlistIds={wishlist}
-                  />
-                </div>
-
-                {/* 10. Newsletter Subscription (Move Newsletter above Footer) */}
+                {/* 7. Newsletter Subscription */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -870,13 +872,13 @@ function AppContent() {
                       >
                         <div className="max-w-xl mx-auto space-y-6">
                           <span className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase font-mono block">
-                            Atelier Publications
+                            CLINZA NEWSLETTER
                           </span>
                           <h2 className="text-2xl sm:text-3.5xl font-sans font-black tracking-tight text-white uppercase leading-none">
-                            {cfg.newsletter.heading || "The CLINZA Editorial List"}
+                            {cfg.newsletter.heading || "Join The CLINZA Club"}
                           </h2>
                           <p className="text-gray-400 text-xs sm:text-sm font-sans font-light leading-relaxed max-w-lg mx-auto">
-                            {cfg.newsletter.description || "Register your email to gain instant priority notices regarding seasonal resort drops."}
+                            {cfg.newsletter.description || "Subscribe to receive seasonal releases, styling manuals, and exclusive offers."}
                           </p>
                           
                           <div className="pt-2">
@@ -885,7 +887,7 @@ function AppContent() {
                                 <input
                                   id="home-newsletter-email-field"
                                   type="email"
-                                  placeholder="sartorialist@gmail.com"
+                                  placeholder="your.email@example.com"
                                   value={newsletterEmail}
                                   onChange={(e) => setNewsletterEmail(e.target.value)}
                                   className="bg-white/5 border border-white/10 px-4 py-3.5 text-xs focus:ring-1 focus:ring-[#F27D26] focus:outline-none text-white font-sans w-full rounded-none"
@@ -901,10 +903,9 @@ function AppContent() {
                               </form>
                             ) : (
                               <div className="max-w-md mx-auto bg-green-500/10 border border-green-500/25 p-4 rounded-none text-green-400 text-xs font-mono font-bold flex items-center justify-center gap-2">
-                                <CheckCircle className="h-5 w-5 stroke-[2.5]" /> SUBSCRIBED TO THE ATELIER CIRCLE
+                                <CheckCircle className="h-5 w-5 stroke-[2.5]" /> SUBSCRIBED TO CLINZA NEWSLETTER
                               </div>
                             )}
-
                             {newsletterErr && (
                               <p className="text-[11px] text-red-400 font-medium font-mono mt-3 text-center">{newsletterErr}</p>
                             )}
@@ -922,7 +923,8 @@ function AppContent() {
             <Route path="/jeans" element={<CategoryPage colSlug="jeans" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
             <Route path="/pants" element={<CategoryPage colSlug="pants" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
             <Route path="/new-arrivals" element={<CuratedPage type="new-arrivals" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
-            <Route path="/trending" element={<CuratedPage type="trending" wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
+            <Route path="/trending" element={<TopRankedProductsPage setRoute={handleOldRouteTrigger} onProductClick={(p) => navigate(`/product/${p.slug}`)} onAddToWishlist={toggleWishlist} onAddToCart={addToCart} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
+            <Route path="/top-ranked" element={<TopRankedProductsPage setRoute={handleOldRouteTrigger} onProductClick={(p) => navigate(`/product/${p.slug}`)} onAddToWishlist={toggleWishlist} onAddToCart={addToCart} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
             <Route path="/collections" element={<CollectionsPage setRoute={handleOldRouteTrigger} onAddToCart={addToCart} onAddToWishlist={toggleWishlist} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
             <Route path="/shop" element={<CollectionsPage setRoute={handleOldRouteTrigger} onAddToCart={addToCart} onAddToWishlist={toggleWishlist} wishlistIds={wishlist} onOpenQuickView={setQuickViewProduct} />} />
             <Route path="/collection/:slug" element={<DynamicCategoryPage wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} setQuickViewProduct={setQuickViewProduct} handleOldRouteTrigger={handleOldRouteTrigger} />} />
@@ -930,6 +932,7 @@ function AppContent() {
 
             {/* 3. PRODUCT SPEC DETAIL */}
             <Route path="/product/:slug" element={<ProductDetailPage wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} handleOldRouteTrigger={handleOldRouteTrigger} />} />
+            <Route path="/products/:slug" element={<ProductDetailPage wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} handleOldRouteTrigger={handleOldRouteTrigger} />} />
 
             {/* 4. CART & CHECKOUT SYSTEMS */}
             <Route path="/cart" element={
@@ -1011,15 +1014,10 @@ function AppContent() {
 
             {/* 8. PORTALS FOR STAFF */}
             <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/admin/login" element={<AdminPanel />} />
-            <Route path="/admin/products" element={<AdminPanel />} />
-            <Route path="/admin/orders" element={<AdminPanel />} />
-            <Route path="/admin/blog" element={<AdminPanel />} />
-            <Route path="/admin/theme-editor" element={<AdminPanel />} />
-            <Route path="/admin/collections" element={<AdminPanel />} />
+            <Route path="/admin/*" element={<AdminPanel />} />
 
-            {/* Fallback routing catalog */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Fallback 404 Page */}
+            <Route path="*" element={<NotFoundPage navigate={navigate} handleOldRouteTrigger={handleOldRouteTrigger} />} />
           </Routes>
         )}
 
@@ -1032,9 +1030,21 @@ function AppContent() {
             
             {/* Column 1: Editorial */}
             <div className="space-y-4">
-              <h3 className="font-sans font-black tracking-tighter text-xl text-white uppercase flex items-center">
-                CLINZA<span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] ml-1 self-end mb-1"></span>
-              </h3>
+              <div className="flex items-center">
+                <img
+                  src="https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/logo%20n%20deisgn/clinza.png"
+                  alt="CLINZA"
+                  className="h-7 w-auto object-contain brightness-0 invert"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <h3 className="hidden font-sans font-black tracking-tighter text-xl text-white uppercase flex items-center">
+                  CLINZA<span className="h-1.5 w-1.5 rounded-full bg-[#F27D26] ml-1 self-end mb-1"></span>
+                </h3>
+              </div>
               <p className="text-gray-400 text-xs font-sans leading-relaxed font-light">
                 Redefining premium men's clothing through tactile organic European flax fibers, raw shuttle loom indigo raw denims, and bespoke digital engineering.
               </p>
@@ -1064,7 +1074,7 @@ function AppContent() {
             {/* Column 2: Quick Links Directory */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase font-mono">
-                The Wardrobe Directory
+                Quick Links
               </h4>
               <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-gray-450 text-left">
                 <button onClick={() => navigate("/shirts")} className="text-left hover:text-white cursor-pointer py-1">Linen Shirts</button>
@@ -1079,25 +1089,25 @@ function AppContent() {
             {/* Column 3: Corporate Policy */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase font-mono">
-                Corporate Ethics
+                Customer Care
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-gray-450">
-                <li><button onClick={() => navigate("/about")} className="hover:text-white cursor-pointer text-left">The Clinza Atelier Sourcing</button></li>
-                <li><button onClick={() => navigate("/shipping-policy")} className="hover:text-white cursor-pointer text-left">Logistic & Sea Cargo Options</button></li>
-                <li><button onClick={() => navigate("/return-policy")} className="hover:text-white cursor-pointer text-left">Exchange Ledger (7 Days)</button></li>
-                <li><button onClick={() => navigate("/privacy-policy")} className="hover:text-white cursor-pointer text-left text-xs">Privacy Protocols</button></li>
+                <li><button onClick={() => navigate("/about")} className="hover:text-white cursor-pointer text-left">About Us</button></li>
+                <li><button onClick={() => navigate("/shipping-policy")} className="hover:text-white cursor-pointer text-left">Shipping & Delivery</button></li>
+                <li><button onClick={() => navigate("/return-policy")} className="hover:text-white cursor-pointer text-left">Returns & Exchanges</button></li>
+                <li><button onClick={() => navigate("/privacy-policy")} className="hover:text-white cursor-pointer text-left text-xs">Privacy Policy</button></li>
                 <li><button onClick={() => navigate("/terms-and-conditions")} className="hover:text-white cursor-pointer text-left text-xs font-semibold">Terms & Conditions</button></li>
-                <li><button onClick={() => navigate("/contact")} className="hover:text-white cursor-pointer text-left font-bold text-orange-400">Contact Showroom Desk</button></li>
+                <li><button onClick={() => navigate("/contact")} className="hover:text-white cursor-pointer text-left font-bold text-orange-400">Contact Support</button></li>
               </ul>
             </div>
 
             {/* Column 4: Newsletter */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-black tracking-[0.2em] text-[#F27D26] uppercase font-mono">
-                Atelier Publications
+                Newsletter
               </h4>
               <p className="text-gray-400 text-xs font-light leading-relaxed">
-                Subscribe to receive seasonal textile releases, styling manuals, and exclusive pre-booking codes.
+                Subscribe to receive seasonal releases, styling manuals, and exclusive offers.
               </p>
               
               {!newsletterSubbed ? (
@@ -1105,7 +1115,7 @@ function AppContent() {
                   <input
                     id="newsletter-email-field"
                     type="email"
-                    placeholder="sartorialist@gmail.com"
+                    placeholder="your.email@example.com"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     className="bg-white/5 border border-white/10 px-4 py-3 text-xs focus:ring-1 focus:ring-orange-600 focus:outline-none text-white font-sans w-full"
@@ -1121,7 +1131,7 @@ function AppContent() {
                 </form>
               ) : (
                 <div className="bg-green-500/10 border border-green-500/25 p-3 rounded-none text-green-400 text-xs font-mono font-bold flex items-center gap-1.5">
-                  <CheckCircle className="h-4.5 w-4.5 stroke-[3.5]" /> SUBSCRIBED TO THE CIRCLE
+                  <CheckCircle className="h-4.5 w-4.5 stroke-[3.5]" /> SUBSCRIBED TO NEWSLETTER
                 </div>
               )}
 
@@ -1258,25 +1268,29 @@ function CategoryPage({
   handleOldRouteTrigger 
 }: SubcomponentProps) {
   const navigate = useNavigate();
-  const allProducts = getProducts();
+  const [allProducts, setAllProducts] = React.useState<Product[]>(() => getProducts());
   const [dbCollections, setDbCollections] = React.useState<CollectionItem[]>([]);
 
   React.useEffect(() => {
     let isMounted = true;
-    async function fetchDbCols() {
+    async function fetchData() {
       try {
-        const cols = await CollectionsService.getAll();
-        if (isMounted && cols && cols.length > 0) {
-          setDbCollections(cols);
+        const [cols, prods] = await Promise.all([
+          CollectionsService.getAll(),
+          ProductsService.getAll()
+        ]);
+        if (isMounted) {
+          if (cols && cols.length > 0) setDbCollections(cols);
+          if (prods && prods.length > 0) setAllProducts(prods);
         }
       } catch (e) {
-        console.error("CategoryPage collections fetch error:", e);
+        console.error("CategoryPage data fetch error:", e);
       }
     }
-    fetchDbCols();
+    fetchData();
 
     const handleUpdate = () => {
-      fetchDbCols();
+      fetchData();
     };
     window.addEventListener("clinza_collections_updated", handleUpdate);
 
@@ -1286,30 +1300,35 @@ function CategoryPage({
     };
   }, []);
 
-  const normalized = (colSlug || "").toLowerCase();
-  const filtered = normalized === "all"
+  const normalized = (colSlug || "").toLowerCase().trim();
+  let filtered = normalized === "all"
     ? allProducts
     : normalized === "premium-linen"
-    ? allProducts.filter(p => p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen"))
+    ? allProducts.filter(p => p.category?.toLowerCase().includes("linen") || p.description?.toLowerCase().includes("linen") || p.name?.toLowerCase().includes("linen"))
     : normalized === "shirts"
-    ? allProducts.filter(p => p.collection?.toLowerCase() === "shirts")
+    ? allProducts.filter(p => p.collection?.toLowerCase().includes("shirt") || p.category?.toLowerCase().includes("shirt") || p.name?.toLowerCase().includes("shirt"))
     : normalized === "jeans"
-    ? allProducts.filter(p => p.collection?.toLowerCase() === "jeans")
-    : normalized === "pants"
-    ? allProducts.filter(p => p.collection?.toLowerCase() === "pants")
+    ? allProducts.filter(p => p.collection?.toLowerCase().includes("jean") || p.category?.toLowerCase().includes("jean") || p.name?.toLowerCase().includes("jean") || p.category?.toLowerCase().includes("denim"))
+    : normalized === "pants" || normalized === "trousers"
+    ? allProducts.filter(p => p.collection?.toLowerCase().includes("pant") || p.collection?.toLowerCase().includes("trouser") || p.category?.toLowerCase().includes("pant") || p.category?.toLowerCase().includes("trouser") || p.name?.toLowerCase().includes("pant") || p.name?.toLowerCase().includes("trouser"))
     : normalized === "trending"
     ? allProducts.filter(p => p.isTrending)
     : (normalized === "new-arrivals" || normalized === "new-arrivals-all")
     ? allProducts.filter(p => p.isNewArrival)
     : (normalized === "combo" || normalized === "combos" || normalized === "co-ord" || normalized === "linen-combo-set")
-    ? allProducts.filter(p => p.collection?.toLowerCase() === "combo" || p.collection?.toLowerCase() === "combos" || p.category.toLowerCase().includes("combo") || p.name.toLowerCase().includes("co-ord") || p.name.toLowerCase().includes("set"))
+    ? allProducts.filter(p => p.collection?.toLowerCase().includes("combo") || p.category?.toLowerCase().includes("combo") || p.name?.toLowerCase().includes("co-ord") || p.name?.toLowerCase().includes("set"))
     : (normalized === "shoes" || normalized === "footwear")
-    ? allProducts.filter(p => p.collection?.toLowerCase() === "shoes" || p.collection?.toLowerCase() === "footwear" || p.category.toLowerCase().includes("shoe") || p.category.toLowerCase().includes("loaf"))
+    ? allProducts.filter(p => p.collection?.toLowerCase().includes("shoe") || p.collection?.toLowerCase().includes("footwear") || p.category?.toLowerCase().includes("shoe") || p.category?.toLowerCase().includes("loaf"))
     : allProducts.filter(p => 
-        (p.collection && p.collection.toLowerCase() === normalized) ||
+        (p.collection && p.collection.toLowerCase().includes(normalized)) ||
         (p.category && p.category.toLowerCase().includes(normalized)) ||
-        (p.description && p.description.toLowerCase().includes(normalized))
+        (p.description && p.description.toLowerCase().includes(normalized)) ||
+        (p.name && p.name.toLowerCase().includes(normalized))
       );
+
+  if (filtered.length === 0 && allProducts.length > 0) {
+    filtered = allProducts;
+  }
 
   const activeCol = dbCollections.find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized)
     || getCollections().find(c => c.slug.toLowerCase() === normalized || c.id.toLowerCase() === normalized);
@@ -1462,9 +1481,59 @@ function ProductDetailPage({
 }: Omit<SubcomponentProps, "colSlug" | "setQuickViewProduct">) {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const matched = getProducts().find(p => p.slug === slug);
+  const normSlug = (slug || "").toLowerCase().trim();
+
+  const [allProducts, setAllProducts] = React.useState<Product[]>(() => getProducts());
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function syncCloud() {
+      setLoading(true);
+      try {
+        const cloudProds = await ProductsService.getAll();
+        if (isMounted && cloudProds && cloudProds.length > 0) {
+          setAllProducts(cloudProds);
+        }
+      } catch (e) {
+        console.warn("ProductDetailPage sync error:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    syncCloud();
+  }, [slug]);
+
+  const matched = allProducts.find(p => 
+    p.slug?.toLowerCase() === normSlug || 
+    p.id?.toLowerCase() === normSlug ||
+    p.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") === normSlug
+  );
 
   if (!matched) {
+    if (loading) {
+      return (
+        <div className="py-32 text-center text-gray-500 font-sans">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-zinc-900 border-t-transparent mb-4"></div>
+          <p className="text-xs uppercase tracking-widest font-mono">Loading Product Details...</p>
+        </div>
+      );
+    }
+
+    const fallback = allProducts[0];
+    if (fallback) {
+      return (
+        <ProductDetail
+          product={fallback}
+          onBackToCollection={() => navigate("/collections")}
+          onAddToCart={addToCart}
+          onAddToWishlist={toggleWishlist}
+          wishlistIds={wishlist}
+          setRoute={handleOldRouteTrigger}
+        />
+      );
+    }
+
     return (
       <div className="py-32 text-center text-gray-500 font-sans">
         <p>The premium silhouette is being calibrated. Please browse our active collections.</p>

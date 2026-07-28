@@ -89,8 +89,8 @@ export default function CollectionDetailPage({
               name: fallbackName,
               slug: normSlug,
               description: `Explore our complete range of ${fallbackName.toLowerCase()} crafted with premium fabrics and sartorial precision.`,
-              banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1400",
-              thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800",
+              banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+              thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
               isActive: true,
               displayOrder: 99
             });
@@ -122,39 +122,62 @@ export default function CollectionDetailPage({
   // Filter products matching collection slug
   const normalizedSlug = (slug || "").toLowerCase().trim();
 
-  const filteredProducts = allProducts.filter((p) => {
+  let filteredProducts = allProducts.filter((p) => {
     if (inStockOnly && p.stock === 0) return false;
     if (p.price > maxPrice) return false;
 
     if (normalizedSlug === "all") return true;
 
     if (normalizedSlug === "premium-linen" || normalizedSlug === "linen-shirts") {
-      return p.category.toLowerCase().includes("linen") || p.description.toLowerCase().includes("linen");
+      return p.category?.toLowerCase().includes("linen") || p.description?.toLowerCase().includes("linen") || p.name?.toLowerCase().includes("linen");
     }
 
     if (normalizedSlug === "combo" || normalizedSlug === "combos" || normalizedSlug === "co-ord") {
       return (
-        p.collection?.toLowerCase() === "combo" ||
-        p.collection?.toLowerCase() === "combos" ||
-        p.category.toLowerCase().includes("combo") ||
-        p.name.toLowerCase().includes("co-ord") ||
-        p.name.toLowerCase().includes("set")
+        p.collection?.toLowerCase().includes("combo") ||
+        p.category?.toLowerCase().includes("combo") ||
+        p.name?.toLowerCase().includes("co-ord") ||
+        p.name?.toLowerCase().includes("set")
       );
+    }
+
+    if (normalizedSlug === "shirts") {
+      return p.collection?.toLowerCase().includes("shirt") || p.category?.toLowerCase().includes("shirt") || p.name?.toLowerCase().includes("shirt");
+    }
+
+    if (normalizedSlug === "jeans") {
+      return p.collection?.toLowerCase().includes("jean") || p.category?.toLowerCase().includes("jean") || p.name?.toLowerCase().includes("jean") || p.category?.toLowerCase().includes("denim");
+    }
+
+    if (normalizedSlug === "pants" || normalizedSlug === "trousers") {
+      return p.collection?.toLowerCase().includes("pant") || p.collection?.toLowerCase().includes("trouser") || p.category?.toLowerCase().includes("pant") || p.category?.toLowerCase().includes("trouser") || p.name?.toLowerCase().includes("pant") || p.name?.toLowerCase().includes("trouser");
     }
 
     if (normalizedSlug === "trending") return p.isTrending;
     if (normalizedSlug === "new-arrivals") return p.isNewArrival;
 
+    const cleanSlug = normalizedSlug.replace(/^(col-|cat-|collection-)/, "").trim();
+
     return (
-      (p.collection && p.collection.toLowerCase() === normalizedSlug) ||
-      (p.category && p.category.toLowerCase().includes(normalizedSlug)) ||
-      (p.description && p.description.toLowerCase().includes(normalizedSlug)) ||
-      (p.name && p.name.toLowerCase().includes(normalizedSlug))
+      (p.collection && (p.collection.toLowerCase().includes(normalizedSlug) || p.collection.toLowerCase().includes(cleanSlug))) ||
+      (p.category && (p.category.toLowerCase().includes(normalizedSlug) || p.category.toLowerCase().includes(cleanSlug))) ||
+      (p.description && (p.description.toLowerCase().includes(normalizedSlug) || p.description.toLowerCase().includes(cleanSlug))) ||
+      (p.name && (p.name.toLowerCase().includes(normalizedSlug) || p.name.toLowerCase().includes(cleanSlug)))
     );
   });
 
+  // Fallback if specific keyword filters returned 0 items
+  if (filteredProducts.length === 0 && allProducts.length > 0) {
+    filteredProducts = allProducts;
+  }
+
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "rank") {
+      const rankA = a.trendingRank !== undefined && a.trendingRank !== null ? a.trendingRank : 999;
+      const rankB = b.trendingRank !== undefined && b.trendingRank !== null ? b.trendingRank : 999;
+      return rankA - rankB;
+    }
     if (sortBy === "price-low") return a.price - b.price;
     if (sortBy === "price-high") return b.price - a.price;
     if (sortBy === "rating") return b.rating - a.rating;
@@ -166,7 +189,7 @@ export default function CollectionDetailPage({
     collection?.banner ||
     collection?.thumbnail ||
     collection?.image ||
-    "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1400";
+    "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
 
   return (
     <div id="collection-detail-page" className="bg-[#FAFAF8] min-h-screen text-left font-sans text-[#111111] animate-fade-in pb-16">
@@ -278,6 +301,7 @@ export default function CollectionDetailPage({
                 className="bg-zinc-50 border border-zinc-200 text-xs font-bold uppercase tracking-wider text-zinc-900 py-1.5 px-3 focus:outline-none focus:border-black cursor-pointer"
               >
                 <option value="featured">Featured Order</option>
+                <option value="rank">By Rank Sequence (#1 Top Demand)</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="rating">Top Rated</option>

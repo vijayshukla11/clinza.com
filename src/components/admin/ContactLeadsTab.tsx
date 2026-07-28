@@ -65,7 +65,7 @@ export default function ContactLeadsTab() {
             name: "Meera Sen",
             email: "meera.sen@gmail.com",
             phone: "+91 94220 11559",
-            message: "Do you have offline trial studio locations or stockists in South Mumbai? I am a designer looking to collaborate with Clinza's textile architecture project.",
+            message: "Do you have offline trial studio locations or stockists in South Mumbai? I am a designer looking to collaborate with Clinza's luxury clothing collection.",
             created_at: new Date(Date.now() - 3600000 * 48).toISOString()
           }
         ];

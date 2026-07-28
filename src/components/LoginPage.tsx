@@ -81,16 +81,17 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Email Address</label>
+            <label className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 block">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-gray-400" />
               <input 
                 id="login-email-input"
                 type="email" 
+                autoComplete="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-zinc-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-sans focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900"
+                className="w-full bg-zinc-50 border border-gray-200 rounded-xl min-h-[44px] py-3 pl-11 pr-4 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900"
                 required
               />
             </div>
@@ -98,7 +99,7 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Password</label>
+              <label className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 block">Password</label>
               <button
                 type="button"
                 onClick={async () => {
@@ -118,7 +119,7 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
                     alert(err?.message || "Password recovery error. Verify email credentials.");
                   }
                 }}
-                className="text-[10px] text-zinc-400 hover:text-[#F27D26] hover:underline font-mono"
+                className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-[#F27D26] hover:underline font-mono"
               >
                 Forgot Password?
               </button>
@@ -128,10 +129,11 @@ export default function LoginPage({ onLoginSuccess, setRoute }: LoginPageProps) 
               <input 
                 id="login-password-input"
                 type="password" 
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-zinc-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-xs font-sans focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900"
+                className="w-full bg-zinc-50 border border-gray-200 rounded-xl min-h-[44px] py-3 pl-11 pr-4 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-[#F27D26] text-gray-900"
                 required
               />
             </div>

@@ -68,7 +68,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     link: "collections/shirts"
   },
   header: {
-    logoUrl: "",
+    logoUrl: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/logo%20n%20deisgn/clinza.png",
     menuItems: [
       { label: "Home", route: "home" },
       { label: "Linen Shirts", route: "collections/shirts" },
@@ -91,76 +91,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     paginationDots: true,
     pauseOnHover: true
   },
-  slides: [
-    {
-      id: "1",
-      desktopImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
-      mobileImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=640",
-      badge: "SARTORIAL SEASON",
-      subtitle: "Linen Shirts Collection",
-      title: "ELEVATED CUBAN CUTS",
-      description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      button1Text: "Explore Linen Shirts",
-      button1Link: "collections/shirts",
-      button2Text: "Shop All Designs",
-      button2Link: "collections/all",
-      bgOverlay: 40,
-      textPosition: "left",
-      textColor: "#ffffff",
-      enabled: true
-    },
-    {
-      id: "2",
-      desktopImage: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
-      mobileImage: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=640",
-      badge: "PRE-WASHED COTTON",
-      subtitle: "Shirts Collection",
-      title: "COTTON RESORT SHIRTS",
-      description: "Tailored lightweight linen-cotton shirts in earthy resort hues, boasting premium mother-of-pearl button detailing.",
-      button1Text: "Explore Shirts",
-      button1Link: "collections/shirts",
-      button2Text: "Curated Style Room",
-      button2Link: "blog",
-      bgOverlay: 30,
-      textPosition: "center",
-      textColor: "#ffffff",
-      enabled: true
-    },
-    {
-      id: "3",
-      desktopImage: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
-      mobileImage: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=640",
-      badge: "HEAVYWEIGHT SELVEDGE",
-      subtitle: "Jeans Collection",
-      title: "RAW REDLINE DENIM",
-      description: "Premium 13.5 oz selvedge shuttle denim crafted in vintage straight-leg and tapered fits. Built to age like gold.",
-      button1Text: "Shop Selvedge Jeans",
-      button1Link: "collections/jeans",
-      button2Text: "Curated Style Room",
-      button2Link: "blog",
-      bgOverlay: 35,
-      textPosition: "left",
-      textColor: "#ffffff",
-      enabled: true
-    },
-    {
-      id: "4",
-      desktopImage: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1600",
-      mobileImage: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=640",
-      badge: "LUXURY DRAPE",
-      subtitle: "Pants Collection",
-      title: "SARTORIAL PLEATED TROUSERS",
-      description: "Elegant double-pleated flax trousers in structured relaxed silhouettes with clean waistband adjusters.",
-      button1Text: "Shop Luxury Pants",
-      button1Link: "collections/pants",
-      button2Text: "Explore All Designs",
-      button2Link: "collections/all",
-      bgOverlay: 30,
-      textPosition: "center",
-      textColor: "#ffffff",
-      enabled: true
-    }
-  ],
+  slides: [],
   featuredCollections: {
     enabled: true,
     title: "The Clinza Departments",
@@ -184,8 +115,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     ]
   },
   testimonials: [
-    { id: "1", name: "Anand Sen", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150", rating: 5, text: "The heavy plisse double-pleat linen trousers are the exact weight of expensive European designer labels. Perfect crease styling!" },
-    { id: "2", name: "Kunal Kapoor", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150", rating: 5, text: "I ordered the redline 13.5 oz selvedge jeans on COD. Delivery was done in Pune in 2 days. The denim fit sits beautifully, ages like gold." }
+    { id: "1", name: "Anand Sen", image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", rating: 5, text: "The heavy plisse double-pleat linen trousers are the exact weight of expensive European designer labels. Perfect crease styling!" },
+    { id: "2", name: "Kunal Kapoor", image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", rating: 5, text: "I ordered the redline 13.5 oz selvedge jeans on COD. Delivery was done in Pune in 2 days. The denim fit sits beautifully, ages like gold." }
   ],
   blogs: {
     enabled: true,
@@ -195,8 +126,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   },
   newsletter: {
     enabled: true,
-    heading: "The CLINZA Editorial List",
-    description: "Register your email to gain instant priority notices regarding seasonal resort drops.",
+    heading: "The CLINZA Newsletter",
+    description: "Register your email to receive priority updates on new collections and seasonal releases.",
     buttonText: "Subscribe",
     bgImage: "",
     bgColor: "#09090b"
@@ -222,8 +153,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   },
   brandName: "CLINZA",
   brandTagline: "Premium Organic Clothing",
-  faviconUrl: "",
-  mobileLogo: "",
+  faviconUrl: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/logo%20n%20deisgn/clinza%20favicon.png",
+  mobileLogo: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/logo%20n%20deisgn/clinza.png",
   heroOverlayOpacity: 40,
   borderRadius: "rounded-xl",
   buttonStyle: "rounded",
@@ -236,7 +167,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
     ctaText: "SHOP NEW ARRIVALS",
     ctaLink: "collections/new-arrivals",
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
+    image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
     features: [
       { icon: "Sparkles", title: "Premium Fabrics", description: "High-grade Italian & Japanese linen-cotton weaves." },
       { icon: "Shirt", title: "Modern Fit", description: "Precision tailoring designed for effortless drapes." },
@@ -252,8 +183,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     description: "Discover effortless dressing with breathable fabrics, refined tailoring and timeless silhouettes designed for everyday confidence.",
     buttonText: "EXPLORE LOOKBOOK",
     buttonLink: "collections/all",
-    mainImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1400",
-    secondaryImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=900"
+    mainImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+    secondaryImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
   },
   summerEssentialsSection: {
     isPublished: true,
@@ -263,7 +194,7 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     description: "Experience the ultimate seasonal campaign with refined Italian linen, relaxed resort tailoring, and airy silhouettes designed for modern warm-weather luxury.",
     buttonText: "SHOP SUMMER COLLECTION",
     buttonLink: "collections/summer",
-    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1920",
+    image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
     highlights: [
       { icon: "Feather", title: "Breathable Linen", description: "Pure natural flax fibers woven for maximum air permeability." },
       { icon: "Sparkles", title: "Premium Cotton", description: "Ultra-soft extra-long staple organic cotton for weightless comfort." },
@@ -274,63 +205,17 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
 };
 
 export const DEFAULT_HOME_CONFIG: HomepageConfig = {
-  slides: [
-    {
-      id: 1,
-      badge: "SARTORIAL SEASON",
-      subtitle: "The Summer Collection",
-      title: "ELEVATED CUBAN CUTS",
-      description: "Breathe effortlessly. Minimalist silhouettes designed with heavyweight double pleated linen trousers and mother-of-pearl resort shirts.",
-      image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1600",
-      route: "collections/shirts"
-    },
-    {
-      id: 2,
-      badge: "EUROPEAN FLAX",
-      subtitle: "Premium Linen series",
-      title: "TACTILE TEXTURAL SILK",
-      description: "Spun from long-staple Normandy flax, meticulously pre-washed for zero skin friction. Elegant modern spread-collar profiles.",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1600",
-      route: "collections/shirts"
-    },
-    {
-      id: 3,
-      badge: "MODERN ARISTOCRAT",
-      subtitle: "Business Casual Curation",
-      title: "INTELLIGENT CASUAL COMFORT",
-      description: "Premium double-breasted blazers paired beautifully with tapered stretch pants. Reinterpreting classical office attire for the modern visionary.",
-      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=1600",
-      route: "collections/pants"
-    },
-    {
-      id: 4,
-      badge: "SOCIETY OFF-DUTY",
-      subtitle: "The Weekend Collection",
-      title: "MINIMALIST DRAWSTRING ESSENTIALS",
-      description: "Complete linen-blend co-ords. Sophisticated side-vented camp shirts designed for seamless beach-to-evening style styling.",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
-      route: "collections/combos"
-    },
-    {
-      id: 5,
-      badge: "INDIGO ARCHIVES",
-      subtitle: "Trending Selvedge Denim",
-      title: "13.5 OZ SOLID HEAVY RAW DENIM",
-      description: "Woven meticulously on historical Japanese shuttle looms. Authentic redline tickers, designed to age beautifully with your lifestyle.",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1600",
-      route: "collections/jeans"
-    }
-  ],
+  slides: [],
   trendingTitle: "Trending Curation",
   trendingSubtitle: "Highly Coveted Silhouettes",
-  editorialTitle: "Unpacking Textile Architecture",
-  editorialSubtitle: "Clinza Publication Room",
-  editorialDesc: "Read deep reports regarding sustainable European flax agriculture, Mumbai denim loom methods, and precise luxury styling rules formulated directly by our staff.",
-  editorialImg: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/clinza%20set.png",
+  editorialTitle: "Style & Craftsmanship",
+  editorialSubtitle: "CLINZA JOURNAL",
+  editorialDesc: "Discover our guides on European flax linen, fine cotton weaves, and timeless luxury wardrobe essentials.",
+  editorialImg: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
   offers: [
     {
       id: "offer-1",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
       title: "Linen Resort Wardrobe",
       subtitle: "Spun from long-staple Normandy flax, meticulously pre-washed.",
       discount: "FLAT 10% OFF",
@@ -342,7 +227,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     },
     {
       id: "offer-2",
-      image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
       title: "Selvedge Denim Drop",
       subtitle: "Woven on historical Japanese shuttle looms with authentic redline tickers.",
       discount: "FREE SHIPPING",
@@ -354,7 +239,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     },
     {
       id: "offer-3",
-      image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
       title: "Double-Breasted Blazers",
       subtitle: "Reinterpreting classical office attire for the modern visionary.",
       discount: "UP TO 15% OFF",
@@ -366,7 +251,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     },
     {
       id: "offer-4",
-      image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=600",
+      image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
       title: "Luxury Accessories",
       subtitle: "Handcrafted leather accents and everyday minimal luxury goods.",
       discount: "COMPLIMENTARY GIFT",
@@ -385,7 +270,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     description: "Discover our latest seasonal drops crafted with fine breathable linens, structured cottons, and refined minimalist fits.",
     ctaText: "SHOP NEW ARRIVALS",
     ctaLink: "collections/new-arrivals",
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
+    image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
     features: [
       { icon: "Sparkles", title: "Premium Fabrics", description: "High-grade Italian & Japanese linen-cotton weaves." },
       { icon: "Shirt", title: "Modern Fit", description: "Precision tailoring designed for effortless drapes." },
@@ -401,8 +286,8 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     description: "Discover effortless dressing with breathable fabrics, refined tailoring and timeless silhouettes designed for everyday confidence.",
     buttonText: "EXPLORE LOOKBOOK",
     buttonLink: "collections/all",
-    mainImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1400",
-    secondaryImage: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=900"
+    mainImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+    secondaryImage: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
   },
   summerEssentialsSection: {
     isPublished: true,
@@ -412,7 +297,7 @@ export const DEFAULT_HOME_CONFIG: HomepageConfig = {
     description: "Experience the ultimate seasonal campaign with refined Italian linen, relaxed resort tailoring, and airy silhouettes designed for modern warm-weather luxury.",
     buttonText: "SHOP SUMMER COLLECTION",
     buttonLink: "collections/summer",
-    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1920",
+    image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
     highlights: [
       { icon: "Feather", title: "Breathable Linen", description: "Pure natural flax fibers woven for maximum air permeability." },
       { icon: "Sparkles", title: "Premium Cotton", description: "Ultra-soft extra-long staple organic cotton for weightless comfort." },
@@ -861,15 +746,47 @@ export function clearSearchHistory() {
   localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify([]));
 }
 
+const CLINZA_COMBO_IMAGE = "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
+
+export function sanitizeImageUrl(url: string | undefined): string {
+  if (!url || typeof url !== "string" || url.includes("unsplash.com") || url.trim() === "") {
+    return CLINZA_COMBO_IMAGE;
+  }
+  return url;
+}
+
 export function getHomeConfig(): HomepageConfig {
+  let config: HomepageConfig = DEFAULT_HOME_CONFIG;
   if (!localStorage.getItem(HOME_CONFIG_KEY)) {
     localStorage.setItem(HOME_CONFIG_KEY, JSON.stringify(DEFAULT_HOME_CONFIG));
+  } else {
+    try {
+      config = JSON.parse(localStorage.getItem(HOME_CONFIG_KEY)!);
+    } catch (e) {
+      config = DEFAULT_HOME_CONFIG;
+    }
   }
-  try {
-    return JSON.parse(localStorage.getItem(HOME_CONFIG_KEY) || JSON.stringify(DEFAULT_HOME_CONFIG));
-  } catch (e) {
-    return DEFAULT_HOME_CONFIG;
+
+  // Dynamic sanitization of unsplash images
+  config.editorialImg = sanitizeImageUrl(config.editorialImg);
+  if (config.lookbookSection) {
+    config.lookbookSection.mainImage = sanitizeImageUrl(config.lookbookSection.mainImage);
+    config.lookbookSection.secondaryImage = sanitizeImageUrl(config.lookbookSection.secondaryImage);
   }
+  if (config.summerEssentialsSection) {
+    config.summerEssentialsSection.image = sanitizeImageUrl(config.summerEssentialsSection.image);
+  }
+  if (config.newArrivalsBanner) {
+    config.newArrivalsBanner.image = sanitizeImageUrl(config.newArrivalsBanner.image);
+  }
+  if (Array.isArray(config.offers)) {
+    config.offers = config.offers.map(o => ({
+      ...o,
+      image: sanitizeImageUrl(o.image)
+    }));
+  }
+
+  return config;
 }
 
 export function saveHomeConfig(config: HomepageConfig) {
@@ -973,8 +890,8 @@ export function getCollections(): CollectionMaster[] {
       id: "combos", 
       name: "Combos", 
       slug: "combos", 
-      banner: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=300", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
       description: "Pre-coordinated matching clothing sets curated for effortless styling.", 
       displayOrder: 1, 
       featured: true, 
@@ -985,8 +902,8 @@ export function getCollections(): CollectionMaster[] {
       id: "shirts", 
       name: "Shirts", 
       slug: "shirts", 
-      banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=300", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
       description: "Premium linen and organic cotton shirts crafted for supreme breathability.", 
       displayOrder: 2, 
       featured: true, 
@@ -997,8 +914,8 @@ export function getCollections(): CollectionMaster[] {
       id: "pants", 
       name: "Pants", 
       slug: "pants", 
-      banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=300", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
       description: "Pleated heavyweight trousers and tailored modern chinos.", 
       displayOrder: 3, 
       featured: true, 
@@ -1009,8 +926,8 @@ export function getCollections(): CollectionMaster[] {
       id: "jeans", 
       name: "Jeans", 
       slug: "jeans", 
-      banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=300", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
       description: "Selvedge denim jeans structured for timeless shapes.", 
       displayOrder: 4, 
       featured: true, 
@@ -1021,8 +938,8 @@ export function getCollections(): CollectionMaster[] {
       id: "footwear", 
       name: "Footwear", 
       slug: "footwear", 
-      banner: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=1200", 
-      thumbnail: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&q=80&w=300", 
+      banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
+      thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", 
       description: "Luxury leather footwear handcrafted to perfect your silhouette.", 
       displayOrder: 5, 
       featured: true, 

@@ -72,22 +72,7 @@ function mergeWithDefaultThemeConfig(config: any): ThemeConfig {
       ...DEFAULT_THEME_CONFIG.sliderSettings,
       ...(config.sliderSettings || {})
     },
-    slides: Array.isArray(config.slides) && config.slides.length > 0 
-      ? (
-          config.slides.length >= DEFAULT_THEME_CONFIG.slides.length
-            ? config.slides.map((s: any, idx: number) => ({
-                ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
-                ...s
-              }))
-            : [
-                ...config.slides.map((s: any, idx: number) => ({
-                  ...((DEFAULT_THEME_CONFIG.slides?.[idx] || DEFAULT_THEME_CONFIG.slides?.[0]) || {}),
-                  ...s
-                })),
-                ...DEFAULT_THEME_CONFIG.slides.slice(config.slides.length)
-              ]
-        )
-      : DEFAULT_THEME_CONFIG.slides,
+    slides: Array.isArray(config.slides) ? config.slides : [],
     featuredCollections: {
       ...DEFAULT_THEME_CONFIG.featuredCollections,
       ...(config.featuredCollections || {})
@@ -374,8 +359,8 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
     updateDraft(prev => {
       const newSlide: ThemeSlide = {
         id: `slide-${Date.now()}`,
-        desktopImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1600",
-        mobileImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=640",
+        desktopImage: "",
+        mobileImage: "",
         badge: "NEW COORT",
         subtitle: "Loom Engineered Silk",
         title: "SARTORIAL ENCOUNTERS",
@@ -2225,12 +2210,12 @@ export default function ThemeEditorTab({ productList, blogList, orderList }: The
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
                       {(previewCollections.length > 0 ? previewCollections.slice(0, 4) : [
-                        { name: "Shirts", banner: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
-                        { name: "Jeans", banner: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
-                        { name: "Pants", banner: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=200", thumbnail: "" },
-                        { name: "Combos", banner: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=200", thumbnail: "" }
+                        { name: "Shirts", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", thumbnail: "" },
+                        { name: "Jeans", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", thumbnail: "" },
+                        { name: "Pants", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", thumbnail: "" },
+                        { name: "Combos", banner: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png", thumbnail: "" }
                       ]).map((col: any, idx: number) => {
-                        const imgUrl = col.thumbnail || col.banner || col.image || col.img || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=200";
+                        const imgUrl = col.thumbnail || col.banner || col.image || col.img || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
                         return (
                           <div key={idx} className={`overflow-hidden shrink-0 flex flex-col hover:scale-102 transition duration-300 ${currentCardStyleClass}`} style={{
                             backgroundColor: draftConfig.colors.background || "#ffffff",

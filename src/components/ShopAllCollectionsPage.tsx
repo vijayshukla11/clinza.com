@@ -313,16 +313,11 @@ export default function ShopAllCollectionsPage({
           <div className="lg:col-span-6 relative bg-zinc-100 rounded-none border border-zinc-200 overflow-hidden leading-none h-full">
             <div className="aspect-[4/3] rounded-none overflow-hidden bg-gray-100 group">
               <img 
-                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1200" 
-                alt="CLINZA Editorial Campaign Model"
-                className="w-full h-full object-cover grayscale opacity-95 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                src="https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/collections/collections/collections.png" 
+                alt="Clinza Collections Poster"
+                className="w-full h-full object-cover group-hover:scale-102 transition-all duration-700"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-6 left-6 text-white text-left">
-                <p className="font-mono text-[9px] font-bold tracking-widest text-[#F27D26] uppercase">Active Lookbook 2026</p>
-                <h4 className="font-bold text-lg leading-tight uppercase font-serif">Aura de Normandy Linen</h4>
-              </div>
             </div>
           </div>
 
@@ -538,10 +533,10 @@ export default function ShopAllCollectionsPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 lg:gap-7 xl:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
             {loadingCollections ? (
               <div className="col-span-full py-20 text-center space-y-4">
-                <div className="h-8 w-8 border-2 border-[#F27D26] border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="h-8 w-8 border-2 border-[#5B1824] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs uppercase tracking-widest text-zinc-500 font-mono font-bold animate-pulse">
                   Querying Atelier Databases...
                 </p>
@@ -557,45 +552,73 @@ export default function ShopAllCollectionsPage({
                 </p>
               </div>
             ) : (
-              collections.map((col) => {
+              collections.map((col, idx) => {
                 const title = col.name;
-                const imgUrl = col.thumbnail || col.banner || col.image || "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800";
-                const subtitle = col.shortDescription && col.shortDescription.length <= 70 ? col.shortDescription : null;
+                const imgUrl = col.thumbnail || col.banner || col.image || "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
+                const itemCount = getProductCount(col.slug || col.id);
 
                 return (
                   <div 
                     key={col.id || col.slug}
                     onClick={() => handleCollectionSelect(col.slug || col.id)}
-                    className="group relative aspect-[3/4] w-full bg-zinc-100 overflow-hidden cursor-pointer shadow-xs hover:shadow-xl transition-all duration-300 ease-out flex flex-col justify-end"
+                    className="group relative bg-white border-2 border-stone-200 hover:border-[#5B1824] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-2xl transition-all duration-300 ease-out flex flex-col justify-between cursor-pointer hover:-translate-y-1.5 ring-1 ring-black/5"
                   >
-                    {/* BACKGROUND IMAGE WITH 1.03 ZOOM */}
-                    <div className="absolute inset-0 z-0 overflow-hidden">
+                    {/* CARD TOP IMAGE AREA - FULL VISIBLE CLEAN POSTER IMAGE (NO DARK TEXT OVERLAYS) */}
+                    <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-stone-100 overflow-hidden">
                       <img 
                         src={imgUrl} 
                         alt={col.altText || title}
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                        className="w-full h-full object-cover object-center group-hover:scale-[1.04] transition-transform duration-700 ease-out"
                         loading="lazy"
                         referrerPolicy="no-referrer"
                       />
-                      {/* OVERLAY GRADIENT */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 z-10" />
+
+                      {/* TOP LEFT MINIMAL BADGE */}
+                      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 bg-black/80 backdrop-blur-md text-amber-300 text-[10px] font-mono font-bold tracking-widest px-3 py-1 rounded-full border border-amber-300/30 uppercase shadow-md">
+                          <Sparkles className="h-3 w-3 text-amber-300 animate-pulse" />
+                          DEPT #{idx + 1}
+                        </span>
+                      </div>
+
+                      {/* TOP RIGHT ITEM COUNT BADGE */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="inline-flex items-center gap-1 bg-[#5B1824] text-white text-[10px] font-mono font-bold tracking-widest px-3 py-1 rounded-full uppercase shadow-md border border-amber-300/30">
+                          <ShoppingBag className="h-3 w-3 text-amber-300" />
+                          {itemCount > 0 ? `${itemCount} ITEMS` : "FEATURED"}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* BOTTOM OVERLAY DETAILS */}
-                    <div className="relative z-20 p-5 sm:p-6 text-left flex items-end justify-between w-full">
-                      <div className="space-y-0.5">
-                        <h3 className="text-[16px] sm:text-[18px] font-semibold text-white tracking-wide">
+                    {/* CARD BOTTOM BAR WITH UNIQUE ANIMATED BUTTON & BORDER (NO DESCRIPTION TEXT) */}
+                    <div className="p-4 sm:p-5 bg-white border-t border-stone-100 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-tight text-zinc-950 group-hover:text-[#5B1824] transition-colors">
                           {title}
                         </h3>
-                        {subtitle && (
-                          <p className="text-zinc-300 text-[12px] font-normal line-clamp-1 opacity-90">
-                            {subtitle}
-                          </p>
-                        )}
+                        <span className="text-[10px] font-mono font-bold text-amber-800 uppercase tracking-widest bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                          OFFICIAL DEPT
+                        </span>
                       </div>
-                      <div className="shrink-0 ml-3 text-white transition-transform duration-300 ease-out group-hover:translate-x-1.5">
-                        <ArrowRight className="h-5 w-5 stroke-[1.75]" />
-                      </div>
+
+                      {/* ANIMATED UNIQUE BUTTON WITH BORDER */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCollectionSelect(col.slug || col.id);
+                        }}
+                        className="w-full border-2 border-[#5B1824] bg-white group-hover:bg-[#5B1824] text-[#5B1824] group-hover:text-white px-5 py-3 rounded-xl text-xs font-mono font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-between shadow-xs cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Shirt className="h-4 w-4 text-[#5B1824] group-hover:text-amber-300 transition-colors" />
+                          <span>EXPLORE {title}</span>
+                        </span>
+                        
+                        <div className="flex items-center gap-1.5 bg-amber-100 group-hover:bg-amber-400 text-[#5B1824] group-hover:text-zinc-950 px-3 py-1 rounded-lg transition-colors font-extrabold shadow-2xs">
+                          <span className="text-[10px] font-mono uppercase tracking-wider">VIEW</span>
+                          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </button>
                     </div>
                   </div>
                 );
@@ -692,9 +715,9 @@ export default function ShopAllCollectionsPage({
           
           <div className="lg:col-span-6 relative aspect-video lg:aspect-[4/3] rounded-none overflow-hidden border border-white/10 bg-zinc-900 leading-none">
             <img 
-              src="https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=800" 
-              alt="Japanese antique loomer shuttling premium denims"
-              className="h-full w-full object-cover grayscale opacity-90 hover:opacity-100 hover:scale-102 transition-all duration-700"
+              src="https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/collections/collections/trending.png" 
+              alt="Clinza Quality Craft"
+              className="h-full w-full object-cover hover:scale-102 transition-all duration-700"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -814,14 +837,14 @@ export default function ShopAllCollectionsPage({
           
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200 pb-4">
             <div>
-              <span className="text-[10px] font-black tracking-widest text-[#F27D26] uppercase font-mono block mb-1 font-sans">Textile Journal</span>
+              <span className="text-[10px] font-black tracking-widest text-[#F27D26] uppercase font-mono block mb-1 font-sans">CLINZA Journal</span>
               <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-gray-950 font-sans">CLINZA STYLE & CULTURE</h2>
             </div>
             <button
               onClick={() => setRoute("blog")}
               className="text-xs font-bold uppercase tracking-wider text-[#F27D26] hover:underline flex items-center gap-1 cursor-pointer font-mono"
             >
-              Enter Publication Room <ChevronRight className="h-4 w-4" />
+              Explore Journal <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 

@@ -4,13 +4,115 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
 import { CollectionsService, CollectionItem } from "../services/supabaseService";
 
 interface CollectionListProps {
   setRoute: (route: string) => void;
   currentRoute?: string;
 }
+
+// Decorative ornamental flourish SVG matching the reference header design
+function HeaderFlourish({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 100 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M2,12 C10,4 20,4 30,12 C40,20 50,20 60,12 C70,4 80,4 90,12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15,12 C22,7 32,7 38,12 C44,17 54,17 62,12"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.6"
+        strokeLinecap="round"
+      />
+      <circle cx="95" cy="12" r="2.5" fill="currentColor" />
+      <circle cx="5" cy="12" r="2" fill="currentColor" opacity="0.5" />
+    </svg>
+  );
+}
+
+const DEFAULT_CATEGORIES: Partial<CollectionItem>[] = [
+  {
+    id: "cat-combos",
+    name: "Combo Sets",
+    slug: "combos",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-linen-shirts",
+    name: "Linen Shirts",
+    slug: "shirts",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-cotton-shirts",
+    name: "Cotton Shirts",
+    slug: "shirts",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-linen-pants",
+    name: "Linen Pants",
+    slug: "pants",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-formal-pants",
+    name: "Formal Pants",
+    slug: "pants",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-jeans",
+    name: "Jeans & Denim",
+    slug: "jeans",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-coord-sets",
+    name: "Co-ord Sets",
+    slug: "combos",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-resort-wear",
+    name: "Resort Wear",
+    slug: "summer",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-shorts",
+    name: "Linen Shorts",
+    slug: "pants",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-jackets",
+    name: "Jackets & Overshirts",
+    slug: "shirts",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-summer-essentials",
+    name: "Summer Linen",
+    slug: "summer",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  },
+  {
+    id: "cat-new-arrivals",
+    name: "New Arrivals",
+    slug: "new-arrivals",
+    thumbnail: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
+  }
+];
 
 export default function CollectionList({ setRoute, currentRoute }: CollectionListProps) {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
@@ -24,10 +126,17 @@ export default function CollectionList({ setRoute, currentRoute }: CollectionLis
         setLoading(true);
         const cols = await CollectionsService.getHomepageCollections();
         if (isMounted) {
-          setCollections(cols || []);
+          if (cols && cols.length > 0) {
+            setCollections(cols);
+          } else {
+            setCollections(DEFAULT_CATEGORIES as CollectionItem[]);
+          }
         }
       } catch (error) {
         console.error("Error loading collection list from Supabase:", error);
+        if (isMounted) {
+          setCollections(DEFAULT_CATEGORIES as CollectionItem[]);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -45,86 +154,84 @@ export default function CollectionList({ setRoute, currentRoute }: CollectionLis
     };
   }, [currentRoute]);
 
+  const displayList = collections.length > 0 ? collections : (DEFAULT_CATEGORIES as CollectionItem[]);
+
   if (loading) {
     return (
-      <section id="clinza-departments-section" className="py-12 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8]">
-        <div className="max-w-[1440px] mx-auto text-center">
+      <section id="clinza-departments-section" className="py-8 sm:py-12 bg-white">
+        <div className="max-w-[1440px] mx-auto text-center px-4">
           <div className="animate-pulse space-y-4 max-w-sm mx-auto">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mx-auto" />
-            <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto" />
+            <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto" />
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 pt-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-square bg-gray-100 rounded-xl" />
+              ))}
+            </div>
           </div>
         </div>
       </section>
     );
   }
 
-  if (collections.length === 0) {
-    return null;
-  }
-
   return (
-    <section id="clinza-departments-section" className="py-12 sm:py-16 px-4 sm:px-8 lg:px-12 bg-[#FAFAF8]">
-      <div className="max-w-[1440px] mx-auto">
-        {/* EDITORIAL SECTION HEADER */}
-        <div className="text-center mb-8 sm:mb-10 space-y-2">
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500 block font-mono">
-            COLLECTIONS ATELIER
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#111111] tracking-tight">
-            Explore By Collection
+    <section id="shop-by-category-section" className="pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-10 lg:pb-8 px-3 sm:px-6 lg:px-10 bg-white border-y border-gray-100">
+      <div className="max-w-[1440px] mx-auto space-y-6 sm:space-y-8">
+        
+        {/* SHOP BY CATEGORY HEADER WITH ORNAMENTAL FLOURISHES */}
+        <div className="flex items-center justify-center gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-6 text-zinc-900">
+          <HeaderFlourish className="w-10 sm:w-16 lg:w-24 h-3.5 sm:h-5 text-zinc-800 shrink-0 transform scale-x-[-1]" />
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 font-serif text-center">
+            Shop By Category
           </h2>
+          <HeaderFlourish className="w-10 sm:w-16 lg:w-24 h-3.5 sm:h-5 text-zinc-800 shrink-0" />
         </div>
 
-        {/* COLLECTION CMS GRID (Minimal luxury cards) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 lg:gap-7 xl:gap-8">
-          {collections.map((item) => {
+        {/* CATEGORY GRID (3 per row on desktop and tablet, 2 per row on phone) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3.5 sm:gap-5 lg:gap-6">
+          {displayList.map((item) => {
             const displayImg =
               item.thumbnail ||
               item.banner ||
               item.image ||
-              "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800";
-            const subtitle =
-              item.shortDescription && item.shortDescription.length <= 70
-                ? item.shortDescription
-                : null;
+              "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
 
             return (
               <div
-                id={`department-card-${item.slug}`}
+                id={`category-card-${item.slug}`}
                 key={item.id}
                 onClick={() => {
                   setRoute(`collections/${item.slug}`);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="group relative aspect-[3/4] w-full bg-zinc-100 overflow-hidden cursor-pointer shadow-xs hover:shadow-xl transition-all duration-300 ease-out flex flex-col justify-end"
+                className="group relative bg-white border border-stone-200 hover:border-[#5B1824] rounded-2xl overflow-hidden shadow-2xs hover:shadow-xl transition-all duration-300 ease-out flex flex-col justify-between cursor-pointer hover:-translate-y-1 ring-1 ring-black/5"
               >
-                {/* BACKGROUND IMAGE WITH 1.03 ZOOM */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
+                {/* TOP IMAGE AREA WITH ANIMATED SHINE OVERLAY */}
+                <div className="relative w-full aspect-[4/3] bg-stone-100 overflow-hidden">
                   <img
                     src={displayImg}
                     alt={item.altText || item.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                    className="w-full h-full object-cover object-center group-hover:scale-[1.08] transition-transform duration-500 ease-out"
                     loading="lazy"
                   />
-                  {/* OVERLAY GRADIENT */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 z-10" />
+                  {/* HOVER SHINE EFFECT */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#5B1824]/20 via-transparent to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  
+                  {/* OPTION ANIMATION BADGE */}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-2 transition-all duration-300 z-10">
+                    <span className="bg-[#5B1824] text-white text-[9px] font-mono font-bold tracking-widest px-2 py-0.5 rounded-full shadow-md uppercase flex items-center gap-1">
+                      VIEW <span className="text-amber-300">→</span>
+                    </span>
+                  </div>
                 </div>
 
-                {/* BOTTOM OVERLAY DETAILS */}
-                <div className="relative z-20 p-5 sm:p-6 text-left flex items-end justify-between w-full">
-                  <div className="space-y-0.5">
-                    <h3 className="text-[16px] sm:text-[18px] font-semibold text-white tracking-wide">
-                      {item.name}
-                    </h3>
-                    {subtitle && (
-                      <p className="text-zinc-300 text-[12px] font-normal line-clamp-1 opacity-90">
-                        {subtitle}
-                      </p>
-                    )}
-                  </div>
-                  <div className="shrink-0 ml-3 text-white transition-transform duration-300 ease-out group-hover:translate-x-1.5">
-                    <ArrowRight className="h-5 w-5 stroke-[1.75]" />
-                  </div>
+                {/* BOTTOM WHITE LABEL BOX WITH PREMIUM BUTTON STYLE */}
+                <div className="py-2.5 sm:py-3 px-2 bg-white border-t border-stone-100 text-center flex flex-col items-center justify-center min-h-[52px] sm:min-h-[60px] group-hover:bg-stone-50/80 transition-colors">
+                  <h3 className="text-[12px] sm:text-[13px] font-serif font-bold text-zinc-900 tracking-tight leading-snug group-hover:text-[#5B1824] transition-colors text-center flex items-center gap-1">
+                    <span>{item.name}</span>
+                  </h3>
+                  <span className="text-[9px] font-mono font-bold text-amber-800 uppercase tracking-widest mt-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    EXPLORE STYLE
+                  </span>
                 </div>
               </div>
             );
@@ -134,4 +241,5 @@ export default function CollectionList({ setRoute, currentRoute }: CollectionLis
     </section>
   );
 }
+
 

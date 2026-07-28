@@ -190,7 +190,7 @@ export default function CheckoutPage({
 
             {/* FULL NAME */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
+              <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
                 Customer Name
               </label>
               <div className="relative">
@@ -198,23 +198,24 @@ export default function CheckoutPage({
                   id="checkout-name-input"
                   type="text"
                   name="name"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="e.g. Samarth Nair"
-                  className={`w-full bg-gray-50 border py-3.5 pl-11 pr-4 rounded-xl text-xs font-semibold focus:outline-none placeholder-gray-450 text-gray-800 ${
+                  className={`w-full bg-gray-50 border min-h-[44px] py-3 pl-11 pr-4 rounded-xl text-sm font-semibold focus:outline-none placeholder-gray-400 text-gray-800 ${
                     formErrors.name ? "border-red-500 focus:border-red-500" : "border-gray-250 focus:border-orange-500"
                   }`}
                 />
                 <User className="absolute left-4 top-3.5 h-4.5 w-4.5 text-gray-450" />
               </div>
-              {formErrors.name && <p className="text-[10px] text-red-500 font-bold mt-1.5">{formErrors.name}</p>}
+              {formErrors.name && <p className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-1.5">{formErrors.name}</p>}
             </div>
 
             {/* PHONE & EMAIL TWOS-ROW */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Phone */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
+                <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
                   Mobile Number (India)
                 </label>
                 <div className="relative">
@@ -222,21 +223,22 @@ export default function CheckoutPage({
                     id="checkout-phone-input"
                     type="tel"
                     name="phone"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="10-digit number e.g. 9812345678"
-                    className={`w-full bg-gray-50 border py-3.5 pl-11 pr-4 rounded-xl text-xs font-semibold focus:outline-none placeholder-gray-450 text-gray-800 ${
+                    className={`w-full bg-gray-50 border min-h-[44px] py-3 pl-11 pr-4 rounded-xl text-sm font-semibold focus:outline-none placeholder-gray-400 text-gray-800 ${
                       formErrors.phone ? "border-red-500" : "border-gray-250 focus:border-orange-500"
                     }`}
                   />
                   <Phone className="absolute left-4 top-3.5 h-4.5 w-4.5 text-gray-450" />
                 </div>
-                {formErrors.phone && <p className="text-[10px] text-red-500 font-bold mt-1.5">{formErrors.phone}</p>}
+                {formErrors.phone && <p className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-1.5">{formErrors.phone}</p>}
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
+                <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
                   Email Address
                 </label>
                 <div className="relative">
@@ -244,23 +246,24 @@ export default function CheckoutPage({
                     id="checkout-email-input"
                     type="email"
                     name="email"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="e.g. sam@gmail.com"
-                    className={`w-full bg-gray-50 border py-3.5 pl-11 pr-4 rounded-xl text-xs font-semibold focus:outline-none placeholder-gray-450 text-gray-800 ${
+                    className={`w-full bg-gray-50 border min-h-[44px] py-3 pl-11 pr-4 rounded-xl text-sm font-semibold focus:outline-none placeholder-gray-400 text-gray-800 ${
                       formErrors.email ? "border-red-500" : "border-gray-250 focus:border-orange-500"
                     }`}
                   />
                   <Mail className="absolute left-4 top-3.5 h-4.5 w-4.5 text-gray-450" />
                 </div>
-                {formErrors.email && <p className="text-[10px] text-red-500 font-bold mt-1.5">{formErrors.email}</p>}
+                {formErrors.email && <p className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-1.5">{formErrors.email}</p>}
               </div>
             </div>
 
             {/* DETAILED STREET ADDRESS */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
-                Street Address / Apartment, Suit
+              <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
+                Street Address / Apartment, Suite
               </label>
               <textarea
                 id="checkout-address-input"
@@ -269,45 +272,47 @@ export default function CheckoutPage({
                 value={formData.address}
                 onChange={handleInputChange}
                 placeholder="Apartment building, sector, landmarks and street coordinates detailed."
-                className={`w-full bg-gray-50 border p-4 rounded-xl text-xs font-semibold focus:outline-none placeholder-gray-450 text-gray-800 ${
+                className={`w-full bg-gray-50 border p-3.5 rounded-xl text-sm font-semibold focus:outline-none placeholder-gray-400 text-gray-800 ${
                   formErrors.address ? "border-red-500" : "border-gray-250 focus:border-orange-500"
                 }`}
               />
-              {formErrors.address && <p className="text-[10px] text-red-500 font-bold mt-1">{formErrors.address}</p>}
+              {formErrors.address && <p className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-1">{formErrors.address}</p>}
             </div>
 
             {/* CITY & STATE & PINCODE ROW */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* City */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
+                <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
                   Town / City
                 </label>
                 <input
                   id="checkout-city-input"
                   type="text"
                   name="city"
+                  autoComplete="address-level2"
                   value={formData.city}
                   onChange={handleInputChange}
                   placeholder="e.g. Mumbai"
-                  className={`w-full bg-gray-50 border py-3.5 px-4 rounded-xl text-xs font-semibold focus:outline-none placeholder-gray-450 text-gray-800 ${
+                  className={`w-full bg-gray-50 border min-h-[44px] py-3 px-4 rounded-xl text-sm font-semibold focus:outline-none placeholder-gray-400 text-gray-800 ${
                     formErrors.city ? "border-red-500" : "border-gray-250 focus:border-orange-500"
                   }`}
                 />
-                {formErrors.city && <p className="text-[10px] text-red-500 font-bold mt-1.5">{formErrors.city}</p>}
+                {formErrors.city && <p className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-1.5">{formErrors.city}</p>}
               </div>
 
               {/* State */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-450 mb-1.5 font-mono select-none">
+                <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-gray-500 mb-1.5 font-mono select-none">
                   State / Territory
                 </label>
                 <select
                   id="checkout-state-select"
                   name="state"
+                  autoComplete="address-level1"
                   value={formData.state}
                   onChange={handleInputChange}
-                  className="w-full bg-gray-50 border border-gray-250 py-3.5 px-4 rounded-xl text-xs font-semibold focus:outline-none text-gray-800 focus:border-orange-500"
+                  className="w-full bg-gray-50 border border-gray-250 min-h-[44px] py-3 px-4 rounded-xl text-sm font-semibold focus:outline-none text-gray-800 focus:border-orange-500"
                 >
                   {indianStates.map(st => (
                     <option key={st} value={st}>{st}</option>

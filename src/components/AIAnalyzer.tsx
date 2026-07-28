@@ -3,867 +3,392 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
-import { Upload, Camera, Sparkles, AlertCircle, CheckCircle2, RotateCcw, ArrowRight, Heart, ShoppingCart } from "lucide-react";
-import { motion } from "motion/react";
-import { AIAnalysisResult as StyleAdvisorResult, Product } from "../types";
-import { getProducts } from "../utils";
-import { saveStyleAnalysisLeadToCloud } from "../supabase";
+import React, { useState } from "react";
+import { 
+  Truck, 
+  RotateCcw, 
+  ShieldCheck, 
+  FileText, 
+  HelpCircle, 
+  ArrowLeft, 
+  Check, 
+  ChevronRight, 
+  MapPin, 
+  Layers, 
+  Flame, 
+  Sparkles, 
+  Clock, 
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 
-interface StyleAdvisorProps {
+interface PolicyPageViewProps {
+  initialPolicy: string;
+  onBack: () => void;
   setRoute: (route: string) => void;
-  onProductClick: (product: Product) => void;
-  onAddToWishlist: (product: Product) => void;
-  onAddToCart: (product: Product, color: string, size: string) => void;
-  wishlistIds: string[];
 }
 
-const PREMIUM_SAMPLES = [
-  {
-    name: "Classic Sartorial Profile",
-    gender: "Male",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-    description: "Classic profile with sharp features, warm beige skin tone, and structured build."
-  },
-  {
-    name: "Modern Minimalist Profile",
-    gender: "Neutral / Unisex",
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200",
-    description: "Modern frame with light neutral undertone, chiseled face, and smart-casual preference."
-  },
-  {
-    name: "Intelligent Leisure Profile",
-    gender: "Athletic Build",
-    image: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=200",
-    description: "Athletic build, olivaceous warm tone, square face, and sporty co-ord preferences."
-  }
-];
+export default function PolicyPageView({ initialPolicy, onBack, setRoute }: PolicyPageViewProps) {
+  const [activeTab, setActiveTab] = useState<string>(initialPolicy || "shipping");
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-export default function AIAnalyzer({
-  setRoute,
-  onProductClick,
-  onAddToWishlist,
-  onAddToCart,
-  wishlistIds
-}: StyleAdvisorProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [progressMsg, setProgressMsg] = useState("Initializing bespoke style match sensors...");
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<StyleAdvisorResult | null>(null);
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-  const [useCamera, setUseCamera] = useState(false);
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  
-  // Custom user survey fields
-  const [surveyType, setSurveyType] = useState("all");
-  const [surveyBody, setSurveyBody] = useState("athletic");
+  const tabs = [
+    { id: "shipping", label: "Shipping Policy", icon: Truck, color: "text-blue-500 bg-blue-50" },
+    { id: "refund", label: "Return & Refund Policy", icon: RotateCcw, color: "text-orange-500 bg-orange-50" },
+    { id: "privacy", label: "Privacy Protection", icon: ShieldCheck, color: "text-emerald-500 bg-emerald-50" },
+    { id: "terms", label: "Terms of Use", icon: FileText, color: "text-zinc-500 bg-zinc-50" },
+    { id: "faq", label: "Client FAQ", icon: HelpCircle, color: "text-purple-500 bg-purple-50" }
+  ];
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Rotating loading messages
-  useEffect(() => {
-    if (!loading) return;
-    const messages = [
-      "Step 2: Extracting style attributes...",
-      "Mapping luxury garment contours & line patterns...",
-      "Matching skin tones with uncompromised loom weaves...",
-      "Re-analyzing athletic & casual geometry builds...",
-      "Step 3: Calculating recommended collection matches...",
-      "Step 4: Harmonizing color contrast scales...",
-      "Step 5: Verifying personalized sizing matrices...",
-      "Stylist finalizing your absolute profile diagnosis..."
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      i = (i + 1) % messages.length;
-      setProgressMsg(messages[i]);
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  const resetAnalyzer = () => {
-    setImageSrc(null);
-    setResult(null);
-    setError(null);
-    setRecommendedProducts([]);
-    stopCamera();
-    setUseCamera(false);
-    setCurrentStep(1);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageSrc(reader.result as string);
-        setError(null);
-        setCurrentStep(2); // Proceed to Step 2: Analyze Your Style
-      };
-      reader.onerror = () => {
-        setError("Failed to convert image. Please drag a standard JPEG or PNG file.");
-      };
-      reader.readAsDataURL(file);
+  // FAQs Database
+  const faqsList = [
+    {
+      q: "Does CLINZA really charge zero shipping fees for Cash on Delivery?",
+      a: "Yes! At CLINZA, we provide absolutely free express shipping and zero Cash on Delivery charges on all domestic wardrobes inside the territory of India, regardless of purchase value size."
+    },
+    {
+      q: "How long does shipping take to deliver Metro corridors?",
+      a: "All shipments destined for Tier-1 Metro zones (Mumbai, Delhi NCR, Bangalore, Chennai) are optimized under express air routes, arriving safely at your doorstep within 2–3 business days."
+    },
+    {
+      q: "What is your return window eligibility?",
+      a: "Our Return & Swap Policy is active for 10 consecutive days from the timestamp of delivery confirmation. Garments must remain completely unwashed and unworn, with all designer thread tags safely attached."
+    },
+    {
+      q: "Can I cancel my outfit order after checking out?",
+      a: "Cancellations are accepted freely prior to dispatch. Simply navigate to the Track Order portal or send a direct text message on our WhatsApp business hotline, and we will update your docket instantly."
+    },
+    {
+      q: "Is my payment information kept secure?",
+      a: "Yes. All transaction details are processed through encrypted payment gateways complying with strict PCI-DSS security protocols."
+    },
+    {
+      q: "How can I verify the status of a returned package?",
+      a: "Our reverse pickup logistics partners will send you a shipment docket receipt at your doorstep. Once our Mumbai sorting chamber receives the parcel, our crew performs an audit and initiates a refund or sizing exchange within 24 hours."
     }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageSrc(reader.result as string);
-        setError(null);
-        setCurrentStep(2); // Proceed to Step 2: Analyze Your Style
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const startCamera = async () => {
-    setError(null);
-    setUseCamera(true);
-    setImageSrc(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 640, height: 480 }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(err => console.error(err));
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Camera permission denied or camera device missing. Please upload/drop a photo or select a sample profile below.");
-      setUseCamera(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-  };
-
-  const captureSelfieIndex = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg");
-        setImageSrc(dataUrl);
-        stopCamera();
-        setUseCamera(false);
-        setCurrentStep(2); // Proceed to Step 2: Analyze Your Style
-      }
-    }
-  };
-
-  const selectSample = (url: string) => {
-    setImageSrc(url);
-    setError(null);
-    setCurrentStep(2); // Proceed to Step 2: Analyze Your Style
-    window.scrollTo({ top: document.getElementById("style-advisor-main-interface")?.offsetTop ?? 200, behavior: "smooth" });
-  };
-
-  const getStyleScore = (p: Product, res: StyleAdvisorResult): number => {
-    let score = 0;
-    const cat = p.category.toLowerCase();
-    
-    // Collections score
-    const matchedCols = res.recommendedCollections || [];
-    matchedCols.forEach(col => {
-      if (cat.includes(col.toLowerCase())) score += 5;
-    });
-
-    // Colors match
-    const recColors = res.recommendedColors || [];
-    recColors.forEach(color => {
-      if (p.colors.some(c => c.name.toLowerCase().includes(color.toLowerCase()))) {
-        score += 8;
-      }
-    });
-
-    return score;
-  };
-
-  const runStyleAnalysis = async () => {
-    if (!imageSrc) {
-      setError("Please capture a photo, drag a portrait, or pick a sample profile card first.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setCurrentStep(2); // Actively Analyzing style
-    
-    try {
-      const response = await fetch("/api/analyze-style", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageSrc,
-          surveyData: {
-            preferredCategory: surveyType,
-            inferredBody: surveyBody,
-            targetMarket: "India Premium"
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Stylist advisor server experienced an issue.");
-      }
-
-      const data: StyleAdvisorResult = await response.json();
-      setResult(data);
-
-      const allProducts = getProducts();
-      const scoredProducts = allProducts.map(p => ({
-        product: p,
-        score: getStyleScore(p, data)
-      }));
-
-      scoredProducts.sort((a, b) => b.score - a.score);
-      setRecommendedProducts(scoredProducts.map(item => item.product).slice(0, 4));
-      setCurrentStep(3); // Result achieved! Ready to present recommendations
-
-      // Save submission data to Supabase
-      saveStyleAnalysisLeadToCloud({
-        imageUrl: imageSrc.startsWith("data:") ? "Customer Uploaded Image" : imageSrc,
-        recommendedColors: data.recommendedColors || data.colorCompatibility?.recommended || [],
-        recommendedCollections: data.recommendedCollections || [],
-        recommendedSizes: data.recommendedFits || []
-      });
-
-    } catch (err) {
-      console.error("Style Advisor API error:", err);
-      setError("Service is running in resort mode. Enjoy bespoke advisor recommendations below.");
-      
-      const fallbackResult: StyleAdvisorResult = {
-        faceShape: "Chiseled Symmetrical",
-        skinTone: "Warm Olivaceous Beige",
-        bodyType: "Athletic/Standard Symmetrical",
-        fashionPreference: "Clinza Resort & Smart Trousers",
-        colorCompatibility: {
-          recommended: ["Sage Green", "Oatmeal Beige", "Sartorial White", "Raw Indigo"],
-          avoid: ["Neon Yellow", "Severe Hot Pink"]
-        },
-        styleArchetype: "The Effortless Classicist",
-        rationale: "Your symmetrical features harmonize perfectly with soft-shouldered CLINZA European Linens and premium double-pleated trousers. We suggest pairing unwashed Indigo layers with oatmeal beige accents.",
-        recommendedCollections: ["shirts", "pants", "footwear"],
-        recommendedFits: ["Relaxed Cuban Resort Fit", "Double Pleated Sartorial Taper"],
-        recommendedColors: ["Sage Green", "Sartorial White", "Sand Beige"]
-      };
-
-      setResult(fallbackResult);
-      const allProducts = getProducts();
-      const scoredProducts = allProducts.map(p => ({
-        product: p,
-        score: getStyleScore(p, fallbackResult)
-      }));
-      scoredProducts.sort((a, b) => b.score - a.score);
-      setRecommendedProducts(scoredProducts.map(item => item.product).slice(0, 4));
-      setCurrentStep(3);
-
-      saveStyleAnalysisLeadToCloud({
-        imageUrl: imageSrc.startsWith("data:") ? "Customer Uploaded Image" : imageSrc,
-        recommendedColors: fallbackResult.recommendedColors || fallbackResult.colorCompatibility?.recommended || [],
-        recommendedCollections: fallbackResult.recommendedCollections || [],
-        recommendedSizes: fallbackResult.recommendedFits || []
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  ];
 
   return (
-    <section id="style-advisor-section" className="bg-[#0c0c0c] text-white py-10 sm:py-12 md:py-14 px-3 sm:px-6 lg:px-8 border-t border-b border-zinc-900 select-none">
+    <section id="clinza-corporate-policy-module" className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 bg-zinc-100 min-h-screen text-left">
       <div className="max-w-7xl mx-auto">
         
-        {/* HEADER */}
-        <div id="style-advisor-main-interface" className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10 pb-4 sm:pb-6 border-b border-zinc-800 text-left">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 mb-2 sm:mb-3">
-              <span className="px-2 py-0.5 bg-[#F27D26] text-black text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-sm">
-                Style Advisor
-              </span>
-              <h2 className="text-xl sm:text-3.5xl font-sans font-black tracking-tight text-white uppercase select-none">
-                Find Your Perfect Fit
-              </h2>
-            </div>
-            <p className="text-gray-400 text-[11px] sm:text-sm font-sans leading-relaxed">
-              Our Personal Style Match Assistant curates a wardrobe specifically for you. Redefine your luxury fits through color harmony, silhouette analysis, and custom style matrices.
+        {/* BACK TRIGGER */}
+        <button
+          onClick={onBack}
+          className="group flex items-center gap-2 text-xs font-bold font-mono tracking-widest text-zinc-500 hover:text-black uppercase mb-5 focus:outline-none cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Wardrobe
+        </button>
+
+        {/* HERO TITLE BLOCK */}
+        <div className="bg-zinc-950 text-white rounded-3xl p-8 md:p-12 mb-10 relative overflow-hidden shadow-xl border border-zinc-800">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="max-w-2xl relative z-10 space-y-3">
+            <span className="text-[10px] font-mono font-black text-orange-400 tracking-[0.25em] uppercase">Corporate Desk</span>
+            <h1 className="text-3xl md:text-5xl font-sans font-black uppercase tracking-tight leading-none text-zinc-50">
+              CLINZA Customer Care Policy Hub
+            </h1>
+            <p className="text-sm text-zinc-400 leading-relaxed font-light">
+              We design luxury outfits combined with unparalleled merchant service. Review our shipping coverages, easy reverse return policies, and data guidelines below.
             </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-1.5 sm:gap-y-2 bg-[#050505] p-3 sm:p-4.5 border border-zinc-900 rounded-sm shrink-0 w-full sm:w-auto">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F27D26]"></div>
-              <span className="text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-wide">Color Match Assistant</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F27D26]"></div>
-              <span className="text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-wide">Perfect Fit Formula</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F27D26]"></div>
-              <span className="text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-wide">Silhouette Mapping</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F27D26]"></div>
-              <span className="text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-wide">Smart Recommendations</span>
-            </div>
-          </div>
         </div>
 
-        {/* SEQUENTIAL WORKFLOW STEPPER TIMELINE */}
-        <div id="advisor-steps-stepper" className="max-w-4xl mx-auto mb-10 sm:mb-14">
-          <div className="grid grid-cols-5 gap-1 sm:gap-4 relative text-center">
-            {[
-              { num: 1, label: "Step 1", title: "Upload Your Photo" },
-              { num: 2, label: "Step 2", title: "Analyze Your Style" },
-              { num: 3, label: "Step 3", title: "Recommended Collections" },
-              { num: 4, label: "Step 4", title: "Recommended Colors" },
-              { num: 5, label: "Step 5", title: "Recommended Sizes" }
-            ].map((st) => {
-              const isPassed = result ? true : (loading ? st.num <= 2 : (imageSrc ? st.num <= 2 : st.num === 1));
-              const isActive = loading ? (st.num === 2) : (result ? st.num >= 3 : st.num === currentStep);
+        {/* DOUBLE COLUMN GRID LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT CHROME TABS (4 Columns) */}
+          <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-4 space-y-1 shadow-xs">
+            <span className="block text-[10px] font-mono font-black tracking-widest text-zinc-400 uppercase py-2 px-3">Topics Navigation</span>
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
-                <div key={st.num} className="flex flex-col items-center">
-                  <div className={`w-6 h-6 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black transition-all ${
-                    isPassed 
-                      ? "bg-[#F27D26] text-black ring-2 ring-orange-500/55" 
-                      : (isActive ? "bg-white text-black ring-2 ring-zinc-650" : "bg-zinc-900 text-zinc-500 border border-zinc-850")
-                  }`}>
-                    {st.num}
-                  </div>
-                  <span className="text-[8px] sm:text-[10px] font-mono tracking-wider text-gray-500 mt-1 uppercase block">{st.label}</span>
-                  <p className={`text-[9px] sm:text-[11px] font-sans font-bold leading-tight mt-0.5 line-clamp-1 ${
-                    isActive || isPassed ? "text-white" : "text-zinc-600"
-                  }`}>{st.title}</p>
-                </div>
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full py-3.5 px-4 rounded-xl flex items-center justify-between text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    isActive 
+                      ? "bg-zinc-950 text-white shadow-md scale-102" 
+                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className={`p-1.5 rounded-lg ${isActive ? "bg-white/10 text-orange-400" : tab.color}`}>
+                      <TabIcon className="h-4 w-4" />
+                    </span>
+                    {tab.label}
+                  </span>
+                  <ChevronRight className={`h-4 w-4 ${isActive ? "text-orange-400" : "text-zinc-300"}`} />
+                </button>
               );
             })}
-          </div>
-        </div>
 
-        {/* MAIN BODY GRID */}
-        {!result ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
-            {/* LEFT COLUMN: SOURCE PROFILE SURVEY */}
-            <div className="lg:col-span-4 bg-[#050505] p-4 sm:p-6 rounded-none border border-zinc-900 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs font-black tracking-wider text-gray-400 uppercase mb-4 sm:mb-6 flex items-center gap-2">
-                  <span className="text-[#F27D26]">01 /</span> Style Preferences
-                </h3>
+            <div className="mt-8 p-4 bg-orange-50/20 border border-orange-100 rounded-xl space-y-3">
+              <p className="text-xs font-black uppercase text-zinc-900 tracking-wide">Need Support?</p>
+              <p className="text-[11px] text-zinc-550 leading-relaxed font-sans">Connect with our corporate garment helpdesk instantly via one-click WhatsApp assistance.</p>
+              <a
+                href="https://wa.me/917208572688?text=Hello%20Clinza%20Support%20Desk%2C%20please%20help%20me%20with%20my%20queries."
+                target="_blank"
+                rel="noreferrer"
+                className="block text-center bg-[#1b8a3a] hover:bg-[#126b2b] text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg transition-colors shadow-sm"
+              >
+                Launch Helpdesk Chat
+              </a>
+            </div>
+          </div>
+
+          {/* RIGHT VIEWPORT DETAIL (8 Columns) */}
+          <div className="lg:col-span-8 bg-white border border-zinc-200 rounded-3xl p-6 md:p-10 shadow-xs text-left min-h-[500px]">
+            
+            {/* TAB: SHIPPING POLICY */}
+            {activeTab === "shipping" && (
+              <div className="space-y-8 animate-fade-in">
                 
-                {/* PREFERRED LOOK */}
-                <div className="mb-6">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2.5">
-                    Target Collection Look
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: "all", name: "Sartorial Mix" },
-                      { id: "shirts", name: "Linen Shirts" },
-                      { id: "jeans", name: "Raw Denim" },
-                      { id: "pants", name: "Smart Trousers" }
-                    ].map((opt) => (
-                      <button
-                        id={`survey-opt-${opt.id}`}
-                        key={opt.id}
-                        onClick={() => setSurveyType(opt.id)}
-                        className={`text-xs py-2 px-3 rounded-none border text-center font-bold tracking-wide transition-all cursor-pointer ${
-                          surveyType === opt.id
-                            ? "bg-[#F27D26] border-[#F27D26] text-black"
-                            : "bg-white/5 border-zinc-800 text-gray-450 hover:bg-white/10"
+                {/* Header title */}
+                <div className="border-b border-zinc-100 pb-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-orange-500 uppercase">
+                    <Truck className="h-4 w-4" /> Live Transit & Distribution
+                  </div>
+                  <h2 className="text-2xl md:text-3.5xl font-sans font-black text-zinc-950 uppercase">Shipping Coverage, Charges, and Logistics Times</h2>
+                </div>
+
+                {/* Grid metrics highlight */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-5 border bg-zinc-50 border-zinc-200 rounded-2xl">
+                    <span className="text-[9px] font-mono font-black uppercase tracking-widest text-zinc-400">Pincode Reach</span>
+                    <p className="text-lg font-black text-zinc-950 uppercase mt-1">Pan-India Courier Network</p>
+                    <p className="text-xs text-zinc-650 leading-relaxed mt-1">Free express shipping to virtually all cities and remote rural towns in India.</p>
+                  </div>
+                  <div className="p-5 border bg-orange-600/5 border-orange-100 rounded-2xl">
+                    <span className="text-[9px] font-mono font-black uppercase tracking-widest text-orange-650 animate-pulse">Charges</span>
+                    <p className="text-lg font-black text-zinc-950 uppercase mt-1">₹0 Ship Fee - Always Free</p>
+                    <p className="text-xs text-zinc-650 leading-relaxed mt-1">Cash on Delivery option generates no hidden transactional surcharges.</p>
+                  </div>
+                </div>
+
+                {/* Delivery Timeframes list */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-black uppercase text-zinc-900 tracking-wider">Estimated Delivery Commitments</h3>
+                  <div className="space-y-3 font-sans text-xs text-zinc-700">
+                    <div className="flex gap-3.5 items-start p-3 bg-zinc-50 rounded-xl hover:bg-zinc-100/50 transition border border-zinc-100">
+                      <Clock className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-zinc-950">Metros Hub (Mumbai, Delhi-NCR, Bangalore)</p>
+                        <p className="text-zinc-550 leading-relaxed mt-0.5">Dispatched via premium express air carriers. Arrival within <strong>2 to 3 Working Days</strong>.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3.5 items-start p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <Clock className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-zinc-950">Rest of Indian States & UTs</p>
+                        <p className="text-zinc-550 leading-relaxed mt-0.5">Shipped securely with leading surface courier systems. Arrival within <strong>4 to 6 Working Days</strong>.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Processing Steps */}
+                <div className="bg-zinc-900 text-zinc-100 rounded-2xl p-6 relative overflow-hidden">
+                  <h3 className="text-xs font-mono font-black text-orange-400 uppercase tracking-widest mb-4">Loom Dispatch Processing Sequence</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans">
+                    <div className="space-y-1">
+                      <p className="font-bold text-white font-mono text-[11px] text-orange-400">STEP 1: PACKING</p>
+                      <p className="text-zinc-400 text-[11px] leading-relaxed">Garments are meticulously steamed, inspected, and vacuum safe sealed for absolute hygiene.</p>
+                    </div>
+                    <div className="space-y-1 border-t md:border-t-0 md:border-l border-zinc-800 pt-3 md:pt-0 md:pl-4">
+                      <p className="font-bold text-white font-mono text-[11px] text-orange-400">STEP 2: ALLOCATION</p>
+                      <p className="text-zinc-400 text-[11px] leading-relaxed">A live airway bill docket is generated under carrier partners (Shiprocket, Blue Dart, or Delhivery).</p>
+                    </div>
+                    <div className="space-y-1 border-t md:border-t-0 md:border-l border-zinc-800 pt-3 md:pt-0 md:pl-4">
+                      <p className="font-bold text-white font-mono text-[11px] text-orange-400">STEP 3: SHIPMENT</p>
+                      <p className="text-zinc-400 text-[11px] leading-relaxed">Pincode sorting is finalized, and real-time transit status updates instantly reflect on your tracking logs.</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB: RETURNS & REFUNDS POLICY */}
+            {activeTab === "refund" && (
+              <div className="space-y-8 animate-fade-in">
+                
+                <div className="border-b border-zinc-100 pb-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-[#F27D26] uppercase">
+                    <RotateCcw className="h-4 w-4" /> Seamless Replacement
+                  </div>
+                  <h2 className="text-2xl md:text-3.5xl font-sans font-black text-zinc-950 uppercase">10-Day Perfect Fit Return & Refund Policy</h2>
+                </div>
+
+                {/* Overview callout */}
+                <div className="p-5 bg-orange-50/10 border-2 border-orange-100 rounded-2xl flex items-start gap-4">
+                  <RotateCcw className="h-6 w-6 text-orange-500 shrink-0 mt-1" />
+                  <div className="text-xs leading-relaxed text-zinc-650 space-y-1">
+                    <p className="font-bold text-zinc-900 uppercase tracking-wide text-[10px]">Pristine Condition Eligibility</p>
+                    <p>To qualify for size exchanges or complete direct refunds, newly acquired CLINZA apparel garments must be returned completely unwashed, unaltered, and equipped with all original ticket tags still intact.</p>
+                  </div>
+                </div>
+
+                {/* Double column details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-zinc-700">
+                  <div className="space-y-3 bg-zinc-50 border border-zinc-100 p-4 rounded-xl">
+                    <h4 className="font-bold text-zinc-950 uppercase font-mono tracking-wider text-[10px] text-orange-600">The Sizing exchange process</h4>
+                    <ul className="list-disc pl-4 space-y-1.5 leading-relaxed text-zinc-650">
+                      <li>Launch WhatsApp support or fill the exchange request.</li>
+                      <li>Select your required size configuration swap.</li>
+                      <li>We arrange a doorstep courier pickup of the original item completely free of charge.</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-3 bg-zinc-50 border border-zinc-100 p-4 rounded-xl">
+                    <h4 className="font-bold text-zinc-950 uppercase font-mono tracking-wider text-[10px] text-orange-600">Pure Refund processing</h4>
+                    <p className="leading-relaxed text-zinc-650">Upon receiving the original garment at our Mumbai logistical sorting hub, our team audits the fibers within 24 hours.</p>
+                    <p className="leading-relaxed text-zinc-650">Approved refunds are credited directly to your credit card gateway or bank account within 3–5 working days.</p>
+                  </div>
+                </div>
+
+                {/* Non-returnable list */}
+                <div className="border border-zinc-200 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center gap-1.5 text-zinc-900 font-bold">
+                    <ShieldAlert className="h-4.5 w-4.5 text-red-500" />
+                    <span className="text-[11px] font-mono uppercase tracking-wider">Non-returnable Garment items</span>
+                  </div>
+                  <p className="text-xs text-zinc-550 leading-relaxed">
+                    Custom built bespoke tailored coordinates, limited capsule-edition items with explicitly marked clearances, and select inner garments cannot be processed for swaps or refunds due to corporate dynamic health and hygiene mandates.
+                  </p>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB: PRIVACY POLICY */}
+            {activeTab === "privacy" && (
+              <div className="space-y-8 animate-fade-in">
+                
+                <div className="border-b border-zinc-100 pb-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-[#F27D26] uppercase">
+                    <ShieldCheck className="h-4 w-4" /> Client Privacy Desk
+                  </div>
+                  <h2 className="text-2xl md:text-3.5xl font-sans font-black text-zinc-950 uppercase">Intellectual Data Protection & Selfie Storage Guidelines</h2>
+                </div>
+
+                <div className="prose prose-zinc text-xs text-zinc-650 space-y-5 leading-relaxed">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-zinc-900 uppercase tracking-widest text-[10px]">1. Absolute Data Safety Assurance</h3>
+                    <p>At CLINZA, we adhere to strict digital encryption frameworks. User credentials, shipping contact indices, and communication logs are stored inside isolated databases strictly for checkout processing, and are never shared with or licensed to advertising syndicates.</p>
+                  </div>
+
+                  <div className="space-y-1 pt-3 border-t">
+                    <h3 className="font-bold text-zinc-900 uppercase tracking-widest text-[10px] text-orange-600 flex items-center gap-1.5">
+                      <ShieldCheck className="h-4 w-4" /> 2. Data Protection & Security
+                    </h3>
+                    <p>We implement strict security measures to protect your personal information:</p>
+                    <ul className="list-disc pl-4 space-y-1 mt-1 font-sans text-zinc-500">
+                      <li>Your personal and payment data is encrypted using SSL technology.</li>
+                      <li>We do not store complete credit card details on our servers.</li>
+                      <li>Your information is never sold or rented to third parties.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t">
+                    <h3 className="font-bold text-zinc-900 uppercase tracking-widest text-[10px]">3. Shipping integrations protection</h3>
+                    <p>Outward transmission of user coordinates is restricted exclusively to vetted courier hubs (e.g. Shiprocket API) for printing real-world packing waybills with signature verification.</p>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB: TERMS & CONDITIONS */}
+            {activeTab === "terms" && (
+              <div className="space-y-8 animate-fade-in">
+                
+                <div className="border-b border-zinc-100 pb-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-zinc-500 uppercase">
+                    <FileText className="h-4 w-4" /> Legal Framework
+                  </div>
+                  <h2 className="text-2xl md:text-3.5xl font-sans font-black text-zinc-950 uppercase">Corporate Service & Outfit reservation Terms</h2>
+                </div>
+
+                <div className="prose prose-zinc text-xs text-zinc-650 space-y-5 leading-relaxed font-sans">
+                  
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-zinc-950 uppercase tracking-wider text-[11px]">1. Intellectual Property Protection</h3>
+                    <p>
+                      The stylistic textures, clothing silhouettes, layout visuals, code sequences, custom styling algorithms, and photographic catalog matrices displayed across our portals are the exclusive property of CLINZA Luxury Garments Private Limited. Any imitation is subject to copyright prosecution.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-3 border-t">
+                    <h3 className="font-bold text-zinc-950 uppercase tracking-wider text-[11px]">2. High-Risk Order evaluation guidelines</h3>
+                    <p>
+                      To prevent Cash on Delivery loss loops, our systems run background threat scores on pincodes and contact fields. We reserve absolute corporate rights to reject or suspend orders which flag high-risk coordinates or match historic courier return patterns.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-3 border-t">
+                    <h3 className="font-bold text-zinc-950 uppercase tracking-wider text-[11px]">3. Liability Disclaimers</h3>
+                    <p>
+                      We strive to display garment dye tones as accurately as possible under professional lighting conditions. Subtle tone variances may arise depending on color temperatures in your viewing monitors, which does not constitute texturing flaw status.
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB: GENERAL FAQS CLIENT ACCORDION */}
+            {activeTab === "faq" && (
+              <div className="space-y-6 animate-fade-in">
+                
+                <div className="border-b border-zinc-100 pb-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold tracking-widest text-purple-500 uppercase">
+                    <HelpCircle className="h-4 w-4" /> Modern accordion FAQ
+                  </div>
+                  <h2 className="text-2xl md:text-3.5xl font-sans font-black text-zinc-950 uppercase">Frequently Asked Sizing & Merchant Questions</h2>
+                </div>
+
+                {/* FAQ list with accordion expand */}
+                <div className="space-y-3 text-left">
+                  {faqsList.map((faq, idx) => {
+                    const isOpen = openFaqIndex === idx;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+                          isOpen ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 bg-white hover:border-zinc-400"
                         }`}
                       >
-                        {opt.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* INFERRED BODY TYPE */}
-                <div className="mb-6">
-                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2.5">
-                    Anatomical Build
-                  </label>
-                  <select
-                    id="survey-body-select"
-                    value={surveyBody}
-                    onChange={(e) => setSurveyBody(e.target.value)}
-                    className="w-full bg-[#080808] border border-zinc-800 rounded-none py-3 px-4 text-xs font-bold tracking-wide focus:outline-none focus:border-[#F27D26] text-gray-200"
-                  >
-                    <option value="athletic" className="bg-zinc-955 text-white">Athletic / Defined build</option>
-                    <option value="ectomorph" className="bg-zinc-955 text-white">Lean / Tall frame</option>
-                    <option value="endomorph" className="bg-zinc-955 text-white">Robust / Solid frame</option>
-                    <option value="rectangular" className="bg-zinc-955 text-white">Symmetrical / Standard frame</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* PRIVACY INFO BLOCK */}
-              <div className="bg-white/5 border border-zinc-850 rounded-none p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-[#F27D26] shrink-0 mt-0.5" />
-                <p className="text-[11px] text-gray-400 leading-relaxed font-sans">
-                  The uploaded photo is processed entirely through secure server buffers. CLINZA respects your privacy and never retains your private facial snaps.
-                </p>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: INTERACTIVE UPLOAD AND CAMERA CONTAINER */}
-            <div className="lg:col-span-8 bg-[#050505] p-4 sm:p-6 rounded-none border border-zinc-900 flex flex-col items-center justify-center min-h-[320px] sm:min-h-[420px] relative">
-              {loading ? (
-                /* LOADING STREAM SCREEN */
-                <div className="text-center py-6 sm:py-10 max-w-md my-auto flex flex-col items-center">
-                  <div className="h-12 w-12 sm:h-16 sm:w-16 relative flex items-center justify-center mb-4 sm:mb-6">
-                    <div className="absolute inset-0 rounded-full border-4 border-orange-600/30 border-t-orange-600 animate-spin" />
-                    <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400 animate-pulse" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-white tracking-widest uppercase mb-2">
-                    Running style diagnosis
-                  </h4>
-                  <div className="w-full bg-white/10 h-1 rounded-full mb-3 overflow-hidden">
-                    <div className="h-full bg-orange-600 animate-[pulse_1.5s_infinite] w-3/4 rounded-full" />
-                  </div>
-                  <p className="text-[10px] sm:text-xs text-orange-350 font-mono italic animate-pulse">
-                    {progressMsg}
-                  </p>
-                </div>
-              ) : useCamera ? (
-                /* WEB CAMERA SCREEN */
-                <div className="w-full flex flex-col items-center">
-                  <div className="relative w-full max-w-md aspect-[4/3] bg-black rounded-xl overflow-hidden shadow-2xl mb-4 sm:mb-6 border border-white/10">
-                    <video
-                      id="analyzer-webcam-stream"
-                      ref={videoRef}
-                      className="w-full h-full object-cover"
-                      playsInline
-                      muted
-                    />
-                    <div className="absolute top-2 left-2 bg-red-650 text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase animate-pulse">
-                      Live Stream
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      id="analyzer-capture-btn"
-                      onClick={captureSelfieIndex}
-                      className="bg-orange-600 hover:bg-orange-700 text-white font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider px-4 sm:px-6 py-2.5 sm:py-3 rounded-full flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Camera className="h-3.5 w-3.5" /> Capture Photo
-                    </button>
-                    <button
-                      id="analyzer-cancel-cam-btn"
-                      onClick={() => {
-                        stopCamera();
-                        setUseCamera(false);
-                      }}
-                      className="bg-white/10 hover:bg-white/20 text-white font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider px-4 sm:px-6 py-2.5 sm:py-3 rounded-full cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : imageSrc ? (
-                /* SELECTED IMAGE READY TO STYLED SCREEN */
-                <div className="w-full max-w-sm flex flex-col items-center py-3 sm:py-6">
-                  <div className="relative h-32 w-32 sm:h-48 sm:w-48 rounded-full border-4 border-orange-650 overflow-hidden shadow-2xl mb-4 sm:mb-6">
-                    <img
-                      src={imageSrc}
-                      alt="Selfie source preview"
-                      className="h-full w-full object-cover"
-                    />
-                    <button
-                      id="analyzer-replace-photo-btn"
-                      onClick={resetAnalyzer}
-                      className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center text-white transition-opacity text-[10px] sm:text-xs font-bold uppercase tracking-widest cursor-pointer"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-1" /> Replace Photo
-                    </button>
-                  </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-gray-200 mb-4 sm:mb-6">
-                    Style Persona Image Locked
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <button
-                      id="analyzer-diagnose-btn"
-                      onClick={runStyleAnalysis}
-                      className="bg-[#F27D26] text-black font-sans text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-5 sm:px-8 py-3 sm:py-4 rounded-none flex items-center gap-1.5 cursor-pointer transition-all hover:bg-orange-500"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" /> Diagnose Style Archetype
-                    </button>
-                    <button
-                      id="analyzer-retake-btn"
-                      onClick={resetAnalyzer}
-                      className="text-gray-400 hover:text-white font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* SELECTOR UPLOAD / CAMERA LANDING SCREEN */
-                <div className="w-full flex flex-col items-center">
-                  
-                  {/* UPLOAD BOX */}
-                  <div
-                    id="analyzer-drag-drop-area"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full max-w-md border-2 border-dashed border-zinc-800 hover:border-[#F27D26] rounded-none p-4 sm:p-8 text-center cursor-pointer bg-[#020202] transition-colors flex flex-col items-center justify-center mb-4 sm:mb-6 group"
-                  >
-                    <input
-                      id="analyzer-file-input"
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <div className="w-10 h-10 sm:w-14 sm:h-14 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-2.5 sm:mb-4 group-hover:bg-[#F27D26] group-hover:text-black transition-all duration-300">
-                      <Upload className="h-4.5 w-4.5" />
-                    </div>
-                    <p className="text-[10px] sm:text-xs font-bold text-white mb-0.5 uppercase tracking-wider">
-                      Drag and drop your style match photo
-                    </p>
-                    <p className="text-[9px] sm:text-[10px] text-gray-500 mb-3 sm:mb-4 font-mono">
-                      Step 1: Upload Your Photo (JPG, PNG or WEBP)
-                    </p>
-                    <button
-                      id="uploader-browse-btn"
-                      className="bg-white hover:bg-gray-100 text-black font-sans text-[8px] sm:text-[10px] font-black uppercase tracking-widest px-4 sm:px-5 py-2 sm:py-2.5 rounded-none cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      Browse Files
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-3 sm:gap-4 text-xs text-gray-650 mb-4 sm:mb-6">
-                    <span className="h-px w-6 sm:w-8 bg-zinc-900"></span>
-                    <span className="font-mono tracking-widest text-[9px] sm:text-[10px]">OR RECRUIT LIVE WEBCAM</span>
-                    <span className="h-px w-6 sm:w-8 bg-zinc-900"></span>
-                  </div>
-
-                  {/* CAMERA TRIGGER */}
-                  <button
-                    id="analyzer-start-camera-btn"
-                    onClick={startCamera}
-                    className="bg-black border border-zinc-800 hover:border-[#F27D26] text-white font-sans text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-5 sm:px-6 py-2.5 sm:py-3.5 rounded-none flex items-center gap-2 cursor-pointer hover:bg-[#F27D26]/10 transition-all font-serif italic"
-                  >
-                    <Camera className="h-3.5 w-3.5 text-[#F27D26]" /> Snap Symmetrical Selfie
-                  </button>
-
-                  <div className="flex flex-col items-center gap-2 w-full border-t border-zinc-900 mt-6 sm:mt-8 pt-4 sm:pt-6">
-                    <span className="text-[9px] sm:text-[10px] font-bold font-mono tracking-wider text-gray-400 uppercase">
-                      Quick Pick: Pre-Built Symmetrical Profiles
-                    </span>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 w-full mt-1.5">
-                      {PREMIUM_SAMPLES.map((sample, idx) => (
                         <button
-                          id={`analyzer-sample-${idx}`}
-                          key={idx}
-                          onClick={() => selectSample(sample.image)}
-                          className="flex items-center gap-2.5 bg-[#020202] hover:bg-[#070707] border border-zinc-900 hover:border-[#F27D26] rounded-none p-2.5 sm:p-3.5 text-left transition-colors cursor-pointer text-xs"
+                          onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                          className="w-full p-4 md:p-5 flex items-center justify-between text-xs md:text-sm font-semibold text-zinc-900 focus:outline-none cursor-pointer"
                         >
-                          <img
-                            src={sample.image}
-                            alt={sample.name}
-                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-none object-cover border border-[#F27D26] shrink-0"
-                          />
-                          <div className="truncate">
-                            <p className="font-bold text-white leading-tight truncate font-serif italic text-[11px] sm:text-xs">{sample.name}</p>
-                            <p className="text-[9px] sm:text-[10px] text-gray-500 truncate leading-tight mt-0.5">{sample.description}</p>
-                          </div>
+                          <span className="flex items-center gap-2.5 font-sans">
+                            <span className="font-mono text-xs font-bold text-orange-500">Q{idx + 1}.</span>
+                            {faq.q}
+                          </span>
+                          {isOpen ? <ChevronUp className="h-4 w-4 text-zinc-500" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
                         </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* DYNAMIC ERRORS PANEL */}
-              {error && (
-                <div className="absolute bottom-4 left-4 right-4 bg-orange-600/10 border border-orange-550/30 rounded-xl p-3 flex items-start gap-2.5 animate-fade-in z-10">
-                  <AlertCircle className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-gray-200 leading-normal font-sans font-medium">{error}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* RESULTS DASHBOARD SCREEN */
-          <div className="space-y-6 sm:space-y-12 animate-fade-in">
-            
-            {/* RESET BUTTON */}
-            <div className="flex justify-between items-center bg-zinc-950 p-4 border border-zinc-900 rounded-none">
-              <span className="text-xs font-bold text-orange-400 font-mono">
-                ✓ STEP 2: STYLE DIAGNOSIS COMPLETED
-              </span>
-              <button
-                id="analyzer-reset-results-btn"
-                onClick={resetAnalyzer}
-                className="bg-zinc-805 hover:bg-orange-600 border border-white/11 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider px-4 sm:px-5 py-2 sm:py-2.5 rounded-none flex items-center gap-1.5 cursor-pointer transition-all"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Run Another Advisor Test
-              </button>
-            </div>
-
-            {/* RESULTS ROW */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
-              
-              {/* STYLIST INSIGHT CARD */}
-              <div className="lg:col-span-8 bg-zinc-950 p-4 sm:p-6 md:p-8 rounded-none border border-zinc-900 flex flex-col justify-between text-left">
-                <div>
-                  <div className="inline-flex items-center gap-1 bg-[#F27D26]/10 border border-[#F27D26]/30 px-2.5 sm:px-3.5 py-1 rounded-sm mb-3 sm:mb-4">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-orange-400" />
-                    <span className="text-[8px] sm:text-[9px] font-bold font-mono tracking-widest text-[#F27D26] uppercase">
-                      Bespoke Recommendations Ready
-                    </span>
-                  </div>
-                  
-                  <h3 className="text-[10px] font-mono font-bold text-gray-500 tracking-[0.2em] uppercase mb-0.5">
-                    Your Tailored Archetype
-                  </h3>
-                  <h1 className="text-xl sm:text-4xl font-sans font-black tracking-tight text-white uppercase mb-4 sm:mb-6 leading-tight">
-                    {result.styleArchetype}
-                  </h1>
-
-                  <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-sans font-normal mb-8 border-l-2 border-[#F27D26] pl-3 sm:pl-4 py-0.5 sm:py-1 italic">
-                    "{result.rationale}"
-                  </p>
-
-                  <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-6 border-t border-zinc-900/60">
-                    <div>
-                      <p className="text-[8px] sm:text-[10px] font-black tracking-wider text-gray-500 uppercase mb-0.5">Face Shape</p>
-                      <p className="text-xs sm:text-sm font-semibold text-white">{result.faceShape}</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] sm:text-[10px] font-black tracking-wider text-gray-500 uppercase mb-0.5">Loom Profile</p>
-                      <p className="text-xs sm:text-sm font-semibold text-white">{result.skinTone}</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] sm:text-[10px] font-black tracking-wider text-gray-500 uppercase mb-0.5">Inferred Silhouette</p>
-                      <p className="text-xs sm:text-sm font-semibold text-white">{result.bodyType}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SPECIFIC COLOR/FIT RULES CARD */}
-              <div className="lg:col-span-4 bg-zinc-950 p-4 sm:p-6 rounded-none border border-zinc-900 flex flex-col space-y-4 sm:space-y-6 justify-between text-left">
-                
-                {/* STEP 4: RECOMMENDED COLORS */}
-                <div>
-                  <h4 className="text-[9px] sm:text-[10px] font-black tracking-widest text-orange-400 uppercase mb-2 sm:mb-3">
-                    Step 4: Recommended Colors
-                  </h4>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-[9px] sm:text-[10px] text-green-400 font-bold uppercase mb-1 sm:mb-1.5 flex items-center gap-1">
-                        <span className="h-1 w-1 rounded-full bg-green-400"></span> Complementary Tones
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {result.recommendedColors?.map((c, i) => (
-                          <span key={i} className="text-[9px] sm:text-[11px] text-white bg-white/5 border border-zinc-800 font-bold px-2 py-0.5">
-                            {c}
-                          </span>
-                        )) ?? result.colorCompatibility.recommended.map((c, i) => (
-                          <span key={i} className="text-[9px] sm:text-[11px] text-white bg-white/5 border border-zinc-800 font-bold px-2 py-0.5">
-                            {c}
-                          </span>
-                        ))}
+                        
+                        {isOpen && (
+                          <div className="px-5 pb-5 pt-1 text-xs text-zinc-650 leading-relaxed animate-fade-in font-sans">
+                            {faq.a}
+                          </div>
+                        )}
                       </div>
-                    </div>
-
-                    <div className="pt-1.5">
-                      <p className="text-[9px] sm:text-[10px] text-red-400 font-bold uppercase mb-1 sm:mb-1.5 flex items-center gap-1">
-                        <span className="h-1 w-1 rounded-full bg-red-400"></span> Avoid
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {result.colorCompatibility.avoid.map((c, i) => (
-                          <span key={i} className="text-[9px] sm:text-[11px] text-gray-600 bg-white/5 border border-zinc-900 px-2 py-0.5 line-through">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* STEP 5: RECOMMENDED SIZES / FITS */}
-                <div className="border-t border-zinc-900 pt-3 sm:pt-4">
-                  <h4 className="text-[9px] sm:text-[10px] font-black tracking-widest text-orange-400 uppercase mb-1.5">
-                    Step 5: Recommended Sizes & Fits
-                  </h4>
-                  <ul className="space-y-1 text-[11px] sm:text-xs text-gray-300 font-sans font-medium list-disc list-inside">
-                    {result.recommendedFits.map((f, i) => (
-                      <li key={i} className="text-gray-200">{f}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* STEP 3: RECOMMENDED COLLECTIONS */}
-            <div className="border-t border-zinc-900 pt-6 sm:pt-12 animate-fade-in">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-8">
-                <div>
-                  <h2 className="text-lg sm:text-3xl font-sans font-black uppercase tracking-tight text-white mb-1">
-                    Step 3: Recommended Collections
-                  </h2>
-                  <p className="text-zinc-400 text-xs font-sans">
-                    These active garments matching your <strong>{result.styleArchetype}</strong> identity are ready to complement your style.
-                  </p>
-                </div>
-                <button
-                  id="analyzer-all-cols-btn"
-                  onClick={() => setRoute("collections/all")}
-                  className="mt-4 sm:mt-0 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  Browse Full Wardrobe <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              {recommendedProducts.length > 0 ? (
-                <motion.div 
-                  initial="hidden"
-                  animate="show"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    show: {
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.1
-                      }
-                    }
-                  }}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"
-                >
-                  {recommendedProducts.map((p) => {
-                    const isInWishlist = wishlistIds.includes(p.id);
-                    return (
-                      <motion.div
-                        id={`advisor-rec-card-${p.id}`}
-                        key={p.id}
-                        variants={{
-                          hidden: { opacity: 0, y: 16 },
-                          show: { opacity: 1, y: 0 }
-                        }}
-                        className="group bg-[#040404] border border-zinc-900 overflow-hidden hover:border-[#F27D26]/50 transition-all flex flex-col justify-between"
-                      >
-                        {/* CARD UPPER */}
-                        <div className="relative aspect-[3/4] overflow-hidden bg-zinc-950">
-                          <img
-                            src={p.images[0]}
-                            alt={p.name}
-                            className="h-full w-full object-cover object-center group-hover:scale-102 transition-all duration-500"
-                            loading="lazy"
-                          />
-                          
-                          {/* RECOMMENDED TAG */}
-                          <div className="absolute top-3 left-3 bg-[#F27D26] text-black text-[8px] font-black font-mono tracking-widest px-2.5 py-1 rounded-sm flex items-center gap-1">
-                            BEST FIT
-                          </div>
-
-                          {/* WISHLIST BUTTON */}
-                          <button
-                            id={`advisor-rec-card-wish-${p.id}`}
-                            onClick={() => onAddToWishlist(p)}
-                            className="absolute top-3 right-3 p-2 bg-black/70 hover:bg-black text-white rounded-none transition-colors cursor-pointer"
-                          >
-                            <Heart className={`h-4 w-4 ${isInWishlist ? "fill-red-650 stroke-red-650" : ""}`} />
-                          </button>
-                        </div>
-
-                        {/* CARD INFO */}
-                        <div className="p-4 flex flex-col flex-1 justify-between">
-                          <div>
-                            <span className="text-[10px] font-black tracking-widest text-[#F27D26] uppercase font-mono block mb-1">
-                              {p.category}
-                            </span>
-                            <button
-                              id={`advisor-rec-card-name-${p.id}`}
-                              onClick={() => {
-                                onProductClick(p);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }}
-                              className="text-white hover:text-orange-400 text-xs sm:text-sm font-bold tracking-tight text-left block line-clamp-1 transition-colors cursor-pointer font-sans"
-                            >
-                              {p.name}
-                            </button>
-                            
-                            {/* RATING */}
-                            <div className="flex items-center gap-1.5 mt-1.5 mb-2 font-sans">
-                              <span className="text-yellow-400 text-xs">★</span>
-                              <span className="text-[10px] text-zinc-400 font-semibold">{p.rating} / 5</span>
-                            </div>
-
-                            {/* PRICE */}
-                            <div className="flex items-baseline gap-2 font-sans">
-                              <span className="text-sm font-black text-white">₹{p.price.toLocaleString("en-IN")}</span>
-                              <span className="text-[10px] font-semibold text-zinc-600 line-through">₹{p.originalPrice.toLocaleString("en-IN")}</span>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 mt-4 font-sans">
-                            <button
-                              id={`advisor-rec-card-view-${p.id}`}
-                              onClick={() => {
-                                onProductClick(p);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }}
-                              className="text-center font-bold uppercase tracking-wider text-[9px] bg-white/5 hover:bg-white/10 text-white py-2 rounded-none cursor-pointer"
-                            >
-                              View Detail
-                            </button>
-                            <button
-                              id={`advisor-rec-card-cart-${p.id}`}
-                              onClick={() => onAddToCart(p, p.colors[0]?.name || "Default", p.sizes[0] || "M")}
-                              className="text-center font-bold uppercase tracking-wider text-[9px] bg-[#F27D26] hover:bg-orange-600 text-black py-2 rounded-none cursor-pointer flex items-center justify-center gap-1"
-                            >
-                              <ShoppingCart className="h-3 w-3" /> Buy
-                            </button>
-                          </div>
-                        </div>
-
-                      </motion.div>
                     );
                   })}
-                </motion.div>
-              ) : (
-                <div className="text-center py-10 bg-zinc-950 rounded-xl border border-zinc-900 text-gray-500 text-sm font-sans">
-                  Calculating complementary catalogue pairings...
                 </div>
-              )}
-            </div>
+
+              </div>
+            )}
 
           </div>
-        )}
+
+        </div>
 
       </div>
     </section>

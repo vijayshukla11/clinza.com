@@ -131,7 +131,7 @@ export default function TrackOrderPage() {
               <input
                 id="track-order-input"
                 type="text"
-                placeholder="e.g. CLZ-XXXX-XX or checkout an item first"
+                placeholder="e.g. CLZ-8912-90 or your registered order ID"
                 value={orderQuery}
                 onChange={(e) => setOrderQuery(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-250 py-3.5 pl-11 pr-4 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500 text-gray-900 uppercase"

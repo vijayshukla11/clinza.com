@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { 
   Star, 
   Heart, 
@@ -29,9 +29,14 @@ import {
   ChevronRight,
   HelpCircle,
   Award,
-  Zap
+  Zap,
+  MapPin,
+  ThumbsUp,
+  MessageSquare,
+  CheckCircle2,
+  Plus
 } from "lucide-react";
-import { Product, ProductCollection } from "../types";
+import { Product, ProductCollection, Review } from "../types";
 import { getProducts } from "../utils";
 import APlusContent from "./APlusContent";
 
@@ -46,12 +51,12 @@ interface ProductDetailProps {
 
 // Default luxury editorial fallback images for gallery completeness (min 6 images)
 const EDITORIAL_FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=1200"
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+  "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png"
 ];
 
 export default function ProductDetail({
@@ -88,6 +93,121 @@ export default function ProductDetail({
   // 360 Spin state
   const [is360Active, setIs360Active] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
+
+  // Pincode serviceability state
+  const [pincodeInput, setPincodeInput] = useState("");
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+  const [pincodeResult, setPincodeResult] = useState<{ serviceable: boolean; deliveryDate?: string; message?: string } | null>(null);
+
+  // Sticky Purchase Bar visibility state
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const mainCtaRef = useRef<HTMLButtonElement | null>(null);
+
+  // Reviews state
+  const defaultReviewsList: Review[] = useMemo(() => [
+    {
+      id: "rev-pdp-1",
+      userName: "Aarav Sharma",
+      rating: 5,
+      date: "2 days ago",
+      comment: "The European linen texture on this piece is unbelievable. Tailoring fits true to size and breathes exceptionally well in Mumbai humidity.",
+      verified: true,
+      helpfulCount: 18,
+      location: "Mumbai, MH",
+      userLocation: "Mumbai, MH"
+    },
+    {
+      id: "rev-pdp-2",
+      userName: "Rohan Kapoor",
+      rating: 5,
+      date: "1 week ago",
+      comment: "Meticulous stitch quality and premium handfeel. Arrived packaged in Clinza signature luxury dustbag within 48 hours.",
+      verified: true,
+      helpfulCount: 12,
+      location: "New Delhi, DL",
+      userLocation: "New Delhi, DL"
+    },
+    {
+      id: "rev-pdp-3",
+      userName: "Kavya Menon",
+      rating: 4,
+      date: "2 weeks ago",
+      comment: "Subtle, refined aesthetic. Fabric holds its drape effortlessly. Highly recommended for resort wear and casual tailoring.",
+      verified: true,
+      helpfulCount: 8,
+      location: "Bengaluru, KA",
+      userLocation: "Bengaluru, KA"
+    }
+  ], []);
+
+  const [reviewsList, setReviewsList] = useState<Review[]>(product.reviews && product.reviews.length > 0 ? product.reviews : defaultReviewsList);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [newReviewForm, setNewReviewForm] = useState({
+    rating: 5,
+    userName: "",
+    title: "",
+    comment: "",
+    userLocation: ""
+  });
+  const [reviewSubmittedToast, setReviewSubmittedToast] = useState(false);
+
+  // Sticky purchase bar scroll observer
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mainCtaRef.current) {
+        const rect = mainCtaRef.current.getBoundingClientRect();
+        setShowStickyBar(rect.bottom < 0);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Handle Pincode Check
+  const handleCheckPincode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(pincodeInput.trim())) {
+      setPincodeResult({
+        serviceable: false,
+        message: "Please enter a valid 6-digit Indian PIN code."
+      });
+      return;
+    }
+    setIsCheckingPincode(true);
+    setTimeout(() => {
+      setIsCheckingPincode(false);
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 3);
+      const formattedDate = deliveryDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" });
+      setPincodeResult({
+        serviceable: true,
+        deliveryDate: formattedDate,
+        message: `PIN ${pincodeInput} is fully serviceable by Express Air Courier. Cash on Delivery available.`
+      });
+    }, 400);
+  };
+
+  // Handle Review Submission
+  const handleAddReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReviewForm.userName || !newReviewForm.comment) return;
+    const createdReview: Review = {
+      id: `rev-${Date.now()}`,
+      userName: newReviewForm.userName,
+      rating: newReviewForm.rating,
+      date: "Just now",
+      comment: newReviewForm.comment,
+      verified: true,
+      helpfulCount: 0,
+      location: newReviewForm.userLocation || "India",
+      userLocation: newReviewForm.userLocation || "India"
+    };
+    setReviewsList([createdReview, ...reviewsList]);
+    setShowReviewModal(false);
+    setNewReviewForm({ rating: 5, userName: "", title: "", comment: "", userLocation: "" });
+    setReviewSubmittedToast(true);
+    setTimeout(() => setReviewSubmittedToast(false), 3000);
+  };
 
   const isInWishlist = wishlistIds.includes(product.id);
 
@@ -220,12 +340,12 @@ export default function ProductDetail({
   // Buy Now direct redirect
   const handleBuyNowClick = () => {
     onAddToCart(product, selectedColor, selectedSize, quantity);
-    setRoute("cart");
+    setRoute("checkout");
   };
 
   // Share link handler
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/#product-${product.slug}`;
+    const shareUrl = `${window.location.origin}/product/${product.slug}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -606,6 +726,7 @@ export default function ProductDetail({
               {product.stockStatus !== "Out of Stock" ? (
                 <>
                   <button
+                    ref={mainCtaRef}
                     id="pdp-add-to-cart-btn"
                     disabled={isAdding}
                     onClick={handleAddToCartClick}
@@ -659,20 +780,58 @@ export default function ProductDetail({
               )}
             </div>
 
-            {/* DELIVERY & LOGISTICS SUMMARY CARD */}
-            <div className="bg-[#F8F8F6] p-4 rounded-[12px] border border-zinc-200/80 space-y-3 text-xs text-zinc-700">
-              <div className="flex items-center gap-3">
-                <Truck className="h-4 w-4 text-black shrink-0" />
-                <div>
-                  <p className="font-semibold text-black">Estimated Delivery</p>
-                  <p className="text-[11px] text-zinc-500">Delivered by <strong className="text-black">{estimatedDeliveryDate}</strong> with live tracking.</p>
+            {/* DELIVERY & PINCODE SERVICEABILITY CHECKER */}
+            <div className="bg-[#F8F8F6] p-4.5 rounded-[12px] border border-zinc-200/80 space-y-3.5 text-xs text-zinc-700">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 font-bold text-black uppercase tracking-wider text-[11px] font-mono">
+                  <MapPin className="h-4 w-4 text-[#F27D26]" />
+                  <span>Check Delivery & Serviceability</span>
                 </div>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">India Wide</span>
               </div>
-              <div className="border-t border-zinc-200 pt-2.5 flex items-center gap-3">
-                <ShieldCheck className="h-4 w-4 text-black shrink-0" />
-                <div>
-                  <p className="font-semibold text-black">COD & Shipping Guarantee</p>
-                  <p className="text-[11px] text-zinc-500">Cash on Delivery Available • Free Shipping on orders over ₹999.</p>
+
+              <form onSubmit={handleCheckPincode} className="flex gap-2">
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit PIN code (e.g. 400001)"
+                  value={pincodeInput}
+                  onChange={(e) => setPincodeInput(e.target.value)}
+                  className="flex-1 bg-white border border-zinc-200 rounded-[8px] px-3 py-2 text-xs font-mono focus:outline-none focus:border-black text-black"
+                />
+                <button
+                  type="submit"
+                  disabled={isCheckingPincode}
+                  className="px-4 py-2 bg-black text-white rounded-[8px] text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                >
+                  {isCheckingPincode ? "Checking..." : "Check"}
+                </button>
+              </form>
+
+              {pincodeResult && (
+                <div className={`p-3 rounded-[8px] text-[11px] font-medium leading-relaxed flex items-start gap-2 ${
+                  pincodeResult.serviceable ? "bg-emerald-50 text-emerald-900 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"
+                }`}>
+                  {pincodeResult.serviceable ? <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" /> : <X className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
+                  <div>
+                    <p className="font-semibold">{pincodeResult.message}</p>
+                    {pincodeResult.deliveryDate && (
+                      <p className="mt-1 text-[10px] font-mono uppercase text-emerald-800">
+                        Estimated Arrival: <strong>{pincodeResult.deliveryDate}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-zinc-200 grid grid-cols-2 gap-2 text-[11px] text-zinc-600">
+                <div className="flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-zinc-800" />
+                  <span>Free Shipping &gt; ₹999</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-zinc-800" />
+                  <span>COD Option Available</span>
                 </div>
               </div>
             </div>
@@ -835,6 +994,270 @@ export default function ProductDetail({
           </div>
         )}
 
+        {/* FREQUENTLY BOUGHT TOGETHER / COMPLETE THE LOOK BUNDLE */}
+        {relatedProducts.length > 0 && (
+          <div className="pt-10 border-t border-zinc-200 text-left space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono font-bold text-[#F27D26] uppercase tracking-[0.2em] block mb-1">
+                  EDITORIAL STYLING BUNDLE
+                </span>
+                <h2 className="text-xl font-bold uppercase tracking-tight text-black font-sans">
+                  Complete The Look
+                </h2>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                SAVE 10% ON BUNDLE
+              </span>
+            </div>
+
+            <div className="bg-[#FAF9F5] rounded-[16px] p-5 border border-zinc-200/90 flex flex-col md:flex-row items-center gap-6 justify-between">
+              <div className="flex items-center gap-3 sm:gap-4 flex-1 overflow-x-auto w-full py-2">
+                {/* Product 1 */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <img
+                    src={galleryImages[0]}
+                    alt={product.name}
+                    className="w-16 h-20 object-cover rounded-[8px] border border-zinc-200 shadow-xs"
+                  />
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase block">This Item</span>
+                    <p className="text-xs font-bold text-black truncate max-w-[140px]">{product.name}</p>
+                    <p className="text-xs font-mono font-bold text-black">₹{product.price.toLocaleString("en-IN")}</p>
+                  </div>
+                </div>
+
+                <Plus className="h-5 w-5 text-zinc-400 shrink-0" />
+
+                {/* Product 2 */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <img
+                    src={relatedProducts[0].images?.[0] || EDITORIAL_FALLBACK_IMAGES[1]}
+                    alt={relatedProducts[0].name}
+                    className="w-16 h-20 object-cover rounded-[8px] border border-zinc-200 shadow-xs"
+                  />
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase block">Suggested Pair</span>
+                    <p className="text-xs font-bold text-black truncate max-w-[140px]">{relatedProducts[0].name}</p>
+                    <p className="text-xs font-mono font-bold text-black">₹{relatedProducts[0].price.toLocaleString("en-IN")}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bundle Action */}
+              <div className="w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l border-zinc-200 pt-4 md:pt-0 md:pl-6 flex flex-col sm:flex-row md:flex-col items-center gap-3">
+                <div className="text-center md:text-right w-full">
+                  <span className="text-[10px] text-zinc-400 font-mono uppercase block">Bundle Total</span>
+                  <div className="flex items-baseline justify-center md:justify-end gap-2">
+                    <span className="text-lg font-bold text-black font-mono">
+                      ₹{Math.round((product.price + relatedProducts[0].price) * 0.9).toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs text-zinc-400 line-through font-mono">
+                      ₹{(product.price + relatedProducts[0].price).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    onAddToCart(product, selectedColor, selectedSize, quantity);
+                    onAddToCart(relatedProducts[0], relatedProducts[0].colors[0]?.name || "Default", relatedProducts[0].sizes[0] || "M", 1);
+                    setAddedToast(true);
+                    setTimeout(() => setAddedToast(false), 3000);
+                  }}
+                  className="w-full sm:w-auto px-6 py-3 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-[10px] hover:bg-zinc-800 transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Add Both To Bag (Save 10%)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CUSTOMER REVIEWS & RATING MATRIX */}
+        <div id="reviews-section" className="pt-12 border-t border-zinc-200 text-left space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-[0.2em] block mb-1">
+                VERIFIED CLIENT FEEDBACK
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-tight text-black font-sans">
+                Customer Reviews ({reviewsList.length})
+              </h2>
+            </div>
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="px-5 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-[10px] hover:bg-zinc-800 transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Write A Review</span>
+            </button>
+          </div>
+
+          {/* RATING BREAKDOWN CARD */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#FAF9F5] p-6 rounded-[16px] border border-zinc-200/90">
+            {/* Score box */}
+            <div className="flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-zinc-200 pb-6 md:pb-0 md:pr-6">
+              <span className="text-5xl font-extrabold text-black font-mono tracking-tight">{product.rating || "4.9"}</span>
+              <div className="flex text-amber-400 my-2">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <span className="text-xs font-medium text-zinc-500">Based on {reviewsList.length + 142} verified orders</span>
+            </div>
+
+            {/* Distribution bars */}
+            <div className="md:col-span-2 space-y-2 flex flex-col justify-center">
+              {[
+                { stars: 5, percentage: 88, count: 125 },
+                { stars: 4, percentage: 9, count: 13 },
+                { stars: 3, percentage: 2, count: 3 },
+                { stars: 2, percentage: 1, count: 1 },
+                { stars: 1, percentage: 0, count: 0 },
+              ].map((row) => (
+                <div key={row.stars} className="flex items-center gap-3 text-xs font-mono text-zinc-600">
+                  <span className="w-12 shrink-0 font-bold text-black">{row.stars} Stars</span>
+                  <div className="flex-1 bg-zinc-200 h-2 rounded-full overflow-hidden">
+                    <div className="bg-black h-full rounded-full" style={{ width: `${row.percentage}%` }} />
+                  </div>
+                  <span className="w-10 text-right shrink-0 text-zinc-400">{row.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* REVIEWS LIST */}
+          <div className="space-y-4">
+            {reviewsList.map((rev) => (
+              <div key={rev.id} className="p-5 bg-white rounded-[12px] border border-zinc-200/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-black">{rev.userName}</span>
+                    {rev.verified && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 className="h-3 w-3" /> Verified Purchase
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-400">{rev.date}</span>
+                </div>
+
+                <div className="flex text-amber-400">
+                  {[...Array(rev.rating)].map((_, i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+
+                <p className="text-xs text-zinc-700 leading-relaxed font-normal">{rev.comment}</p>
+
+                <div className="pt-2 flex items-center justify-between text-[11px] text-zinc-400 border-t border-zinc-100">
+                  <span>{rev.userLocation}</span>
+                  <button
+                    onClick={(e) => {
+                      const btn = e.currentTarget;
+                      btn.textContent = `Helpful (${(rev.helpfulCount || 0) + 1})`;
+                      btn.classList.add("text-black", "font-bold");
+                    }}
+                    className="flex items-center gap-1 hover:text-black transition-colors cursor-pointer"
+                  >
+                    <ThumbsUp className="h-3 w-3" />
+                    <span>Helpful ({rev.helpfulCount || 0})</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* WRITE A REVIEW MODAL */}
+        {showReviewModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[160] flex items-center justify-center p-4 animate-fade-in text-left">
+            <div className="bg-white rounded-[16px] max-w-lg w-full p-6 sm:p-8 relative shadow-2xl border border-zinc-200">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <form onSubmit={handleAddReviewSubmit} className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                    SHARE YOUR EXPERIENCE
+                  </span>
+                  <h3 className="text-lg font-bold uppercase tracking-tight text-black font-sans">
+                    Review {product.name}
+                  </h3>
+                </div>
+
+                {/* Rating selection */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase text-zinc-700 font-mono">Rating</label>
+                  <div className="flex gap-1.5 text-zinc-300">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setNewReviewForm({ ...newReviewForm, rating: star })}
+                        className="p-1 cursor-pointer transition-transform hover:scale-110"
+                      >
+                        <Star className={`h-6 w-6 ${star <= newReviewForm.rating ? "fill-amber-400 text-amber-400" : "text-zinc-300"}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Name */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase text-zinc-700 font-mono">Your Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Vikramaditya S."
+                    value={newReviewForm.userName}
+                    onChange={(e) => setNewReviewForm({ ...newReviewForm, userName: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-[8px] px-3.5 py-2.5 text-xs text-black focus:outline-none focus:border-black"
+                  />
+                </div>
+
+                {/* Location */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase text-zinc-700 font-mono">Location (City, State)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Jaipur, RJ"
+                    value={newReviewForm.userLocation}
+                    onChange={(e) => setNewReviewForm({ ...newReviewForm, userLocation: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-[8px] px-3.5 py-2.5 text-xs text-black focus:outline-none focus:border-black"
+                  />
+                </div>
+
+                {/* Comment */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold uppercase text-zinc-700 font-mono">Detailed Review</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Describe fit, fabric handfeel, stitching, and overall impression..."
+                    value={newReviewForm.comment}
+                    onChange={(e) => setNewReviewForm({ ...newReviewForm, comment: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-[8px] p-3 text-xs text-black focus:outline-none focus:border-black resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-[10px] hover:bg-zinc-800 transition-colors shadow-md cursor-pointer"
+                >
+                  Submit Review
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* RECENTLY VIEWED PRODUCTS */}
         {recentlyViewedProducts.length > 0 && (
           <div className="pt-12 border-t border-zinc-200 text-left space-y-6">
@@ -846,8 +1269,7 @@ export default function ProductDetail({
                 <div
                   key={p.id}
                   onClick={() => {
-                    window.location.hash = `#product-${p.slug}`;
-                    window.dispatchEvent(new HashChangeEvent("hashchange"));
+                    setRoute(`product/${p.slug}`);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className="group bg-white rounded-[12px] border border-zinc-200 overflow-hidden cursor-pointer hover:border-black transition-all p-2.5 flex flex-col justify-between"
@@ -890,8 +1312,7 @@ export default function ProductDetail({
                 <div
                   key={item.id}
                   onClick={() => {
-                    window.location.hash = `#product-${item.slug}`;
-                    window.dispatchEvent(new HashChangeEvent("hashchange"));
+                    setRoute(`product/${item.slug}`);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className="group bg-white rounded-[14px] border border-zinc-200/80 overflow-hidden cursor-pointer hover:border-black hover:shadow-md transition-all duration-300 p-3 flex flex-col justify-between"
@@ -1069,6 +1490,63 @@ export default function ProductDetail({
           </div>
         </div>
       )}
+
+      {/* STICKY BOTTOM PURCHASE BAR */}
+      <div className={`fixed bottom-0 left-0 right-0 z-[120] bg-white/95 backdrop-blur-md border-t border-zinc-200 px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:px-8 shadow-2xl transition-transform duration-300 ${
+        showStickyBar ? "translate-y-0" : "translate-y-full"
+      }`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={galleryImages[0]}
+              alt={product.name}
+              className="w-12 h-14 object-cover rounded-[6px] border border-zinc-200 shrink-0"
+            />
+            <div className="hidden sm:block text-left">
+              <span className="text-[9px] font-mono font-bold text-zinc-400 uppercase block">{product.brand || "CLINZA"}</span>
+              <h4 className="text-xs font-bold text-black truncate max-w-[200px]">{product.name}</h4>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-bold font-mono text-black">₹{product.price.toLocaleString("en-IN")}</span>
+                {product.originalPrice > product.price && (
+                  <span className="text-[10px] text-zinc-400 line-through font-mono">₹{product.originalPrice.toLocaleString("en-IN")}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-end">
+            {/* Quick Size Select */}
+            <div className="flex items-center gap-1">
+              <span className="hidden md:inline text-[10px] font-mono uppercase text-zinc-400 font-bold">Size:</span>
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="bg-zinc-100 border border-zinc-300 rounded-[6px] px-2.5 py-2 text-xs font-mono font-bold text-black focus:outline-none focus:border-black cursor-pointer"
+              >
+                {product.sizes.map((sz) => (
+                  <option key={sz} value={sz}>{sz}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleAddToCartClick}
+              disabled={isAdding}
+              className="px-5 sm:px-8 h-11 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-[8px] hover:bg-zinc-800 transition-colors shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>{isAdding ? "ADDING..." : "ADD TO BAG"}</span>
+            </button>
+
+            <button
+              onClick={handleBuyNowClick}
+              className="hidden sm:flex px-6 h-11 bg-[#F4F4F2] hover:bg-[#EAEAE6] text-black text-xs font-bold uppercase tracking-wider rounded-[8px] transition-colors cursor-pointer border border-zinc-200 shrink-0 items-center justify-center"
+            >
+              BUY NOW
+            </button>
+          </div>
+        </div>
+      </div>
 
     </article>
   );

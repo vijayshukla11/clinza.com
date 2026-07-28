@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { Heart, Eye, ShoppingCart, MessageCircleCode, CheckCircle, Flame, Star, ShieldAlert } from "lucide-react";
+import { Heart, Eye, ShoppingCart, MessageCircleCode, CheckCircle, Flame, Star, ShieldAlert, Zap, ShoppingBag } from "lucide-react";
 import { Product } from "../types";
 
 interface ProductCardProps {
@@ -58,7 +58,7 @@ Please confirm availability. Link: ${itemUrl}`;
 
   const handleBuyNow = () => {
     onAddToCart(product, product.colors[0]?.name || "Default", product.sizes[0] || "M");
-    setRoute("cart");
+    setRoute("checkout");
   };
 
   return (
@@ -85,7 +85,21 @@ Please confirm availability. Link: ${itemUrl}`;
 
         {/* ACCENT LABELS ROW */}
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10 pointer-events-none">
-          {product.isTrending && (
+          {product.trendingRank !== undefined && product.trendingRank !== null && product.trendingRank <= 20 && (
+            <div className={`font-mono text-[9px] font-black tracking-wider px-2.5 py-1.2 rounded-md flex items-center gap-1 shadow-md text-white ${
+              product.trendingRank === 1 
+                ? "bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 border border-amber-300 animate-pulse" 
+                : product.trendingRank === 2
+                ? "bg-gradient-to-r from-zinc-700 via-zinc-600 to-zinc-800 border border-zinc-400"
+                : product.trendingRank === 3
+                ? "bg-gradient-to-r from-amber-800 via-amber-700 to-amber-900 border border-amber-600"
+                : "bg-black/90 backdrop-blur-md border border-white/20"
+            }`}>
+              <Flame className="h-3 w-3 text-amber-300" />
+              <span>#{product.trendingRank} {product.demandBadge || (product.trendingRank === 1 ? "NO.1 HIGH DEMAND" : "TOP DEMAND")}</span>
+            </div>
+          )}
+          {product.isTrending && (!product.trendingRank || product.trendingRank > 20) && (
             <div className="bg-red-650 text-white font-mono text-[8px] font-black tracking-widest px-2.5 py-1.2 rounded-none flex items-center gap-1 shadow-xs">
               <Flame className="h-3 w-3" /> TRENDING
             </div>
@@ -203,23 +217,25 @@ Please confirm availability. Link: ${itemUrl}`;
         </div>
 
         {/* BOTTOM ORDER WORKFLOW GATES */}
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-col gap-1 sm:gap-1.5">
+        <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1.5">
           {product.stockStatus !== "Out of Stock" ? (
             <>
-              <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 <button
                   id={`card-buy-now-${product.id}`}
                   onClick={handleBuyNow}
-                  className="bg-black hover:bg-[#F27D26] text-white hover:text-black font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-colors cursor-pointer text-center"
+                  className="bg-gradient-to-r from-[#5B1824] via-[#43101A] to-zinc-900 hover:from-black hover:to-black text-white font-sans text-[10px] sm:text-[11px] font-bold uppercase tracking-tight h-8 sm:h-8.5 px-1 sm:px-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 text-center shadow-2xs hover:shadow-sm active:scale-95 whitespace-nowrap overflow-hidden"
                 >
-                  Buy Now
+                  <Zap className="h-3 w-3 text-amber-300 shrink-0" />
+                  <span className="whitespace-nowrap">Buy Now</span>
                 </button>
                 <button
                   id={`card-add-to-cart-${product.id}`}
                   onClick={() => onAddToCart(product, product.colors[0]?.name || "Default", product.sizes[0] || "M")}
-                  className="bg-white hover:bg-gray-50 border border-black text-black font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-colors cursor-pointer text-center"
+                  className="bg-white hover:bg-zinc-900 border border-zinc-300 hover:border-zinc-900 text-zinc-900 hover:text-white font-sans text-[10px] sm:text-[11px] font-bold uppercase tracking-tight h-8 sm:h-8.5 px-1 sm:px-2 rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 text-center shadow-2xs active:scale-95 group/btn whitespace-nowrap overflow-hidden"
                 >
-                  Add to Bag
+                  <ShoppingBag className="h-3 w-3 text-zinc-600 group-hover/btn:text-white transition-colors shrink-0" />
+                  <span className="whitespace-nowrap">Add to Bag</span>
                 </button>
               </div>
               <a
@@ -227,22 +243,22 @@ Please confirm availability. Link: ${itemUrl}`;
                 href={buildWhatsAppLink()}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full bg-[#1b8a3a] hover:bg-[#126b2b] text-white font-sans text-[8px] sm:text-[9px] font-black uppercase tracking-widest py-2 sm:py-3 rounded-none transition-all flex items-center justify-center gap-2"
+                className="w-full bg-emerald-50 hover:bg-[#126b2b] border border-emerald-200 hover:border-[#126b2b] text-[#126b2b] hover:text-white font-sans text-[10px] sm:text-[11px] font-bold uppercase tracking-normal h-7.5 sm:h-8 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs whitespace-nowrap"
               >
                 <img 
                   src="https://i.postimg.cc/fVFPc5Mf/image.png" 
                   onError={(e) => { e.currentTarget.src = "https://i.postimg.cc/Vr6DJmCQ/image.png"; }}
                   alt="WhatsApp" 
-                  className="h-3.5 w-3.5 object-contain rounded-full bg-white shrink-0"
+                  className="h-3.5 w-3.5 object-contain rounded-full shrink-0"
                 /> 
-                WhatsApp
+                <span className="whitespace-nowrap">WhatsApp Order</span>
               </a>
             </>
           ) : (
             <button
               id={`card-outstock-btn-${product.id}`}
               disabled
-              className="w-full bg-gray-50 border border-gray-200 text-gray-400 font-sans text-[8px] sm:text-[9px] font-bold uppercase tracking-widest py-2.5 sm:py-3.5 rounded-none cursor-not-allowed select-none text-center"
+              className="w-full bg-stone-100 border border-stone-200 text-stone-400 font-sans text-[10px] font-bold uppercase tracking-wider h-8 rounded-lg cursor-not-allowed select-none flex items-center justify-center text-center whitespace-nowrap"
             >
               Sold Out
             </button>

@@ -19,6 +19,8 @@ export interface Review {
   avatarUrl?: string;
   comment: string;
   location: string;
+  userLocation?: string;
+  helpfulCount?: number;
   verified: boolean;
   date: string;
 }
@@ -58,6 +60,8 @@ export interface Product {
   aPlusContent: APlusSection;
   isTrending?: boolean;
   isNewArrival?: boolean;
+  trendingRank?: number; // Sequence number #1, #2, #3, #4...
+  demandBadge?: string; // e.g. "No. 1 High Demand", "No. 2 Best Seller"
   seoTitle?: string;
   metaDescription?: string;
   seoImage?: string;
@@ -224,6 +228,7 @@ export interface SummerHighlightItem {
   icon: string;
   title: string;
   description: string;
+  badge?: string;
 }
 
 export interface SummerEssentialsSectionConfig {
@@ -300,14 +305,81 @@ export interface Coupon {
   expiryDate: string;
 }
 
+export interface CustomerTimelineItem {
+  id: string;
+  type: "order" | "support" | "note" | "loyalty" | "login" | "status";
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
+export interface CustomerNote {
+  id: string;
+  user: string;
+  text: string;
+  date: string;
+}
+
+export interface MarketingConsent {
+  emailOptIn: boolean;
+  smsOptIn: boolean;
+  whatsappOptIn: boolean;
+  newsletter: boolean;
+}
+
+export interface RecentlyViewedItem {
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  viewedAt: string;
+}
+
+export interface SupportRequestItem {
+  id: string;
+  subject: string;
+  status: "Pending" | "In Progress" | "Resolved";
+  date: string;
+  priority?: "Low" | "Medium" | "High";
+  message?: string;
+}
+
+export interface CouponUsageItem {
+  code: string;
+  date: string;
+  discountAmount: number;
+}
+
 export interface CustomerProfile {
   id: string;
   name: string;
   email: string;
   phone: string;
-  addressBook: string[];
+  status?: "Active" | "Blocked" | "Inactive";
+  tags?: string[]; // VIP, Wholesale, Retail, High Value, First Order, Repeat Customer, Inactive
+  createdAt?: string;
+  lastOrderDate?: string;
+  totalOrders?: number;
   totalSpend: number;
+  avgOrderValue?: number;
+  addressBook: string[];
+  shippingAddresses?: Address[];
+  billingAddresses?: Address[];
   wishlist: string[];
+  recentlyViewed?: RecentlyViewedItem[];
+  timeline?: CustomerTimelineItem[];
+  notes?: CustomerNote[];
+  // Loyalty
+  rewardPoints?: number;
+  storeCredit?: number;
+  referralCode?: string;
+  couponHistory?: CouponUsageItem[];
+  // Marketing
+  marketingConsent?: MarketingConsent;
+  // Admin flags
+  isBlocked?: boolean;
+  blockReason?: string;
+  supportRequests?: SupportRequestItem[];
 }
 
 export interface ReviewItem {
