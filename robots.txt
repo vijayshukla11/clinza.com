@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /account
+Disallow: /api/
+
+Sitemap: https://www.clinza.in/sitemap.xml
+
