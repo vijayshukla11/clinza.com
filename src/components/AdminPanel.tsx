@@ -360,15 +360,47 @@ export default function AdminPanel() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    deleteProduct(id);
-    reloadData();
-    if (googleUser) {
-      await AdminAuditLogService.logActivity(
-        googleUser.email,
-        googleUser.displayName || "Admin",
-        `Product Deleted`,
-        `Product ID: ${id}`
-      );
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Supabase product deletion error:", error);
+        alert(`Failed to delete product from database: ${error.message}`);
+        return;
+      }
+
+      // Synchronize local cache and state
+      deleteProduct(id);
+
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("clinza_products");
+          if (cached) {
+            const list = JSON.parse(cached);
+            if (Array.isArray(list)) {
+              localStorage.setItem("clinza_products", JSON.stringify(list.filter((p: any) => p.id !== id)));
+            }
+          }
+        } catch {}
+      }
+
+      reloadData();
+
+      if (googleUser) {
+        await AdminAuditLogService.logActivity(
+          googleUser.email,
+          googleUser.displayName || "Admin",
+          `Product Deleted`,
+          `Product ID: ${id}`
+        );
+      }
+      alert("Product successfully deleted from database.");
+    } catch (err: any) {
+      console.error("Unexpected delete error:", err);
+      alert(`Unexpected error deleting product: ${err?.message || err}`);
     }
   };
 

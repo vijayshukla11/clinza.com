@@ -389,10 +389,12 @@ export async function deleteProductFromCloud(productId: string): Promise<void> {
       .eq("id", productId);
 
     if (error) {
-      console.warn("Supabase delete failed - products table missing:", error.message);
+      console.warn("Supabase delete failed on products table:", error.message);
+      throw error;
     }
   } catch (err) {
     console.error("Product cloud delete failure:", err);
+    throw err;
   }
 }
 

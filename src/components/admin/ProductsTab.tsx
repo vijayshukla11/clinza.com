@@ -13,8 +13,8 @@ import { generateVariantsForProduct, ensureUniqueSlug, distributeStockAcrossVari
 
 interface ProductsTabProps {
   productList: Product[];
-  onSaveProduct: (product: Product) => void;
-  onDeleteProduct: (id: string) => void;
+  onSaveProduct: (product: Product) => void | Promise<void>;
+  onDeleteProduct: (id: string) => void | Promise<void>;
 }
 
 export default function ProductsTab({ productList, onSaveProduct, onDeleteProduct }: ProductsTabProps) {
@@ -576,12 +576,13 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm(`Acknowledge removing product: "${p.name}"?`)) {
-                              onDeleteProduct(p.id);
+                              await onDeleteProduct(p.id);
                             }
                           }}
                           className="p-1.5 hover:bg-red-50 text-red-600 rounded cursor-pointer inline-block"
+                          title="Delete Product"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
