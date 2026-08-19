@@ -6,17 +6,24 @@
 import { createClient } from "@supabase/supabase-js";
 import { Product, ProductCollection, BlogPost, Order, HomepageConfig, ThemeConfig, CollectionMaster, Category, Coupon, CustomerProfile, ReviewItem, OrderReturnRequest } from "./types";
 
-// Fallbacks are provided directly from user specification for immediate, robust operation
-const viteEnv = (import.meta as any).env || {};
-const SUPABASE_URL = 
-  viteEnv.VITE_SUPABASE_URL || 
-  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://vdtbquxxpikniarmjpai.supabase.co";
+// Environment variables with solid Vite and Next.js public prefix support
+const metaEnv = (import.meta as any).env || {};
+const envUrl = metaEnv.VITE_SUPABASE_URL || metaEnv.NEXT_PUBLIC_SUPABASE_URL;
+const envKey = 
+  metaEnv.VITE_SUPABASE_ANON_KEY || 
+  metaEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+  metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const SUPABASE_ANON_KEY = 
-  viteEnv.VITE_SUPABASE_ANON_KEY || 
-  (globalThis as any).process?.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  "sb_publishable_T5AXsc3Zotfbi_J18VwJXw_jZR3wlOp";
+export const SUPABASE_URL = envUrl || "https://vdtbquxxpikniarmjpai.supabase.co";
+export const SUPABASE_ANON_KEY = envKey || "sb_publishable_T5AXsc3Zotfbi_J18VwJXw_jZR3wlOp";
+
+export const SUPABASE_HOSTNAME = (function() {
+  try {
+    return new URL(SUPABASE_URL).hostname;
+  } catch {
+    return "vdtbquxxpikniarmjpai.supabase.co";
+  }
+})();
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

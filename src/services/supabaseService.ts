@@ -2402,7 +2402,7 @@ function parseSeoKeywords(raw: any, defaultFallback: string = ""): string {
   return defaultFallback;
 }
 
-function mapDbProduct(row: any): Product {
+export function mapDbProduct(row: any): Product {
   try {
     const baseColors = Array.isArray(row.colors) ? row.colors : [];
     const baseSizes = Array.isArray(row.sizes) ? row.sizes : [];
@@ -2513,7 +2513,7 @@ function mapDbProduct(row: any): Product {
   }
 }
 
-function mapProductToDb(product: Product) {
+export function mapProductToDb(product: Product) {
   return {
     id: product.id,
     name: product.name,

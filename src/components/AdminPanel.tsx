@@ -52,7 +52,8 @@ import {
   saveHomeConfig
 } from "../utils";
 import { auth, signInWithGoogle, signInWithEmail, logOutUser, supabase } from "../supabase";
-import { AdminUsersService, AdminAuditLogService } from "../services/supabaseService";
+import { AdminUsersService, AdminAuditLogService, ProductsService, mapProductToDb } from "../services/supabaseService";
+import { SUPABASE_HOSTNAME } from "../supabase";
 
 // Import modular tab panels
 import AnalyticsTab from "./admin/AnalyticsTab";
@@ -320,12 +321,22 @@ export default function AdminPanel() {
     await logOutUser();
   };
 
-  const reloadData = () => {
-    setProductList(getProducts());
+  const reloadData = async () => {
     setOrderList(getOrders());
     setBlogPostList(getBlogs());
     setReviewCount(getReviews().length);
     setHomeConfig(getHomeConfig());
+
+    try {
+      const liveProducts = await ProductsService.getAll();
+      if (liveProducts && liveProducts.length > 0) {
+        setProductList(liveProducts);
+        return;
+      }
+    } catch (e) {
+      console.warn("Direct Supabase product fetch error in reloadData:", e);
+    }
+    setProductList(getProducts());
   };
 
   useEffect(() => {
@@ -336,7 +347,7 @@ export default function AdminPanel() {
     setSyncing(true);
     try {
       await forceSyncFromCloud();
-      reloadData();
+      await reloadData();
       alert("Committed sitemaps successfully. Cloud Firestore resources synchronized!");
     } catch (err) {
       alert("Synchronization failed. Check internet coordinates.");
@@ -347,32 +358,166 @@ export default function AdminPanel() {
 
   // Dedicated Product callbacks
   const handleSaveProduct = async (prod: Product) => {
-    saveProduct(prod);
-    reloadData();
-    if (googleUser) {
-      await AdminAuditLogService.logActivity(
-        googleUser.email,
-        googleUser.displayName || "Admin",
-        `Product Saved / Updated`,
-        `SKU/ID: ${prod.id} (${prod.name})`
-      );
-    }
-  };
+    console.log(`[Supabase SAVE] Initiating upsert for product: "${prod.name}" (ID: ${prod.id})`);
+    
+    // Check runtime session info for diagnostics
+    const { data: { session } } = await supabase.auth.getSession();
+    const activeAuthEmail = session?.user?.email || "ANONYMOUS/NO_SESSION";
+    console.log(`[Supabase SAVE Diagnostic Context] Host: ${SUPABASE_HOSTNAME} | Auth User: ${activeAuthEmail} | User Role: ${staffRole}`);
 
-  const handleDeleteProduct = async (id: string) => {
     try {
-      const { error } = await supabase
+      const dbRow = mapProductToDb(prod);
+      const response = await supabase
         .from("products")
-        .delete()
-        .eq("id", id);
+        .upsert(dbRow, { onConflict: "id" })
+        .select();
 
-      if (error) {
-        console.error("Supabase product deletion error:", error);
-        alert(`Failed to delete product from database: ${error.message}`);
+      console.log("[Supabase SAVE response]", {
+        status: (response as any).status,
+        statusText: (response as any).statusText,
+        data: response.data,
+        error: response.error,
+        errorCode: response.error?.code,
+        errorMessage: response.error?.message,
+        errorDetails: response.error?.details,
+        errorHint: response.error?.hint
+      });
+
+      if (response.error) {
+        console.error("Supabase product save error details:", {
+          code: response.error.code,
+          message: response.error.message,
+          details: response.error.details,
+          hint: response.error.hint
+        });
+        alert(`Failed to save product to database.\nHost: ${SUPABASE_HOSTNAME}\nAuth Session: ${activeAuthEmail}\nError Code: ${response.error.code || "UNKNOWN"}\nMessage: ${response.error.message}\nDetails: ${response.error.details || "None"}\nHint: ${response.error.hint || "None"}`);
         return;
       }
 
       // Synchronize local cache and state
+      saveProduct(prod);
+      await reloadData();
+
+      if (googleUser) {
+        await AdminAuditLogService.logActivity(
+          googleUser.email,
+          googleUser.displayName || "Admin",
+          `Product Saved / Updated`,
+          `SKU/ID: ${prod.id} (${prod.name})`
+        );
+      }
+      alert(`Product "${prod.name}" successfully synchronized to database!`);
+    } catch (err: any) {
+      console.error("Unexpected save error:", err);
+      alert(`Unexpected error saving product: ${err?.message || err}`);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    console.log(`[Supabase DELETE] Initiating deletion for product ID: "${id}"`);
+    
+    // 7. Check the production authenticated Supabase user
+    const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
+    const userExists = !!authUserData?.user;
+    const authenticatedEmail = authUserData?.user?.email || null;
+    
+    console.log("[Supabase Auth User Check]", {
+      userExists,
+      authenticatedEmail,
+      authError: authUserError?.message || null
+    });
+
+    try {
+      // 1. Execute delete with select('id')
+      const response = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id)
+        .select("id");
+
+      const returnedData = response.data;
+      const dataLength = Array.isArray(returnedData) ? returnedData.length : (returnedData ? 1 : 0);
+      const httpStatus = (response as any).status ?? null;
+
+      // 2. Log the EXACT returned payload
+      console.log("[Supabase DELETE response]", {
+        data: returnedData,
+        dataLength: dataLength,
+        error: response.error,
+        errorCode: response.error?.code,
+        errorMessage: response.error?.message,
+        errorDetails: response.error?.details,
+        errorHint: response.error?.hint,
+        status: httpStatus
+      });
+
+      // 5. Immediately after DELETE, run a SELECT for the same product ID and verify whether the row still exists
+      const { data: verifyRow, error: verifyError } = await supabase
+        .from("products")
+        .select("id, name")
+        .eq("id", id)
+        .maybeSingle();
+
+      console.log("[Supabase Post-DELETE Verification SELECT]", {
+        searchedId: id,
+        rowStillExists: !!verifyRow,
+        foundRow: verifyRow,
+        selectError: verifyError?.message || null
+      });
+
+      // 4. Handle errors from Supabase
+      if (response.error) {
+        console.error("[Supabase DELETE Error Details]", {
+          code: response.error.code,
+          message: response.error.message,
+          details: response.error.details,
+          hint: response.error.hint,
+          status: httpStatus
+        });
+        alert(
+          `DELETE REJECTED (Database Error):\n` +
+          `Code: ${response.error.code || "UNKNOWN"}\n` +
+          `Message: ${response.error.message}\n` +
+          `Details: ${response.error.details || "None"}\n` +
+          `Hint: ${response.error.hint || "None"}`
+        );
+        return;
+      }
+
+      // 3. & 4. SUCCESS must ONLY be declared when: error === null AND data.length === 1
+      if (dataLength === 0) {
+        console.error("[Supabase DELETE 0 Rows Deleted]", {
+          targetId: id,
+          authenticatedEmail,
+          userExists,
+          rowStillExists: !!verifyRow
+        });
+
+        alert(
+          `DELETE FAILED (0 Rows Deleted):\n\n` +
+          `Supabase returned zero deleted rows for Product ID: "${id}".\n\n` +
+          `Diagnosis:\n` +
+          `• Supabase Authenticated User: ${userExists ? authenticatedEmail : "NONE (Anonymous / Unauthenticated)"}\n` +
+          `• Target Row in Database: ${verifyRow ? "EXISTS (Deletion blocked by Row Level Security / RLS)" : "NOT FOUND (ID does not exist in Supabase products table)"}\n\n` +
+          `RLS Requirement:\n` +
+          `The products table policy requires write operations to come from an authenticated session whose email is registered in the admin_users table with 'Super Admin', 'Admin', or 'Inventory Manager' role.`
+        );
+        return;
+      }
+
+      if (verifyRow) {
+        console.error("[Supabase DELETE Inconsistency] Post-delete SELECT confirmed product still exists!", verifyRow);
+        alert(
+          `DELETE INCONSISTENCY:\n` +
+          `Delete operation returned ${dataLength} rows, but post-delete SELECT verified the product still remains in the database!`
+        );
+        return;
+      }
+
+      // 3. Exactly 1 row deleted and confirmed removed by SELECT
+      console.log(`[Supabase DELETE SUCCESS] Verified 1 row deleted for product ID: "${id}".`);
+
+      // Synchronize local cache and state only after verified database deletion
       deleteProduct(id);
 
       if (typeof window !== "undefined") {
@@ -387,19 +532,19 @@ export default function AdminPanel() {
         } catch {}
       }
 
-      reloadData();
+      await reloadData();
 
       if (googleUser) {
         await AdminAuditLogService.logActivity(
           googleUser.email,
           googleUser.displayName || "Admin",
           `Product Deleted`,
-          `Product ID: ${id}`
+          `Product ID: ${id} (Verified: 1 row removed from database)`
         );
       }
-      alert("Product successfully deleted from database.");
+      alert(`Product successfully deleted from database (Verified: 1 row removed).`);
     } catch (err: any) {
-      console.error("Unexpected delete error:", err);
+      console.error("[Supabase DELETE Unexpected Exception]:", err);
       alert(`Unexpected error deleting product: ${err?.message || err}`);
     }
   };
