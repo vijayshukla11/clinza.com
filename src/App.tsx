@@ -1128,6 +1128,7 @@ function AppContent() {
               <ul className="space-y-2 text-xs font-semibold text-gray-450">
                 <li><a href="/about" onClick={(e) => { e.preventDefault(); navigate("/about"); }} className="hover:text-white cursor-pointer text-left block">About Us</a></li>
                 <li><a href="/shipping-policy" onClick={(e) => { e.preventDefault(); navigate("/shipping-policy"); }} className="hover:text-white cursor-pointer text-left block">Shipping & Delivery</a></li>
+                <li><a href="/track-order" onClick={(e) => { e.preventDefault(); navigate("/track-order"); }} className="hover:text-white cursor-pointer text-left block">Track Order</a></li>
                 <li><a href="/return-policy" onClick={(e) => { e.preventDefault(); navigate("/return-policy"); }} className="hover:text-white cursor-pointer text-left block">Returns & Exchanges</a></li>
                 <li><a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigate("/privacy-policy"); }} className="hover:text-white cursor-pointer text-left text-xs block">Privacy Policy</a></li>
                 <li><a href="/terms-and-conditions" onClick={(e) => { e.preventDefault(); navigate("/terms-and-conditions"); }} className="hover:text-white cursor-pointer text-left text-xs font-semibold block">Terms & Conditions</a></li>

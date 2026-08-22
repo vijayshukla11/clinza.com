@@ -57,10 +57,6 @@ export interface CollectionItem {
 // -------------------------------------------------------------
 export const ProductsService = {
   async getAll(): Promise<Product[]> {
-    const startTime = performance.now();
-    // STEP 7: Inside ProductsService.getAll()
-    console.log("Supabase request started");
-    console.log("[ProductsService.getAll] START");
     try {
       const fetchPromise = supabase.from("products").select("*").order("name");
       const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
@@ -68,13 +64,6 @@ export const ProductsService = {
       );
       const res = await Promise.race([fetchPromise, timeoutPromise]);
       const { data, error } = res;
-
-      // STEP 8: After Supabase response
-      console.log("[STEP 8] Supabase response:", {
-        numberOfRowsReturned: data ? data.length : 0,
-        firstFiveIds: data ? data.slice(0, 5).map((r: any) => r.id) : [],
-        firstFiveSlugs: data ? data.slice(0, 5).map((r: any) => r.slug) : []
-      });
 
       let result: Product[] | null = null;
       if (!error && data && data.length > 0) {
@@ -89,9 +78,6 @@ export const ProductsService = {
             if (cachedStr) {
               const parsed = JSON.parse(cachedStr);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                console.log("[ProductsService.getAll] Using existing localStorage cached products on network/fetch issue");
-                const duration = performance.now() - startTime;
-                console.log("[ProductsService.getAll] END", { duration: `${duration.toFixed(2)}ms`, productCount: parsed.length });
                 return parsed;
               }
             }
@@ -107,11 +93,9 @@ export const ProductsService = {
         }
       }
 
-      const duration = performance.now() - startTime;
-      console.log("[ProductsService.getAll] END", { duration: `${duration.toFixed(2)}ms`, productCount: result.length });
       return result;
     } catch (e) {
-      console.warn("Supabase products getAll error fallback check:", e);
+      console.error("Supabase products getAll error:", e);
       if (typeof window !== "undefined") {
         try {
           const cachedStr = localStorage.getItem("clinza_products");
@@ -123,8 +107,6 @@ export const ProductsService = {
           }
         } catch {}
       }
-      const duration = performance.now() - startTime;
-      console.log("[ProductsService.getAll] END", { duration: `${duration.toFixed(2)}ms`, productCount: INITIAL_PRODUCTS.length });
       return INITIAL_PRODUCTS;
     }
   },
@@ -1713,10 +1695,16 @@ export const AdminAuditLogService = {
         affected_record: affectedRecord || null,
         ip_address: ipAddress || null
       });
-      if (error) throw error;
+      if (error) {
+        // If the table does not exist or schema is not yet provisioned, fail silently without disrupting core CRUD
+        if (error.code === "PGRST205" || error.message?.includes("admin_audit_logs")) {
+          return false;
+        }
+        console.warn("Audit log write notice:", error.message);
+        return false;
+      }
       return true;
-    } catch (err) {
-      console.error("Failed to write audit log:", err);
+    } catch {
       return false;
     }
   },
@@ -1727,10 +1715,15 @@ export const AdminAuditLogService = {
         .from("admin_audit_logs")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        if (error.code === "PGRST205" || error.message?.includes("admin_audit_logs")) {
+          return [];
+        }
+        console.warn("Audit logs fetch notice:", error.message);
+        return [];
+      }
       return data || [];
-    } catch (err) {
-      console.error("Failed to fetch audit logs:", err);
+    } catch {
       return [];
     }
   }
@@ -2493,22 +2486,9 @@ export function mapDbProduct(row: any): Product {
       jsonLdSchema: row.json_ld_schema ?? row.jsonLdSchema
     };
 
-    console.log("[STEP 9] Mapped product:", {
-      id: mapped.id,
-      slug: mapped.slug,
-      name: mapped.name,
-      imagesLength: mapped.images.length,
-      colorsLength: mapped.colors.length,
-      sizesLength: mapped.sizes.length,
-      specificationsLength: mapped.specifications.length,
-      aPlusContentExists: !!mapped.aPlusContent,
-      featuresLength: mapped.aPlusContent?.features?.length ?? 0
-    });
-
     return mapped;
   } catch (err: any) {
-    console.error("[STEP 9] mapDbProduct ERROR on row:", row);
-    console.error("[STEP 9] Stack trace:", err?.stack || err);
+    console.error("mapDbProduct error on row:", row, err);
     throw err;
   }
 }

@@ -546,6 +546,17 @@ export default function Navbar({
                     </button>
 
                     <button
+                      id="acc-menu-track-order"
+                      onClick={() => {
+                        setAccountMenuOpen(false);
+                        setRoute("track-order");
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-800 hover:bg-stone-100 hover:text-[#5B1824] rounded-xl transition-colors flex items-center gap-2.5 cursor-pointer uppercase tracking-wider font-sans"
+                    >
+                      <MapPin className="h-4 w-4 text-zinc-500 stroke-[1.8] shrink-0" /> Track Order
+                    </button>
+
+                    <button
                       id="acc-menu-wishlist"
                       onClick={() => {
                         setAccountMenuOpen(false);
@@ -1383,13 +1394,14 @@ export default function Navbar({
                   </h4>
                   <div className="space-y-2 text-xs font-semibold text-zinc-700 uppercase tracking-wider">
                     <button
+                      id="mobile-drawer-track-order"
                       onClick={() => {
                         setSideDrawerOpen(false);
                         setRoute("track-order");
                       }}
                       className="w-full text-left py-1.5 hover:text-black transition-colors flex items-center justify-between cursor-pointer"
                     >
-                      <span>Track Your Order</span>
+                      <span>Track Order</span>
                       <Package className="h-3.5 w-3.5 text-zinc-400" />
                     </button>
                     <button
