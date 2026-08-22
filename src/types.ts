@@ -158,6 +158,13 @@ export interface Order {
     pincode: string;
   };
   items: OrderItem[];
+  subtotal?: number;
+  discount?: number;
+  shippingFee?: number;
+  shipping_fee?: number;
+  tax?: number;
+  couponCode?: string | null;
+  coupon_code?: string | null;
   totalAmount: number;
   status: OrderStatus;
   paymentMethod: "COD";

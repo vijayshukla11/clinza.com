@@ -170,7 +170,11 @@ function AppContent() {
       });
     };
     const refreshProducts = () => {
+      const loadStart = performance.now();
+      console.log(`[PERF][App] Product catalog loading initiated at ${new Date().toISOString()}`);
       ProductsService.getAll().then(res => {
+        const duration = (performance.now() - loadStart).toFixed(2);
+        console.log(`[PERF][App] Product catalog loaded: ${res?.length || 0} products in ${duration}ms`);
         if (res && res.length > 0) {
           setProductsState(res);
 
@@ -1544,6 +1548,8 @@ function ProductDetailPage({
     let isMounted = true;
 
     // STEP 5: Inside useEffect()
+    const seqStart = performance.now();
+    console.log(`[PERF][ProductDetailPage] Product load sequence initiated for slug: "${slug}"`);
     console.log("[STEP 5] useEffect started:", {
       currentSlug: slug,
       currentLoading: loading
@@ -1562,9 +1568,13 @@ function ProductDetailPage({
     async function syncCloud() {
       try {
         // STEP 6: Before ProductsService.getAll()
-        console.log("Fetching cloud products...");
+        console.log(`[PERF][ProductDetailPage] Fetching cloud products for "${slug}"...`);
+        const fetchStart = performance.now();
 
         const cloudProds = await ProductsService.getAll();
+        const fetchDuration = (performance.now() - fetchStart).toFixed(2);
+        const totalDuration = (performance.now() - seqStart).toFixed(2);
+        console.log(`[PERF][ProductDetailPage] Cloud products fetched in ${fetchDuration}ms (Total load sequence: ${totalDuration}ms, count: ${cloudProds ? cloudProds.length : 0})`);
 
         // STEP 10: After getAll()
         console.log("cloudProds.length:", cloudProds ? cloudProds.length : 0);

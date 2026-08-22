@@ -147,6 +147,11 @@ export default function CheckoutPage({
             pincode: formData.pincode.trim()
           },
           items: orderItems,
+          subtotal: subtotal,
+          discount: discountAmount,
+          shippingFee: shippingCharge,
+          tax: standardGST,
+          couponCode: checkoutSummary?.appliedCoupon || null,
           totalAmount: grandTotal,
           paymentMethod: "COD" as const
         };

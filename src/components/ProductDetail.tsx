@@ -167,6 +167,16 @@ export default function ProductDetail({
   });
   const [reviewSubmittedToast, setReviewSubmittedToast] = useState(false);
 
+  // Performance monitoring for product view duration and render efficiency
+  useEffect(() => {
+    const mountTime = performance.now();
+    console.log(`[PERF][ProductDetail] Mounted product specifications view for "${product.name}" (ID: ${product.id}, SKU: ${product.sku || "N/A"})`);
+    return () => {
+      const activeDuration = ((performance.now() - mountTime) / 1000).toFixed(2);
+      console.log(`[PERF][ProductDetail] Product view session ended for "${product.name}" (Active time: ${activeDuration}s)`);
+    };
+  }, [product.id, product.name, product.sku]);
+
   // Sticky purchase bar scroll observer
   useEffect(() => {
     const handleScroll = () => {

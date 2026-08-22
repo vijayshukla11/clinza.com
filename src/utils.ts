@@ -699,9 +699,20 @@ export function createOrder(order: Omit<Order, "id" | "status" | "trackingHistor
   const orderNum = `CLNZA-2026-${nextSeq}`;
   const now = new Date().toISOString();
   
+  // Calculate fallback subtotal from items if not directly provided
+  const itemsSubtotal = order.items && Array.isArray(order.items)
+    ? order.items.reduce((sum, it) => sum + ((it.price || 0) * (it.quantity || 1)), 0)
+    : order.totalAmount;
+
   const fullOrder: Order = {
     ...order,
     id: orderNum,
+    subtotal: order.subtotal !== undefined ? order.subtotal : itemsSubtotal,
+    discount: order.discount !== undefined ? order.discount : Math.max(0, itemsSubtotal - order.totalAmount),
+    shippingFee: order.shippingFee !== undefined ? order.shippingFee : (order.shipping_fee !== undefined ? order.shipping_fee : 0),
+    tax: order.tax !== undefined ? order.tax : 0,
+    couponCode: order.couponCode || order.coupon_code || null,
+    totalAmount: order.totalAmount,
     status: "Pending",
     createdAt: now,
     trackingHistory: [
@@ -723,8 +734,8 @@ export function createOrder(order: Omit<Order, "id" | "status" | "trackingHistor
     }
   }
   
-  // Sync to Firestore
-  saveOrderToCloud(fullOrder).catch(err => console.error("Firestore order logging failed:", err));
+  // Sync to Cloud
+  saveOrderToCloud(fullOrder).catch(err => console.error("Cloud order logging failed:", err));
   
   return fullOrder;
 }
@@ -783,37 +794,54 @@ export function updateOrderTracking(
 
 // Fetch single order statically for guest tracking using secure RPC (orderId + contact)
 export async function fetchOrderForTracking(orderId: string, contactInfo: string): Promise<Order | null> {
+  const local = getOrders();
+  const matchedLocal = local.find(o => 
+    o.id.toLowerCase() === orderId.toLowerCase() || 
+    o.id.toLowerCase().replace(/[^a-z0-9]/g, "") === orderId.toLowerCase().replace(/[^a-z0-9]/g, "")
+  );
+
   try {
     if (!orderId || !contactInfo) return null;
     const cloudOrder = await getGuestOrderFromCloud(orderId, contactInfo);
     if (cloudOrder) {
-      // Update local storage so cache is synced
-      const current = getOrders();
-      const index = current.findIndex(o => o.id === orderId);
+      // Merge with matched local order if available to guarantee no financial data is lost
+      const mergedOrder: Order = {
+        ...matchedLocal,
+        ...cloudOrder,
+        totalAmount: (cloudOrder.totalAmount && cloudOrder.totalAmount > 0) ? cloudOrder.totalAmount : (matchedLocal?.totalAmount || 0),
+        subtotal: (cloudOrder.subtotal && cloudOrder.subtotal > 0) ? cloudOrder.subtotal : (matchedLocal?.subtotal || cloudOrder.totalAmount || matchedLocal?.totalAmount || 0),
+        discount: cloudOrder.discount !== undefined && cloudOrder.discount > 0 ? cloudOrder.discount : (matchedLocal?.discount ?? 0),
+        shippingFee: cloudOrder.shippingFee !== undefined ? cloudOrder.shippingFee : (matchedLocal?.shippingFee ?? 0),
+        items: (cloudOrder.items && cloudOrder.items.length > 0)
+          ? cloudOrder.items.map((it, idx) => {
+              const localIt = matchedLocal?.items?.[idx];
+              return {
+                ...it,
+                price: it.price > 0 ? it.price : (localIt?.price || 0)
+              };
+            })
+          : (matchedLocal?.items || [])
+      };
+
+      const index = local.findIndex(o => o.id === orderId || o.id === mergedOrder.id);
       if (index !== -1) {
-        current[index] = { ...current[index], ...cloudOrder };
+        local[index] = mergedOrder;
       } else {
-        current.unshift(cloudOrder);
+        local.unshift(mergedOrder);
       }
-      saveOrders(current);
-      return cloudOrder;
+      saveOrders(local);
+      return mergedOrder;
     }
   } catch (err) {
     console.warn("Online order lookup restricted or timed out, assessing local cache:", err);
   }
   
-  const local = getOrders();
-  const matched = local.find(o => 
-    o.id.toLowerCase() === orderId.toLowerCase() || 
-    o.id.toLowerCase().replace(/[^a-z0-9]/g, "") === orderId.toLowerCase().replace(/[^a-z0-9]/g, "")
-  );
-
-  if (matched && contactInfo) {
+  if (matchedLocal && contactInfo) {
     const cleanContact = contactInfo.trim().toLowerCase();
-    const emailMatch = matched.customer?.email?.toLowerCase() === cleanContact;
-    const phoneMatch = matched.customer?.phone?.replace(/[^0-9]/g, "").endsWith(cleanContact.replace(/[^0-9]/g, ""));
+    const emailMatch = matchedLocal.customer?.email?.toLowerCase() === cleanContact;
+    const phoneMatch = matchedLocal.customer?.phone?.replace(/[^0-9]/g, "").endsWith(cleanContact.replace(/[^0-9]/g, ""));
     if (emailMatch || phoneMatch || cleanContact === "sample") {
-      return matched;
+      return matchedLocal;
     }
   }
   return null;
@@ -1293,7 +1321,7 @@ export function calculateCartTotals(cart: CartItem[], appliedCoupon: string | nu
   
   let discountPercent = promo.discountPercent;
 
-  // When NO combo promotion tier is active (currentTier === 0), standard coupon or subtotal discounts apply
+  // When NO combo promotion tier is active (currentTier === 0), standard coupon discounts apply ONLY when explicitly entered by customer
   if (promo.currentTier === 0) {
     if (appliedCoupon) {
       if (appliedCoupon === "CLINZA10") {
@@ -1301,9 +1329,8 @@ export function calculateCartTotals(cart: CartItem[], appliedCoupon: string | nu
       } else if (appliedCoupon === "LUXURY20") {
         discountPercent = subtotal >= 4000 ? 20 : 0;
       }
-    } else if (subtotal >= 3000) {
-      discountPercent = 20;
     }
+    // Note: Automatic 20% discount without coupon has been removed to respect customer explicit action.
   } else {
     // When a Combo Tier promotion IS active (currentTier > 0):
     // The Combo Tier promotion is the SINGLE SOURCE OF TRUTH.

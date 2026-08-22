@@ -26,7 +26,7 @@ import {
   X
 } from "lucide-react";
 import { Order } from "../types";
-import { getOrders, fetchOrderForTracking } from "../utils";
+import { getOrders, fetchOrderForTracking, getProducts } from "../utils";
 
 export default function TrackOrderPage() {
   const location = useLocation();
@@ -292,11 +292,24 @@ export default function TrackOrderPage() {
       })
     : (activeOrder as any)?.date || "Recent Order";
 
-  const subtotal = activeOrder?.items 
-    ? activeOrder.items.reduce((sum, it) => sum + ((it.price || 0) * (it.quantity || 1)), 0)
-    : activeOrder?.totalAmount || 0;
+  const allProducts = getProducts();
 
-  const discount = Math.max(0, subtotal - (activeOrder?.totalAmount || subtotal));
+  const subtotal = activeOrder?.subtotal !== undefined && activeOrder.subtotal > 0
+    ? activeOrder.subtotal
+    : activeOrder?.items && activeOrder.items.length > 0
+      ? activeOrder.items.reduce((sum, it) => {
+          const itemPrice = it.price > 0 ? it.price : (allProducts.find(p => p.id === it.productId || p.name === it.name)?.price || 0);
+          return sum + (itemPrice * (it.quantity || 1));
+        }, 0)
+      : activeOrder?.totalAmount || 0;
+
+  const shippingFee = activeOrder?.shippingFee !== undefined ? activeOrder.shippingFee : (activeOrder?.shipping_fee !== undefined ? activeOrder.shipping_fee : 0);
+  const discount = activeOrder?.discount !== undefined && activeOrder.discount > 0
+    ? activeOrder.discount
+    : Math.max(0, subtotal + shippingFee - (activeOrder?.totalAmount || (subtotal + shippingFee)));
+  const finalTotal = activeOrder?.totalAmount && activeOrder.totalAmount > 0 
+    ? activeOrder.totalAmount 
+    : (subtotal - discount + shippingFee);
 
   return (
     <section id="clinza-track-order-page" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-zinc-50 min-h-screen text-left">
@@ -630,7 +643,7 @@ export default function TrackOrderPage() {
                               {it.color ? `${it.color} | ` : ""}Size: {it.size || "Standard"}
                             </p>
                             <p className="text-xs font-semibold text-gray-800 mt-1 font-mono">
-                              ₹{(it.price || 0).toLocaleString("en-IN")}.00 × {it.quantity || 1}
+                              ₹{(it.price > 0 ? it.price : (allProducts.find(p => p.id === it.productId || p.name === it.name)?.price || 0)).toLocaleString("en-IN")}.00 × {it.quantity || 1}
                             </p>
                           </div>
 
@@ -654,18 +667,18 @@ export default function TrackOrderPage() {
                       </div>
                       <div className="flex justify-between text-gray-600 font-medium">
                         <span>Shipping</span>
-                        <span className="font-mono text-gray-950">₹0.00</span>
+                        <span className="font-mono text-gray-950">₹{shippingFee.toLocaleString("en-IN")}.00</span>
                       </div>
                       {discount > 0 && (
                         <div className="flex justify-between text-emerald-700 font-medium">
-                          <span>Discount</span>
+                          <span>Discount {activeOrder.couponCode ? `(${activeOrder.couponCode})` : ""}</span>
                           <span className="font-mono">-₹{discount.toLocaleString("en-IN")}.00</span>
                         </div>
                       )}
                       <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-950">Total</span>
                         <span className="text-base font-black text-gray-950 font-mono">
-                          ₹{(activeOrder.totalAmount || subtotal).toLocaleString("en-IN")}.00
+                          ₹{finalTotal.toLocaleString("en-IN")}.00
                         </span>
                       </div>
                     </div>
@@ -825,24 +838,43 @@ export default function TrackOrderPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {activeOrder.items?.map((it, idx) => (
-                    <tr key={idx}>
-                      <td className="p-3">
-                        <p className="font-bold text-gray-950">{it.name}</p>
-                        <p className="text-[10px] text-gray-400">{it.size ? `Size: ${it.size}` : ""}</p>
-                      </td>
-                      <td className="p-3 text-center font-mono">{it.quantity || 1}</td>
-                      <td className="p-3 text-right font-mono">₹{(it.price || 0).toLocaleString("en-IN")}</td>
-                      <td className="p-3 text-right font-mono font-bold">₹{((it.price || 0) * (it.quantity || 1)).toLocaleString("en-IN")}</td>
-                    </tr>
-                  ))}
+                  {activeOrder.items?.map((it, idx) => {
+                    const itPrice = it.price > 0 ? it.price : (allProducts.find(p => p.id === it.productId || p.name === it.name)?.price || 0);
+                    return (
+                      <tr key={idx}>
+                        <td className="p-3">
+                          <p className="font-bold text-gray-950">{it.name}</p>
+                          <p className="text-[10px] text-gray-400">{it.size ? `Size: ${it.size}` : ""}</p>
+                        </td>
+                        <td className="p-3 text-center font-mono">{it.quantity || 1}</td>
+                        <td className="p-3 text-right font-mono">₹{itPrice.toLocaleString("en-IN")}</td>
+                        <td className="p-3 text-right font-mono font-bold">₹{(itPrice * (it.quantity || 1)).toLocaleString("en-IN")}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm font-bold text-gray-950">
-              <span>Grand Total</span>
-              <span className="text-base font-black font-mono">₹{(activeOrder.totalAmount || subtotal).toLocaleString("en-IN")}.00</span>
+            <div className="space-y-1.5 pt-2 border-t border-gray-100 text-xs">
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal</span>
+                <span className="font-mono text-gray-950">₹{subtotal.toLocaleString("en-IN")}.00</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Shipping</span>
+                <span className="font-mono text-gray-950">₹{shippingFee.toLocaleString("en-IN")}.00</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount {activeOrder.couponCode ? `(${activeOrder.couponCode})` : ""}</span>
+                  <span className="font-mono">-₹{discount.toLocaleString("en-IN")}.00</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm font-bold text-gray-950">
+                <span>Grand Total</span>
+                <span className="text-base font-black font-mono">₹{finalTotal.toLocaleString("en-IN")}.00</span>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">

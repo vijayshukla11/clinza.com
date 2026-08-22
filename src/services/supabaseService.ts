@@ -2550,11 +2550,30 @@ export function mapProductToDb(product: Product) {
 }
 
 function mapDbOrder(row: any): Order {
+  const parsedItems = (Array.isArray(row.items) ? row.items : []).map((it: any) => ({
+    productId: it.productId || it.product_id || "",
+    name: it.name || it.product_name || "Apparel Item",
+    price: Number(it.price || it.unit_price || 0),
+    quantity: Number(it.quantity || it.qty || 1),
+    size: it.size || "",
+    color: it.color || "",
+    image: it.image || it.image_url || ""
+  }));
+
+  const itemsSubtotal = parsedItems.reduce((acc: number, it: any) => acc + (it.price * it.quantity), 0);
+  const parsedTotal = Number(row.total_amount ?? row.totalAmount ?? 0);
+  const parsedSubtotal = Number(row.subtotal ?? row.sub_total ?? (itemsSubtotal > 0 ? itemsSubtotal : parsedTotal));
+
   return {
     id: row.id,
     customer: row.customer,
-    items: Array.isArray(row.items) ? row.items : [],
-    totalAmount: Number(row.total_amount ?? row.totalAmount ?? 0),
+    items: parsedItems,
+    subtotal: parsedSubtotal,
+    discount: Number(row.discount ?? row.discount_amount ?? 0),
+    shippingFee: Number(row.shipping_fee ?? row.shippingFee ?? 0),
+    tax: Number(row.tax ?? 0),
+    couponCode: row.coupon_code ?? row.couponCode ?? null,
+    totalAmount: parsedTotal > 0 ? parsedTotal : parsedSubtotal,
     status: row.status || "Pending",
     paymentMethod: row.payment_method ?? row.paymentMethod ?? "COD",
     paymentStatus: row.payment_status ?? row.paymentStatus ?? (row.status === "Delivered" ? "Paid" : "Pending"),
@@ -2571,6 +2590,11 @@ function mapOrderToDb(order: Order) {
     id: order.id,
     customer: order.customer,
     items: order.items,
+    subtotal: order.subtotal,
+    discount: order.discount,
+    shipping_fee: order.shippingFee !== undefined ? order.shippingFee : order.shipping_fee,
+    tax: order.tax,
+    coupon_code: order.couponCode || order.coupon_code,
     total_amount: order.totalAmount,
     status: order.status,
     payment_method: order.paymentMethod,

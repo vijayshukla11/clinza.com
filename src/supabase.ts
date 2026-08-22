@@ -496,11 +496,27 @@ export async function syncOrdersFromCloud(): Promise<Order[]> {
     return (data || []).map((row: any) => ({
       id: row.id,
       customer: row.customer,
-      items: row.items,
-      totalAmount: Number(row.total_amount ?? row.totalAmount),
+      items: (row.items || []).map((it: any) => ({
+        productId: it.productId || it.product_id || "",
+        name: it.name || it.product_name || "Apparel Item",
+        price: Number(it.price || it.unit_price || 0),
+        quantity: Number(it.quantity || it.qty || 1),
+        size: it.size || "",
+        color: it.color || "",
+        image: it.image || it.image_url || ""
+      })),
+      subtotal: Number(row.subtotal ?? row.sub_total ?? 0),
+      discount: Number(row.discount ?? row.discount_amount ?? 0),
+      shippingFee: Number(row.shipping_fee ?? row.shippingFee ?? 0),
+      tax: Number(row.tax ?? 0),
+      couponCode: row.coupon_code ?? row.couponCode ?? null,
+      totalAmount: Number(row.total_amount ?? row.totalAmount ?? 0),
       status: row.status,
       paymentMethod: row.payment_method ?? row.paymentMethod ?? "COD",
+      paymentStatus: row.payment_status ?? row.paymentStatus ?? (row.status === "Delivered" ? "Paid" : "Pending"),
       trackingHistory: row.tracking_history ?? row.trackingHistory ?? [],
+      trackingNumber: row.tracking_number ?? row.trackingNumber,
+      courierPartner: row.courier_partner ?? row.courierPartner,
       createdAt: row.created_at ?? row.createdAt
     }));
   } catch (err) {
@@ -515,6 +531,11 @@ export async function saveOrderToCloud(order: Order): Promise<void> {
       id: order.id,
       customer: order.customer,
       items: order.items,
+      subtotal: order.subtotal,
+      discount: order.discount,
+      shipping_fee: order.shippingFee !== undefined ? order.shippingFee : order.shipping_fee,
+      tax: order.tax,
+      coupon_code: order.couponCode || order.coupon_code,
       total_amount: order.totalAmount,
       status: order.status,
       payment_method: order.paymentMethod,
@@ -555,6 +576,27 @@ export async function getGuestOrderFromCloud(orderId: string, contactInfo: strin
       ? new Date(row.out_created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) 
       : "Recently";
 
+    const parsedItems = (row.out_items || []).map((it: any) => ({
+      productId: it.productId || it.product_id || "",
+      name: it.name || it.product_name || "Apparel Item",
+      price: Number(it.price || it.unit_price || 0),
+      quantity: Number(it.quantity || it.qty || 1),
+      size: it.size || "",
+      color: it.color || "",
+      image: it.image || it.image_url || ""
+    }));
+
+    const calculatedSubtotal = parsedItems.reduce((acc: number, cur: any) => acc + (cur.price * cur.quantity), 0);
+    const parsedTotal = Number(row.out_total_amount ?? row.out_total ?? row.total_amount ?? row.totalAmount ?? 0);
+    const parsedSubtotal = Number(row.out_subtotal ?? row.subtotal ?? (calculatedSubtotal > 0 ? calculatedSubtotal : parsedTotal));
+    const parsedDiscount = Number(row.out_discount ?? row.discount ?? 0);
+    const parsedShipping = Number(row.out_shipping_fee ?? row.shipping_fee ?? 0);
+    const parsedTax = Number(row.out_tax ?? row.tax ?? 0);
+
+    const finalTotal = parsedTotal > 0 
+      ? parsedTotal 
+      : (calculatedSubtotal > 0 ? Math.max(0, calculatedSubtotal - parsedDiscount + parsedShipping + parsedTax) : 0);
+
     return {
       id: row.out_id,
       customer: {
@@ -567,16 +609,13 @@ export async function getGuestOrderFromCloud(orderId: string, contactInfo: strin
         country: "India",
         pincode: row.out_destination_pincode || ""
       },
-      items: (row.out_items || []).map((it: any) => ({
-        productId: it.productId || "",
-        name: it.name || "Apparel Item",
-        price: 0,
-        quantity: Number(it.quantity) || 1,
-        size: it.size || "",
-        color: it.color || "",
-        image: it.image || ""
-      })),
-      totalAmount: 0,
+      items: parsedItems,
+      subtotal: parsedSubtotal,
+      discount: parsedDiscount,
+      shippingFee: parsedShipping,
+      tax: parsedTax,
+      couponCode: row.out_coupon_code ?? row.coupon_code ?? null,
+      totalAmount: finalTotal,
       status: row.out_status || "Placed",
       paymentMethod: "COD",
       trackingHistory: row.out_tracking_history || [],
@@ -608,14 +647,36 @@ export async function getSingleOrderFromCloud(orderId: string, contactInfo?: str
 
     if (!data) return null;
 
+    const parsedItems = (data.items || []).map((it: any) => ({
+      productId: it.productId || it.product_id || "",
+      name: it.name || it.product_name || "Apparel Item",
+      price: Number(it.price || it.unit_price || 0),
+      quantity: Number(it.quantity || it.qty || 1),
+      size: it.size || "",
+      color: it.color || "",
+      image: it.image || it.image_url || ""
+    }));
+
+    const calculatedSubtotal = parsedItems.reduce((acc: number, cur: any) => acc + (cur.price * cur.quantity), 0);
+    const parsedTotal = Number(data.total_amount ?? data.totalAmount ?? 0);
+    const parsedSubtotal = Number(data.subtotal ?? data.sub_total ?? (calculatedSubtotal > 0 ? calculatedSubtotal : parsedTotal));
+
     return {
       id: data.id,
       customer: data.customer,
-      items: data.items,
-      totalAmount: Number(data.total_amount ?? data.totalAmount),
+      items: parsedItems,
+      subtotal: parsedSubtotal,
+      discount: Number(data.discount ?? data.discount_amount ?? 0),
+      shippingFee: Number(data.shipping_fee ?? data.shippingFee ?? 0),
+      tax: Number(data.tax ?? 0),
+      couponCode: data.coupon_code ?? data.couponCode ?? null,
+      totalAmount: parsedTotal > 0 ? parsedTotal : parsedSubtotal,
       status: data.status,
       paymentMethod: data.payment_method ?? data.paymentMethod ?? "COD",
+      paymentStatus: data.payment_status ?? data.paymentStatus ?? (data.status === "Delivered" ? "Paid" : "Pending"),
       trackingHistory: data.tracking_history ?? data.trackingHistory ?? [],
+      trackingNumber: data.tracking_number ?? data.trackingNumber,
+      courierPartner: data.courier_partner ?? data.courierPartner,
       createdAt: data.created_at ?? data.createdAt
     };
   } catch (err) {
