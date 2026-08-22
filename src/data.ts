@@ -796,10 +796,133 @@ export const INITIAL_PRODUCTS: Product[] = [
       { label: "Pre-shrink Treatment", value: "Industrial wash pre-shrunk, pre-washed" }
     ],
     aPlusContent: {
-      title: "Monochrome Sartorial Harmony",
-      description: "Dye-matched meticulously from a single flax harvest bunch, ensuring completely uniform shade transitions between upper clothing and trousers.",
-      features: [
-        { icon: "Sparkles", title: "Instant Old-Money Drape", description: "Minimalist structures that make vacation dinners look effortlessly curated in 10 seconds." }
+      enabled: true,
+      sections: [
+        {
+          id: "sec_hero_1",
+          type: "hero_story",
+          eyebrow: "THE CO-ORD ATELIER",
+          heading: "Sartorial Architecture: Pure Normandy Linen Co-ord",
+          description: "Engineered from harvest-matched organic French flax. Hand-assembled with bespoke double-pleated tailored trousers and a relaxed camp-collar resort overshirt for effortless warm-weather elegance.",
+          image: "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png",
+          badges: ["100% Normandy Flax", "Dye-Matched Batches", "Hand-Finished Hem", "Mother of Pearl Buttons"]
+        },
+        {
+          id: "sec_imgtxt_1",
+          type: "image_text",
+          eyebrow: "BREATHABLE YARN ENGINEERING",
+          heading: "Pure Organic Linen Fibres with Zero Synthetic Additives",
+          description: "Our master mills spin only long-staple linen fibers into high-twist yarns. The result is a crisp, open-weave structure that allows natural micro-circulation and heat dispersal in tropical heat.",
+          image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1200&q=80",
+          layout: "image_right",
+          badge: "100% ORGANIC"
+        },
+        {
+          id: "sec_grid_1",
+          type: "feature_grid",
+          eyebrow: "PRECISION CRAFTSMANSHIP",
+          heading: "Four Cornerstones of Sartorial Co-ords",
+          description: "Every element of the garment is engineered to balance lightweight breathability with tailored structure.",
+          columns: 4,
+          items: [
+            { icon: "Feather", title: "Ultra-Lightweight 180 GSM", description: "Balanced weight that holds crisp crease lines without feeling heavy or stiff." },
+            { icon: "Sparkles", title: "Genuine Mother of Pearl", description: "Natural ocean shell buttons with subtle iridescence and cross-stitched shank." },
+            { icon: "ShieldCheck", title: "Reinforced Tension Seams", description: "18 stitches per inch double French needle seams that never unravel." },
+            { icon: "Wind", title: "Natural Climate Micro-Vents", description: "Porous flax cellular channels pull humidity away instantly." }
+          ]
+        },
+        {
+          id: "sec_detail_1",
+          type: "detail_story",
+          eyebrow: "AN OBSESSION WITH SARTORIAL INTEGRITY",
+          heading: "The Anatomy of Bespoke Coordinates",
+          description: "Every coordinate set is cut from the exact same bolt of fabric to guarantee a flawless 100% chromatic match between shirt and trouser.",
+          image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=1000&q=80",
+          details: [
+            "Cut, assembled, and pressed by master tailors with over 25 years of luxury shirting heritage.",
+            "100% matched chromatic lot dyeing for shirt and trousers.",
+            "Double reinforced gusset construction on stress seams.",
+            "Pre-washed organic French linen yarn prevents post-wash shrinkage."
+          ]
+        },
+        {
+          id: "sec_style_1",
+          type: "style_guide",
+          eyebrow: "THREE OCCASIONS, ONE EFFORTLESS SILHOUETTE",
+          heading: "How to Style the Coordinate Set",
+          description: "Designed to transition seamlessly from sunlit coastal resorts to sophisticated rooftop evenings.",
+          looks: [
+            {
+              lookNumber: 1,
+              lookTitle: "Riviera Resort & Brunch",
+              occasion: "Daytime Casual",
+              description: "Wear the camp shirt open over a white ribbed tank with woven leather loafers and vintage sunglasses.",
+              image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+              lookNumber: 2,
+              lookTitle: "Sunset Aperitivo & Dining",
+              occasion: "Smart Casual",
+              description: "Button the shirt halfway, tuck cleanly into the high-waisted trousers, and pair with suede Belgian loafers.",
+              image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+              lookNumber: 3,
+              lookTitle: "City Minimalist Split",
+              occasion: "Versatile Separates",
+              description: "Separate the pieces: style the shirt with selvedge denim or wear the trousers with a crisp knitted polo.",
+              image: "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=800&q=80"
+            }
+          ]
+        },
+        {
+          id: "sec_banner_1",
+          type: "full_banner",
+          eyebrow: "SUSTAINABLE LUXURY FROM EARTH TO ATELIER",
+          heading: "Woven for Eternal Summers",
+          description: "Zero toxic runoff, 100% biodegradable European flax, and water-conserving bio-enzyme wash cycles.",
+          image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1600&q=80"
+        },
+        {
+          id: "sec_table_1",
+          type: "spec_table",
+          eyebrow: "TECHNICAL DOSSIER",
+          heading: "Material & Craft Specifications",
+          specs: [
+            { label: "Fabric Composition", value: "100% Certified European Organic Flax Linen" },
+            { label: "Fabric Weight", value: "180 GSM (Shirt) / 240 GSM (Trouser)" },
+            { label: "Collar Style", value: "Convertible Italian Camp / Cuban Spread Collar" },
+            { label: "Trouser Cut", value: "Double Forward Pleats with 2\" Cuffed Turn-up" },
+            { label: "Waistband", value: "Beltless Sartorial Cut with Brass Side Buckle Adjusters" },
+            { label: "Buttons", value: "100% Genuine Natural Mother of Pearl" },
+            { label: "Care Instructions", value: "Machine wash cold gentle or dry clean. Hang dry in shade." },
+            { label: "Country of Origin", value: "Handcrafted in India with Imported French Flax" }
+          ]
+        },
+        {
+          id: "sec_faq_1",
+          type: "faq",
+          eyebrow: "BUYER QUESTIONS",
+          heading: "Frequently Asked Questions",
+          items: [
+            {
+              question: "Will the linen shrink after the first wash?",
+              answer: "No. All Clinza linen pieces undergo a proprietary pre-shrink bio-enzyme wash process before cutting. Dimensional shrinkage is kept strictly below 1%."
+            },
+            {
+              question: "Can I wear the shirt and trouser separately?",
+              answer: "Absolutely. The camp-collar shirt pairs effortlessly with denim or swim shorts, while the double-pleated trousers match perfectly with knitwear, tees, and blazers."
+            },
+            {
+              question: "How do the trouser side adjusters work?",
+              answer: "The side buckles allow you to adjust the waistband by up to 1.5 inches tighter or looser without needing a belt, providing a completely tailored bespoke fit."
+            },
+            {
+              question: "What is the return and exchange policy?",
+              answer: "We offer complimentary 10-day door-to-door exchanges and returns across India. If the fit isn't 100% perfect, we swap sizes with zero hassle."
+            }
+          ]
+        }
       ]
     },
     isTrending: true,

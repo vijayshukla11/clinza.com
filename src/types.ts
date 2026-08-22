@@ -25,7 +25,136 @@ export interface Review {
   date: string;
 }
 
-export interface APlusSection {
+export type APlusSectionType = 
+  | "hero_story" 
+  | "image_text" 
+  | "feature_grid" 
+  | "detail_story" 
+  | "style_guide" 
+  | "full_banner" 
+  | "spec_table" 
+  | "faq";
+
+export interface APlusHeroStorySection {
+  type: "hero_story";
+  id: string;
+  eyebrow?: string;
+  heading: string;
+  description?: string;
+  image: string;
+  badges?: string[];
+}
+
+export interface APlusImageTextSection {
+  type: "image_text";
+  id: string;
+  layout?: "image_left" | "image_right";
+  eyebrow?: string;
+  heading: string;
+  description: string;
+  image: string;
+  badge?: string;
+}
+
+export interface APlusFeatureItem {
+  icon?: string;
+  image?: string;
+  title: string;
+  description: string;
+}
+
+export interface APlusFeatureGridSection {
+  type: "feature_grid";
+  id: string;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  columns?: 3 | 4;
+  items: APlusFeatureItem[];
+}
+
+export interface APlusDetailStorySection {
+  type: "detail_story";
+  id: string;
+  eyebrow?: string;
+  heading: string;
+  description?: string;
+  image: string;
+  details: string[];
+}
+
+export interface APlusLookItem {
+  lookNumber?: string | number;
+  lookTitle: string;
+  occasion?: string;
+  description?: string;
+  image: string;
+}
+
+export interface APlusStyleGuideSection {
+  type: "style_guide";
+  id: string;
+  eyebrow?: string;
+  heading: string;
+  description?: string;
+  looks: APlusLookItem[];
+}
+
+export interface APlusFullBannerSection {
+  type: "full_banner";
+  id: string;
+  eyebrow?: string;
+  heading: string;
+  description?: string;
+  image: string;
+}
+
+export interface APlusSpecItem {
+  label: string;
+  value: string;
+}
+
+export interface APlusSpecTableSection {
+  type: "spec_table";
+  id: string;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  specs: APlusSpecItem[];
+}
+
+export interface APlusFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface APlusFaqSection {
+  type: "faq";
+  id: string;
+  eyebrow?: string;
+  heading?: string;
+  items: APlusFaqItem[];
+}
+
+export type APlusSection = 
+  | APlusHeroStorySection
+  | APlusImageTextSection
+  | APlusFeatureGridSection
+  | APlusDetailStorySection
+  | APlusStyleGuideSection
+  | APlusFullBannerSection
+  | APlusSpecTableSection
+  | APlusFaqSection;
+
+export interface APlusContentData {
+  enabled?: boolean;
+  sections?: APlusSection[];
+  title?: string;
+  description?: string;
+  features?: any[];
+}
+
+export interface LegacyAPlusSection {
   title: string;
   description: string;
   imageUrl?: string;
@@ -96,7 +225,7 @@ export interface Product {
   
   faqs?: { question: string; answer: string }[];
   specifications: { label: string; value: string }[];
-  aPlusContent: APlusSection;
+  aPlusContent?: APlusContentData;
   isTrending?: boolean;
   isNewArrival?: boolean;
   trendingRank?: number; // Sequence number #1, #2, #3, #4...

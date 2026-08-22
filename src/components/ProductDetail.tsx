@@ -1031,12 +1031,10 @@ export default function ProductDetail({
         </div>
 
         {/* A+ EDITORIAL BRAND STORYTELLING CONTENT */}
-        {product.aPlusContent && (
-          <div className="pt-10">
-            {renderSectionSafe("APlusContent", () => (
-              <APlusContent block={product.aPlusContent} name={product.name} />
-            ))}
-          </div>
+        {product.aPlusContent?.enabled && Array.isArray(product.aPlusContent?.sections) && product.aPlusContent.sections.length > 0 && (
+          renderSectionSafe("APlusContent", () => (
+            <APlusContent content={product.aPlusContent} />
+          ))
         )}
 
         {/* FREQUENTLY BOUGHT TOGETHER / COMPLETE THE LOOK BUNDLE */}

@@ -300,13 +300,23 @@ export async function syncProductsFromCloud(): Promise<Product[]> {
         aPlusContent: (function() {
           const raw = row.a_plus_content ?? row.aPlusContent;
           if (typeof raw === "object" && raw !== null) {
-            return {
-              title: typeof raw.title === "string" ? raw.title : "",
-              description: typeof raw.description === "string" ? raw.description : "",
-              features: Array.isArray(raw.features) ? raw.features : []
-            };
+            if (Array.isArray(raw.sections)) {
+              return {
+                enabled: raw.enabled !== false,
+                sections: raw.sections
+              };
+            }
+            if (raw.title || raw.description) {
+              return {
+                enabled: raw.enabled !== false,
+                sections: [],
+                title: typeof raw.title === "string" ? raw.title : "",
+                description: typeof raw.description === "string" ? raw.description : "",
+                features: Array.isArray(raw.features) ? raw.features : []
+              };
+            }
           }
-          return { title: "", description: "", features: [] };
+          return undefined;
         })(),
         isTrending: !!(row.is_trending ?? row.isTrending),
         isNewArrival: !!(row.is_new_arrival ?? row.isNewArrival),
@@ -362,7 +372,7 @@ export async function saveProductToCloud(product: Product): Promise<void> {
       fabric_care: product.fabricCare || "",
       shipping_info: product.shippingInfo || "",
       specifications: Array.isArray(product.specifications) ? product.specifications : [],
-      a_plus_content: product.aPlusContent || { title: "", description: "", features: [] },
+      a_plus_content: product.aPlusContent || null,
       is_trending: product.isTrending || false,
       is_new_arrival: product.isNewArrival || false,
       trending_rank: product.trendingRank ?? null,

@@ -4,11 +4,12 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, ChevronLeft, Eye, ImageIcon, HelpCircle, Check, Info, Search, MessageSquare } from "lucide-react";
-import { Product, ProductCollection, ProductVariant } from "../../types";
+import { Plus, Edit, Trash2, ChevronLeft, Eye, ImageIcon, HelpCircle, Check, Info, Search, MessageSquare, Sparkles } from "lucide-react";
+import { Product, ProductCollection, ProductVariant, APlusContentData } from "../../types";
 import MediaUploader from "./MediaUploader";
 import { CollectionsService } from "../../services/supabaseService";
 import ProductReviewsManager from "./ProductReviewsManager";
+import APlusContentBuilder from "./APlusContentBuilder";
 import { generateVariantsForProduct, ensureUniqueSlug, distributeStockAcrossVariants } from "../../utils/variantUtils";
 
 interface ProductsTabProps {
@@ -22,7 +23,8 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [subFilter, setSubFilter] = useState<"all" | "draft" | "out_of_stock" | "archived">("all");
-  const [editFormTab, setEditFormTab] = useState<"details" | "reviews">("details");
+  const [editFormTab, setEditFormTab] = useState<"details" | "reviews" | "aplus">("details");
+  const [aPlusData, setAPlusData] = useState<APlusContentData>({ enabled: false, sections: [] });
 
   // Dynamic collections & categories state
   const [collectionsList, setCollectionsList] = useState<any[]>([]);
@@ -128,6 +130,31 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
     if (prod) {
       setEditingProduct(prod);
       
+      // Load A+ Content structure if present
+      if (prod.aPlusContent && typeof prod.aPlusContent === "object") {
+        if (typeof prod.aPlusContent.enabled === "boolean" && Array.isArray(prod.aPlusContent.sections)) {
+          setAPlusData(prod.aPlusContent);
+        } else if (prod.aPlusContent.title || prod.aPlusContent.description) {
+          setAPlusData({
+            enabled: true,
+            sections: [
+              {
+                id: "sec_legacy_1",
+                type: "hero_story",
+                eyebrow: "BRAND STORY",
+                heading: prod.aPlusContent.title || "SARTORIAL CRAFTSMANSHIP",
+                description: prod.aPlusContent.description || "",
+                image: prod.images?.[0] || ""
+              }
+            ]
+          });
+        } else {
+          setAPlusData({ enabled: false, sections: [] });
+        }
+      } else {
+        setAPlusData({ enabled: false, sections: [] });
+      }
+
       // Attempt to load advanced field fallbacks in case product lacks them
       const specs = prod.specifications || [];
       const getSpec = (lbl: string) => specs.find(s => s.label.toLowerCase() === lbl.toLowerCase())?.value || "";
@@ -198,6 +225,7 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
       setEditorMode("edit");
     } else {
       setEditingProduct(null);
+      setAPlusData({ enabled: false, sections: [] });
       const tempId = `prod-${Date.now()}`;
       setForm({
         id: tempId,
@@ -419,14 +447,7 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
         { label: "Origin of Production", value: form.countryOfOrigin },
         { label: "Collection Season", value: form.season }
       ],
-      aPlusContent: {
-        title: form.aPlusTitle.trim(),
-        description: form.aPlusDesc.trim(),
-        features: [
-          { icon: "Wind", title: "Organic Thermoregulation", description: "Linen fibres ventilate moisture directly from cells." },
-          { icon: "ShieldAlert", title: "Normandy Flax Traceability", description: "Carefully produced under organic European textile guides." }
-        ]
-      },
+      aPlusContent: aPlusData,
       // Injected auxiliary fields for Shopify specifications
       ...({
         barcode: form.barcode.trim(),
@@ -613,7 +634,7 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
           </div>
 
           {/* EDIT FORM TAB SELECTOR */}
-          <div className="flex border-b border-zinc-200 gap-2 pb-1">
+          <div className="flex flex-wrap border-b border-zinc-200 gap-2 pb-1">
             <button
               type="button"
               onClick={() => setEditFormTab("details")}
@@ -624,6 +645,18 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
               }`}
             >
               General Specs & Inventory
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditFormTab("aplus")}
+              className={`py-2 px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                editFormTab === "aplus"
+                  ? "bg-zinc-950 text-white shadow-xs"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#F27D26]" />
+              <span>A+ Brand Content {aPlusData?.enabled && aPlusData?.sections?.length > 0 ? `(${aPlusData.sections.length})` : aPlusData?.enabled ? "(Active)" : "(Off)"}</span>
             </button>
             <button
               type="button"
@@ -644,6 +677,25 @@ export default function ProductsTab({ productList, onSaveProduct, onDeleteProduc
               productId={editingProduct?.id || form.id || form.slug} 
               productName={form.name || "Product"} 
             />
+          ) : editFormTab === "aplus" ? (
+            <div className="space-y-6">
+              <APlusContentBuilder
+                value={aPlusData}
+                onChange={setAPlusData}
+                productName={form.name || "Product"}
+              />
+              <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl flex items-center justify-between">
+                <span className="text-xs text-zinc-600">
+                  {aPlusData?.enabled ? "✓ A+ Brand Content is enabled for this product." : "○ A+ Brand Content is disabled (product page will hide this section)."}
+                </span>
+                <button
+                  type="submit"
+                  className="px-6 py-3 uppercase font-sans font-bold text-xs tracking-wider bg-orange-600 hover:bg-orange-700 transition duration-300 text-white rounded-xl shadow cursor-pointer text-center"
+                >
+                  Save Product & A+ Content
+                </button>
+              </div>
+            </div>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
