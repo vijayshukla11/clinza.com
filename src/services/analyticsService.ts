@@ -11,13 +11,13 @@ declare global {
 }
 
 const GA_MEASUREMENT_ID = ((import.meta as any).env?.VITE_GA_MEASUREMENT_ID || "G-593Y99H4LQ") as string;
-const GTM_ID = ((import.meta as any).env?.VITE_GTM_ID || "") as string;
+const GTM_ID = ((import.meta as any).env?.VITE_GTM_ID || "GTM-NDZL79NW") as string;
 
 // Initialize Google Tag Manager and Google Analytics 4 dynamically
 export function initAnalytics() {
   if (typeof window === "undefined") return;
 
-  // 1. Initialize dataLayer
+  // 1. Initialize dataLayer safely
   window.dataLayer = window.dataLayer || [];
   
   // Define helper function
@@ -31,7 +31,7 @@ export function initAnalytics() {
     cookie_flags: "SameSite=None;Secure",
   });
 
-  // 2. Inject Google Analytics script dynamically (preventing duplicate tags)
+  // 2. Inject Google Analytics script dynamically if not already loaded (preventing duplicate tags)
   if (!document.getElementById("google-gtag-script") && !document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"]`)) {
     const script = document.createElement("script");
     script.id = "google-gtag-script";
@@ -40,8 +40,12 @@ export function initAnalytics() {
     document.head.appendChild(script);
   }
 
-  // 3. Inject Google Tag Manager (GTM) only if a valid GTM ID is provided
-  if (GTM_ID && GTM_ID !== "GTM-XXXXXXXX" && !document.getElementById("gtm-script")) {
+  // 3. Fallback GTM script injection only if not already loaded in index.html
+  const isGtmLoaded = document.getElementById("gtm-script") || 
+                      document.querySelector(`script[src*="googletagmanager.com/gtm.js?id=${GTM_ID}"]`) ||
+                      document.querySelector('script[src*="googletagmanager.com/gtm.js"]');
+
+  if (GTM_ID && GTM_ID !== "GTM-XXXXXXXX" && !isGtmLoaded) {
     const gtmScript = document.createElement("script");
     gtmScript.id = "gtm-script";
     gtmScript.innerHTML = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -51,15 +55,17 @@ export function initAnalytics() {
     })(window,document,'script','dataLayer','${GTM_ID}');`;
     document.head.appendChild(gtmScript);
 
-    // Also inject GTM iframe noscript fallback into body
-    const noscript = document.createElement("noscript");
-    noscript.id = "gtm-noscript";
-    noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
-    document.body.insertBefore(noscript, document.body.firstChild);
+    // Also inject GTM iframe noscript fallback into body if missing
+    if (!document.getElementById("gtm-noscript") && !document.querySelector(`iframe[src*="googletagmanager.com/ns.html?id=${GTM_ID}"]`)) {
+      const noscript = document.createElement("noscript");
+      noscript.id = "gtm-noscript";
+      noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
+      document.body.insertBefore(noscript, document.body.firstChild);
+    }
   }
 
-  console.log(`[Analytics] Initialized GA4 (${GA_MEASUREMENT_ID})`);
+  console.log(`[Analytics] Initialized GA4 (${GA_MEASUREMENT_ID}) & GTM (${GTM_ID})`);
 }
 
 /**
