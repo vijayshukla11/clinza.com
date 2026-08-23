@@ -7,5 +7,4 @@ Disallow: /cart
 Disallow: /account
 Disallow: /api/
 
-Sitemap: https://www.clinza.in/sitemap.xml
-
+Sitemap: https://clinza.in/sitemap.xml

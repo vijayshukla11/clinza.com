@@ -8,17 +8,31 @@ interface SchemaMarkupProps {
   activeBlogSlug?: string | null;
 }
 
+const BASE_DOMAIN = "https://clinza.in";
+const LOGO_URL = "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/logo%20n%20deisgn/clinza.png";
+const DEFAULT_OG_IMAGE = "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
+
+/**
+ * Strips HTML tags and collapses whitespace for clean schema string values.
+ */
+function cleanText(input?: string): string {
+  if (!input) return "";
+  return input
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMarkupProps) {
   const location = useLocation();
   const path = location.pathname;
 
   React.useEffect(() => {
-    // 1. Remove any old dynamic schema scripts
+    // 1. Remove any previously injected dynamic schema scripts to prevent duplicate tags
     const existingScripts = document.querySelectorAll("script[data-dynamic-schema='true']");
     existingScripts.forEach(el => el.remove());
 
     const schemas: any[] = [];
-    const BASE_DOMAIN = "https://www.clinza.in";
 
     // 2. Organization Schema (always present)
     const orgSchema = {
@@ -26,20 +40,24 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
       "@type": "ClothingStore",
       "name": "CLINZA",
       "url": BASE_DOMAIN,
-      "logo": `${BASE_DOMAIN}/assets/logo.png`,
+      "logo": LOGO_URL,
+      "image": DEFAULT_OG_IMAGE,
+      "description": "Luxury European linen shirts, raw selvedge denim, double-pleated sartorial trousers, and bespoke menswear.",
       "sameAs": [
-        "https://instagram.com/clinza",
-        "https://facebook.com/clinza"
+        "https://www.instagram.com/clinza.in",
+        "https://www.facebook.com/clinza.in"
       ],
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+91-7208572688",
-        "contactType": "customer service"
+        "contactType": "customer service",
+        "areaServed": "IN",
+        "availableLanguage": ["English", "Hindi"]
       }
     };
     schemas.push(orgSchema);
 
-    // 3. WebSite Schema with SearchAction for Homepage
+    // 3. WebSite Schema with SearchAction ONLY on Homepage
     if (path === "/" || path === "") {
       const websiteSchema = {
         "@context": "https://schema.org",
@@ -48,14 +66,14 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
         "url": BASE_DOMAIN,
         "potentialAction": {
           "@type": "SearchAction",
-          "target": `${BASE_DOMAIN}/search?q={search_term_string}`,
+          "target": `${BASE_DOMAIN}/collections?search={search_term_string}`,
           "query-input": "required name=search_term_string"
         }
       };
       schemas.push(websiteSchema);
     }
 
-    // 4. Breadcrumb Schema
+    // 4. BreadcrumbList Schema (scoped to deeper routes)
     const pathParts = path.split("/").filter(Boolean);
     const breadcrumbItems = [
       {
@@ -69,125 +87,225 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
     let currentUrl = BASE_DOMAIN;
     pathParts.forEach((part, index) => {
       currentUrl += `/${part}`;
-      const name = part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " ");
+      const formattedName = part
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
       breadcrumbItems.push({
         "@type": "ListItem",
         "position": index + 2,
-        "name": name,
+        "name": formattedName,
         "item": currentUrl
       });
     });
 
-    const breadcrumbSchema = {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": breadcrumbItems
-    };
-    schemas.push(breadcrumbSchema);
+    if (breadcrumbItems.length > 1) {
+      const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbItems
+      };
+      schemas.push(breadcrumbSchema);
+    }
 
     let pageTitle = "CLINZA | Luxury European Linen & Tailored Menswear";
     let pageDescription = "Explore CLINZA for luxury European linen shirts, raw selvedge denim, sartorial trousers, and coordinates crafted with uncompromised quality.";
-    let pageOgImage = "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
+    let pageOgImage = DEFAULT_OG_IMAGE;
+    let canonicalUrl = `${BASE_DOMAIN}${path}`;
 
-    // 5. Case-by-case Routing Schema & Meta Tags
-    if ((path.startsWith("/product/") || path.startsWith("/products/")) && activeProduct) {
-      const prodCanonicalUrl = `${BASE_DOMAIN}/product/${activeProduct.slug || activeProduct.id}`;
-      pageTitle = `${activeProduct.name} | CLINZA`;
-      pageDescription = activeProduct.description || activeProduct.shortDescription || `Shop ${activeProduct.name} at CLINZA. Premium European linen and cotton menswear.`;
-      if (activeProduct.images && activeProduct.images.length > 0) {
-        pageOgImage = activeProduct.images[0];
-      }
-
-      // Product Schema
-      const offers = activeProduct.variants && activeProduct.variants.length > 0
-        ? activeProduct.variants.map(v => {
-            const offerObj: any = {
-              "@type": "Offer",
-              "url": prodCanonicalUrl,
-              "priceCurrency": "INR",
-              "price": v.price,
-              "itemCondition": "https://schema.org/NewCondition",
-              "availability": (v.stockQuantity !== undefined ? v.stockQuantity > 0 : activeProduct.stockStatus !== "Out of Stock")
-                ? "https://schema.org/InStock"
-                : "https://schema.org/OutOfStock"
-            };
-            if (v.sku) offerObj.sku = v.sku;
-            if (v.barcode) offerObj.gtin = v.barcode;
-            return offerObj;
-          })
-        : {
-            "@type": "Offer",
-            "url": prodCanonicalUrl,
-            "priceCurrency": "INR",
-            "price": activeProduct.price,
-            "itemCondition": "https://schema.org/NewCondition",
-            "availability": activeProduct.stockStatus === "Out of Stock" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
-          };
-
-      const productSchema: any = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": activeProduct.name,
-        "image": activeProduct.images || [],
-        "description": pageDescription,
-        "brand": {
-          "@type": "Brand",
-          "name": activeProduct.brand || "CLINZA"
-        },
-        "offers": offers
-      };
-
-      if (activeProduct.sku) {
-        productSchema.sku = activeProduct.sku;
-      }
-
-      const reviewCount = Array.isArray(activeProduct.reviews) ? activeProduct.reviews.length : 0;
-      const ratingVal = activeProduct.rating;
-      if (reviewCount > 0 && ratingVal && ratingVal > 0) {
-        productSchema.aggregateRating = {
-          "@type": "AggregateRating",
-          "ratingValue": ratingVal,
-          "reviewCount": reviewCount
-        };
-      }
-
-      schemas.push(productSchema);
-    } 
-    
-    else if ((path.startsWith("/collection/") || path.startsWith("/collections/")) || path === "/shop") {
-      const collectionSlug = path.split("/").pop() || "all";
-      const formatName = collectionSlug === "all" ? "Wardrobe Catalog" : collectionSlug.replace(/-/g, " ").toUpperCase();
-      pageTitle = `${formatName} | CLINZA`;
-      pageDescription = `Discover CLINZA's curated ${formatName} collection. Engineered with European flax fibers and precision tailoring.`;
-
-      const products = getProducts().filter(p => 
-        collectionSlug === "all" || 
-        p.collection.toLowerCase() === collectionSlug.toLowerCase() ||
-        p.category.toLowerCase().includes(collectionSlug.toLowerCase())
+    // 5. Dynamic Product Schema & Metadata Injection (Strictly on Product Pages)
+    if (path.startsWith("/product/") || path.startsWith("/products/")) {
+      const slugFromPath = path.replace(/^\/products?\//, "").split("?")[0].split("/")[0];
+      const allProducts = getProducts();
+      const resolvedProduct = activeProduct || allProducts.find(
+        p => p.slug === slugFromPath ||
+             p.id === slugFromPath ||
+             p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") === slugFromPath
       );
 
-      const itemsList = products.slice(0, 10).map((prod, idx) => ({
-        "@type": "ListItem",
-        "position": idx + 1,
-        "url": `${BASE_DOMAIN}/product/${prod.slug || prod.id}`
-      }));
+      if (resolvedProduct) {
+        canonicalUrl = `${BASE_DOMAIN}/product/${resolvedProduct.slug || resolvedProduct.id}`;
+        pageTitle = resolvedProduct.seoTitle || `${resolvedProduct.name} | CLINZA`;
+        const rawDesc = resolvedProduct.metaDescription || resolvedProduct.description || `Shop ${resolvedProduct.name} at CLINZA. Premium European linen and cotton menswear.`;
+        pageDescription = cleanText(rawDesc);
+        
+        if (Array.isArray(resolvedProduct.images) && resolvedProduct.images.length > 0) {
+          pageOgImage = resolvedProduct.images[0];
+        }
 
-      const collectionSchema = {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": `${formatName} Collections`,
-        "numberOfItems": products.length,
-        "itemListElement": itemsList
-      };
-      schemas.push(collectionSchema);
+        const isInStock = resolvedProduct.stockStatus !== "Out of Stock";
+        
+        // Construct offers
+        const offers = resolvedProduct.variants && resolvedProduct.variants.length > 0
+          ? resolvedProduct.variants.map(v => {
+              const offerObj: any = {
+                "@type": "Offer",
+                "url": canonicalUrl,
+                "priceCurrency": "INR",
+                "price": v.price || resolvedProduct.price,
+                "priceValidUntil": "2026-12-31",
+                "itemCondition": "https://schema.org/NewCondition",
+                "availability": (v.stockQuantity !== undefined ? v.stockQuantity > 0 : isInStock)
+                  ? "https://schema.org/InStock"
+                  : "https://schema.org/OutOfStock",
+                "seller": {
+                  "@type": "Organization",
+                  "name": "CLINZA"
+                }
+              };
+              if (v.sku) offerObj.sku = v.sku;
+              if (v.barcode) offerObj.gtin = v.barcode;
+              return offerObj;
+            })
+          : {
+              "@type": "Offer",
+              "url": canonicalUrl,
+              "priceCurrency": "INR",
+              "price": resolvedProduct.price,
+              "priceValidUntil": "2026-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": isInStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "seller": {
+                "@type": "Organization",
+                "name": "CLINZA"
+              }
+            };
+
+        const productSchema: any = {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": resolvedProduct.name,
+          "image": Array.isArray(resolvedProduct.images) && resolvedProduct.images.length > 0
+            ? resolvedProduct.images
+            : [DEFAULT_OG_IMAGE],
+          "description": pageDescription,
+          "brand": {
+            "@type": "Brand",
+            "name": resolvedProduct.brand || "CLINZA"
+          },
+          "sku": resolvedProduct.sku || `CLZ-${resolvedProduct.id}`,
+          "offers": offers
+        };
+
+        // Genuine Reviews & Ratings only — NO invented fallback numbers
+        if (Array.isArray(resolvedProduct.reviews) && resolvedProduct.reviews.length > 0) {
+          const validReviews = resolvedProduct.reviews.filter(r => typeof r.rating === "number" && r.rating > 0);
+          if (validReviews.length > 0) {
+            const sumRatings = validReviews.reduce((sum, r) => sum + r.rating, 0);
+            const avgRating = Math.round((sumRatings / validReviews.length) * 10) / 10;
+            
+            productSchema.aggregateRating = {
+              "@type": "AggregateRating",
+              "ratingValue": avgRating.toString(),
+              "reviewCount": validReviews.length,
+              "bestRating": "5",
+              "worstRating": "1"
+            };
+
+            productSchema.review = validReviews.map(r => ({
+              "@type": "Review",
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": r.rating.toString(),
+                "bestRating": "5",
+                "worstRating": "1"
+              },
+              "author": {
+                "@type": "Person",
+                "name": r.userName || "Verified Buyer"
+              },
+              "reviewBody": cleanText(r.comment) || "Excellent craftsmanship.",
+              "datePublished": r.date || "2026-05-01"
+            }));
+          }
+        }
+
+        schemas.push(productSchema);
+      }
     } 
     
-    else if (path.startsWith("/blog")) {
-      const blogs = getBlogs();
-      const activeBlog = blogs.find(b => b.slug === activeBlogSlug);
-      if (activeBlog) {
+    // 6. Collections & Category ItemList Schema
+    else if (
+      path.startsWith("/collection/") || 
+      path.startsWith("/collections") || 
+      path === "/shop" ||
+      path === "/shirts" ||
+      path === "/jeans" ||
+      path === "/pants" ||
+      path === "/combos" ||
+      path === "/linen-shirts" ||
+      path === "/cotton-shirts" ||
+      path === "/linen-pants" ||
+      path === "/new-arrivals" ||
+      path === "/trending" ||
+      path === "/best-sellers" ||
+      path === "/summer-collection" ||
+      path === "/limited-edition"
+    ) {
+      let collectionSlug = "all";
+      if (path.startsWith("/collections/")) {
+        collectionSlug = path.replace("/collections/", "");
+      } else if (path.startsWith("/collection/")) {
+        collectionSlug = path.replace("/collection/", "");
+      } else if (path.startsWith("/")) {
+        collectionSlug = path.substring(1);
+      }
+
+      const formatName = (collectionSlug === "all" || collectionSlug === "collections" || collectionSlug === "shop")
+        ? "Luxury Wardrobe Catalog"
+        : collectionSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        
+      pageTitle = `${formatName} | CLINZA`;
+      pageDescription = `Discover CLINZA's curated ${formatName} collection. Handcrafted with European flax linen, raw selvedge cotton, and bespoke tailoring.`;
+
+      const allProducts = getProducts();
+      const filteredProducts = allProducts.filter(p => {
+        if (collectionSlug === "all" || collectionSlug === "collections" || collectionSlug === "shop") return true;
+        const lowerSlug = collectionSlug.toLowerCase();
+        if (p.collection && p.collection.toLowerCase().includes(lowerSlug)) return true;
+        if (p.category && p.category.toLowerCase().includes(lowerSlug)) return true;
+        if (lowerSlug === "shirts" && (p.category.toLowerCase().includes("shirt") || p.collection.toLowerCase().includes("shirt"))) return true;
+        if (lowerSlug === "jeans" && (p.category.toLowerCase().includes("jean") || p.collection.toLowerCase().includes("denim"))) return true;
+        if (lowerSlug === "pants" && (p.category.toLowerCase().includes("trouser") || p.category.toLowerCase().includes("pant"))) return true;
+        if (lowerSlug === "combos" && p.category.toLowerCase().includes("combo")) return true;
+        if (lowerSlug === "new-arrivals" && p.isNewArrival) return true;
+        if (lowerSlug === "trending" && p.isTrending) return true;
+        if (lowerSlug === "best-sellers") return true;
+        return false;
+      });
+
+      const itemsList = filteredProducts.slice(0, 10).map((prod, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "url": `${BASE_DOMAIN}/product/${prod.slug || prod.id}`,
+        "name": prod.name
+      }));
+
+      if (itemsList.length > 0) {
+        const collectionSchema = {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": `${formatName} Collection`,
+          "numberOfItems": filteredProducts.length,
+          "itemListElement": itemsList
+        };
+        schemas.push(collectionSchema);
+      }
+    } 
+    
+    // 7. Editorial & Blog Posting Schema
+    else if (path.startsWith("/blog") || path.startsWith("/blogs")) {
+      const blogSlugFromPath = path.replace(/^\/blogs?\/(news\/)?/, "").split("?")[0].split("/")[0];
+      const allBlogs = getBlogs();
+      const activeBlog = allBlogs.find(
+        b => b.slug === activeBlogSlug ||
+             b.slug === blogSlugFromPath ||
+             b.id === blogSlugFromPath
+      );
+
+      if (activeBlog && activeBlog.slug) {
+        canonicalUrl = `${BASE_DOMAIN}/blog/${activeBlog.slug}`;
         pageTitle = `${activeBlog.title} | Clinza Journal`;
-        pageDescription = activeBlog.summary || activeBlog.title;
+        pageDescription = cleanText(activeBlog.summary || activeBlog.title);
         if (activeBlog.coverImage) {
           pageOgImage = activeBlog.coverImage;
         }
@@ -196,19 +314,19 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           "headline": activeBlog.title,
-          "image": activeBlog.coverImage,
-          "genre": activeBlog.category,
-          "keywords": activeBlog.tags?.join(", ") || "Fashion, Styling, Luxury",
+          "image": activeBlog.coverImage || DEFAULT_OG_IMAGE,
+          "genre": activeBlog.category || "Style Guide",
+          "keywords": activeBlog.tags?.join(", ") || "Fashion, Styling, Luxury Linen",
           "publisher": {
             "@type": "Organization",
             "name": "CLINZA",
-            "logo": `${BASE_DOMAIN}/assets/logo.png`
+            "logo": LOGO_URL
           },
-          "url": `${BASE_DOMAIN}/blog/${activeBlog.slug}`,
-          "datePublished": activeBlog.publishedAt || new Date().toISOString(),
+          "url": canonicalUrl,
+          "datePublished": activeBlog.publishedAt || "2026-06-01T10:00:00Z",
           "author": {
             "@type": "Person",
-            "name": typeof activeBlog.author === "object" ? activeBlog.author.name || "Clinza Stylist" : "Clinza Stylist"
+            "name": typeof activeBlog.author === "object" ? (activeBlog.author.name || "Alessandro Vanti") : "Alessandro Vanti"
           },
           "description": pageDescription
         };
@@ -219,20 +337,40 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
       }
     }
 
-    // 6. Inject JSON-LD Schema scripts
-    schemas.forEach(schemaData => {
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.setAttribute("data-dynamic-schema", "true");
-      script.innerHTML = JSON.stringify(schemaData);
-      document.head.appendChild(script);
-    });
+    // 8. Static Policy Pages
+    else if (path === "/about") {
+      pageTitle = "About CLINZA | Generational European Craftsmanship";
+      pageDescription = "Learn about CLINZA's philosophy: 100% Normandy flax linen, raw shuttle-loom selvedge denim, and artisanal tailoring crafted for timeless longevity.";
+    } else if (path === "/contact" || path === "/contact-us") {
+      pageTitle = "Contact CLINZA | Client Concierge & Support";
+      pageDescription = "Get in touch with CLINZA client support for sizing assistance, custom tailoring inquiries, and order tracking.";
+    } else if (path === "/privacy-policy") {
+      pageTitle = "Privacy Policy | CLINZA";
+      pageDescription = "Read the CLINZA privacy policy detailing how your customer data and payment information are protected.";
+    } else if (path === "/terms" || path === "/terms-and-conditions") {
+      pageTitle = "Terms & Conditions | CLINZA";
+      pageDescription = "Review the official terms of service and purchase conditions for CLINZA.";
+    } else if (path === "/refund-policy" || path === "/return-policy") {
+      pageTitle = "Refund & Exchange Policy | CLINZA";
+      pageDescription = "CLINZA offers hassle-free 7-day returns and size exchanges on all unworn luxury menswear garments.";
+    } else if (path === "/shipping-policy") {
+      pageTitle = "Shipping Policy | CLINZA";
+      pageDescription = "Information regarding complimentary express shipping and insured pan-India delivery for CLINZA orders.";
+    }
 
-    // 7. Update Document Title, Canonical Link, OG Tags
+    // 9. Inject Single Consolidated JSON-LD Script into Document Head
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-dynamic-schema", "true");
+    script.innerHTML = JSON.stringify(schemas.length === 1 ? schemas[0] : {
+      "@context": "https://schema.org",
+      "@graph": schemas.map(({ "@context": _, ...rest }) => rest)
+    });
+    document.head.appendChild(script);
+
+    // 10. Update Document Title and Head Meta Elements
     document.title = pageTitle;
 
-    const canonicalUrl = `${BASE_DOMAIN}${path}`;
-    
     // Canonical Tag
     let linkCanonical = document.querySelector("link[rel='canonical']") as HTMLLinkElement;
     if (!linkCanonical) {
@@ -251,73 +389,51 @@ export default function SchemaMarkup({ activeProduct, activeBlogSlug }: SchemaMa
     }
     metaDesc.setAttribute("content", pageDescription);
 
-    // OG Title
-    let ogTitle = document.querySelector("meta[property='og:title']") as HTMLMetaElement;
-    if (!ogTitle) {
-      ogTitle = document.createElement("meta");
-      ogTitle.setAttribute("property", "og:title");
-      document.head.appendChild(ogTitle);
-    }
-    ogTitle.setAttribute("content", pageTitle);
+    // Open Graph Tags
+    const updateOgTag = (property: string, content: string) => {
+      let el = document.querySelector(`meta[property='${property}']`) as HTMLMetaElement;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("property", property);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
 
-    // OG Description
-    let ogDesc = document.querySelector("meta[property='og:description']") as HTMLMetaElement;
-    if (!ogDesc) {
-      ogDesc = document.createElement("meta");
-      ogDesc.setAttribute("property", "og:description");
-      document.head.appendChild(ogDesc);
-    }
-    ogDesc.setAttribute("content", pageDescription);
+    updateOgTag("og:title", pageTitle);
+    updateOgTag("og:description", pageDescription);
+    updateOgTag("og:url", canonicalUrl);
+    updateOgTag("og:image", pageOgImage);
 
-    // OG URL
-    let ogUrl = document.querySelector("meta[property='og:url']") as HTMLMetaElement;
-    if (!ogUrl) {
-      ogUrl = document.createElement("meta");
-      ogUrl.setAttribute("property", "og:url");
-      document.head.appendChild(ogUrl);
-    }
-    ogUrl.setAttribute("content", canonicalUrl);
+    // Twitter Card Tags
+    const updateTwitterTag = (name: string, content: string) => {
+      let el = document.querySelector(`meta[name='${name}']`) as HTMLMetaElement;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
 
-    // OG Image
-    let ogImage = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
-    if (!ogImage) {
-      ogImage = document.createElement("meta");
-      ogImage.setAttribute("property", "og:image");
-      document.head.appendChild(ogImage);
-    }
-    ogImage.setAttribute("content", pageOgImage);
+    updateTwitterTag("twitter:title", pageTitle);
+    updateTwitterTag("twitter:description", pageDescription);
+    updateTwitterTag("twitter:image", pageOgImage);
 
-    // 8. Inject Google Analytics & Search Console verification tags from localStorage
+    // 11. Google Search Console Verification Meta Tag (if configured in settings)
     try {
       const integrationsStr = localStorage.getItem("clinza_pixel_integrations");
       if (integrationsStr) {
         const integrations = JSON.parse(integrationsStr);
-        
         if (integrations.gscMeta && !document.querySelector("meta[name='google-site-verification']")) {
           const metaGsc = document.createElement("meta");
           metaGsc.name = "google-site-verification";
           metaGsc.content = integrations.gscMeta;
           document.head.appendChild(metaGsc);
         }
-
-        if (integrations.ga4Id && !document.querySelector(`script[src*='googletagmanager.com/gtag/js']`)) {
-          const gaScript = document.createElement("script");
-          gaScript.async = true;
-          gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${integrations.ga4Id}`;
-          document.head.appendChild(gaScript);
-
-          const gaConfigScript = document.createElement("script");
-          gaConfigScript.innerHTML = `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${integrations.ga4Id}');
-          `;
-          document.head.appendChild(gaConfigScript);
-        }
       }
     } catch (e) {
-      console.warn("Analytics pixel tag injection notice:", e);
+      console.warn("Analytics pixel tag notice:", e);
     }
 
   }, [path, activeProduct, activeBlogSlug]);

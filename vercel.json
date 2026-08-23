@@ -1,4 +1,21 @@
 {
+  "redirects": [
+    { "source": "/pages/contact", "destination": "/contact", "permanent": true },
+    { "source": "/pages/contact-us", "destination": "/contact", "permanent": true },
+    { "source": "/pages/about-us", "destination": "/about", "permanent": true },
+    { "source": "/pages/about", "destination": "/about", "permanent": true },
+    { "source": "/pages/terms-and-conditions", "destination": "/terms", "permanent": true },
+    { "source": "/pages/privacy-policy", "destination": "/privacy-policy", "permanent": true },
+    { "source": "/pages/refund-policy", "destination": "/refund-policy", "permanent": true },
+    { "source": "/pages/return-policy", "destination": "/refund-policy", "permanent": true },
+    { "source": "/pages/shipping-policy", "destination": "/shipping-policy", "permanent": true },
+    { "source": "/collections/all", "destination": "/collections", "permanent": true },
+    { "source": "/products/:slug", "destination": "/product/:slug", "permanent": true },
+    { "source": "/shop", "destination": "/collections", "permanent": true },
+    { "source": "/bestsellers", "destination": "/best-sellers", "permanent": true },
+    { "source": "/blogs/news/:slug", "destination": "/blog/:slug", "permanent": true },
+    { "source": "/blogs/:slug", "destination": "/blog/:slug", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
@@ -6,4 +23,3 @@
     }
   ]
 }
-

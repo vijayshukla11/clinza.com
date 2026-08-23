@@ -247,15 +247,27 @@ function AppContent() {
   // Handle automatic deep-link parsing to set activeProduct state when entering a product URL directly
   useEffect(() => {
     const path = location.pathname;
-    if (path.startsWith("/product/")) {
-      const slug = path.replace("/product/", "");
-      const matched = getProducts().find(p => p.slug === slug);
+    if (path.startsWith("/product/") || path.startsWith("/products/")) {
+      const slug = path.replace(/^\/products?\//, "").split("?")[0].split("/")[0];
+      const allProds = getProducts();
+      const matched = allProds.find(
+        p => p.slug === slug ||
+             p.id === slug ||
+             p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug
+      );
       if (matched) {
         setActiveProduct(matched);
         trackProductView(matched);
         trackMetaViewContent(matched);
       }
-    } else if (path === "/checkout") {
+    } else {
+      // Clear active product when navigating away from product page
+      if (activeProduct) {
+        setActiveProduct(null);
+      }
+    }
+
+    if (path === "/checkout") {
       const totalVal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
       trackBeginCheckout(cart.map(item => ({
         id: item.product.id,
@@ -1031,8 +1043,10 @@ function AppContent() {
             {/* 6. POLICIES */}
             <Route path="/shipping-policy" element={<PolicyPageView initialPolicy="shipping-policy" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
             <Route path="/return-policy" element={<PolicyPageView initialPolicy="return-policy" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
+            <Route path="/refund-policy" element={<PolicyPageView initialPolicy="return-policy" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
             <Route path="/privacy-policy" element={<PolicyPageView initialPolicy="privacy-policy" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
             <Route path="/terms-and-conditions" element={<PolicyPageView initialPolicy="terms-and-conditions" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
+            <Route path="/terms" element={<PolicyPageView initialPolicy="terms-and-conditions" onBack={() => navigate("/")} setRoute={handleOldRouteTrigger} />} />
 
             {/* 7. CMS editorial journal */}
             <Route path="/blog" element={

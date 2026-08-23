@@ -19,9 +19,9 @@ export interface SeoMetaOptions {
   twitterSite?: string;
 }
 
-const DEFAULT_DOMAIN = "https://www.clinza.in";
+const DEFAULT_DOMAIN = "https://clinza.in";
 const DEFAULT_SITE_NAME = "CLINZA";
-const DEFAULT_FALLBACK_IMAGE = "https://www.clinza.in/icon.png";
+const DEFAULT_FALLBACK_IMAGE = "https://vdtbquxxpikniarmjpai.supabase.co/storage/v1/object/public/products/slider/combo%20collection%20linen%20set.png";
 
 /**
  * Sets or creates a <meta> element in document.head

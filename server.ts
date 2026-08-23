@@ -45,7 +45,7 @@ function xmlEscape(str: string = ""): string {
 
 // 1. Robots.txt
 app.get("/robots.txt", (req, res) => {
-  const host = process.env.PUBLIC_DOMAIN || "https://www.clinza.in";
+  const host = process.env.PUBLIC_DOMAIN || "https://clinza.in";
   res.setHeader("Content-Type", "text/plain");
   res.send(`User-agent: *
 Allow: /
@@ -62,25 +62,31 @@ Sitemap: ${host}/sitemap.xml
 
 // 2. Dynamic Sitemap XML for Search Console
 app.get("/sitemap.xml", (req, res) => {
-  const host = process.env.PUBLIC_DOMAIN || "https://www.clinza.in";
+  const host = process.env.PUBLIC_DOMAIN || "https://clinza.in";
   const now = new Date().toISOString().split("T")[0];
 
   const staticUrls = [
     "",
-    "/collections/all",
     "/collections",
-    "/shop",
+    "/shirts",
+    "/linen-shirts",
+    "/cotton-shirts",
+    "/jeans",
+    "/pants",
+    "/linen-pants",
+    "/combos",
     "/new-arrivals",
     "/best-sellers",
     "/trending",
+    "/summer-collection",
+    "/limited-edition",
     "/about",
     "/contact",
     "/blog",
     "/shipping-policy",
-    "/return-policy",
+    "/refund-policy",
     "/privacy-policy",
-    "/terms-and-conditions",
-    "/track-order"
+    "/terms"
   ];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
